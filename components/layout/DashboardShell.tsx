@@ -1,28 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { ReactNode, useState } from "react";
+import { usePathname } from "next/navigation";
+
 import Sidebar from "./Sidebar";
 import TopNavbar from "./TopNavbar";
 
+interface DashboardShellProps {
+  children: ReactNode;
+}
+
 export default function DashboardShell({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: DashboardShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  return (
-    <div className="min-h-screen bg-[#f5f8fc]">
-      {/* MOBILE OVERLAY */}
-      {mobileMenuOpen && (
-        <button
-          type="button"
-          aria-label="Close menu"
-          onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-[2px] lg:hidden"
-        />
-      )}
+  const pathname = usePathname();
 
+  // Top navbar should appear ONLY on the admin dashboard.
+  const isDashboard = pathname === "/admin/dashboard";
+
+  return (
+    <div className="min-h-screen bg-[#f4f7fb]">
       {/* SIDEBAR */}
       <Sidebar
         mobileMenuOpen={mobileMenuOpen}
@@ -30,16 +29,38 @@ export default function DashboardShell({
       />
 
       {/* MAIN AREA */}
-      <div className="min-h-screen lg:ml-[236px]">
-        <TopNavbar
-          mobileMenuOpen={mobileMenuOpen}
-          onMenuClick={() => setMobileMenuOpen((value) => !value)}
-        />
+      <main className="lg:ml-[252px]">
+        {/* TOP NAVBAR - DASHBOARD ONLY */}
+        {isDashboard && (
+          <TopNavbar
+            mobileMenuOpen={mobileMenuOpen}
+            onMenuClick={() => setMobileMenuOpen(true)}
+          />
+        )}
 
-        <main className="min-h-[calc(100vh-72px)] min-w-0 overflow-x-hidden bg-gradient-to-br from-[#f5f8fc] via-white to-[#eef4ff]">
-          {children}
-        </main>
-      </div>
+        {/* PAGE CONTENT */}
+        <div
+          className={
+            isDashboard
+              ? "relative min-h-[calc(100vh-76px)] overflow-hidden"
+              : "relative min-h-screen overflow-hidden"
+          }
+        >
+          {/* BACKGROUND */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -right-40 -top-40 h-[420px] w-[420px] rounded-full bg-blue-400/10 blur-3xl" />
+
+            <div className="absolute -left-40 top-[35%] h-[360px] w-[360px] rounded-full bg-indigo-400/10 blur-3xl" />
+
+            <div className="absolute -bottom-40 right-[20%] h-[360px] w-[360px] rounded-full bg-violet-400/10 blur-3xl" />
+          </div>
+
+          {/* ACTUAL PAGE */}
+          <div className="relative">
+            {children}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

@@ -2,8 +2,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import jwt from "jsonwebtoken";
 
-import DashboardShell from "@/components/layout/DashboardShell";
-
 interface TokenPayload {
   id: string;
   email: string;
@@ -17,37 +15,20 @@ export default async function AdminDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // =========================================================
-  // GET AUTH COOKIE
-  // =========================================================
-
   const cookieStore = await cookies();
 
   const token = cookieStore.get("token")?.value;
-
-  // =========================================================
-  // NO TOKEN
-  // =========================================================
 
   if (!token) {
     redirect("/admin/login");
   }
 
-  // =========================================================
-  // JWT SECRET
-  // =========================================================
-
   const secret = process.env.JWT_SECRET;
 
   if (!secret) {
     console.error("JWT_SECRET is missing");
-
     redirect("/admin/login");
   }
-
-  // =========================================================
-  // VERIFY TOKEN
-  // =========================================================
 
   let decoded: TokenPayload;
 
@@ -55,13 +36,8 @@ export default async function AdminDashboardLayout({
     decoded = jwt.verify(token, secret) as TokenPayload;
   } catch (error) {
     console.error("ADMIN JWT ERROR:", error);
-
     redirect("/admin/login");
   }
-
-  // =========================================================
-  // CHECK ADMIN ROLE
-  // =========================================================
 
   if (
     decoded.role !== "ADMIN" &&
@@ -70,13 +46,5 @@ export default async function AdminDashboardLayout({
     redirect("/admin/login");
   }
 
-  // =========================================================
-  // ADMIN DASHBOARD
-  // =========================================================
-
-  return (
-    <DashboardShell>
-      {children}
-    </DashboardShell>
-  );
+  return <>{children}</>;
 }

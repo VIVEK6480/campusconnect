@@ -2,18 +2,14 @@
 
 import {
   Activity,
-  Bell,
   Building2,
   CalendarDays,
   ChevronRight,
   GraduationCap,
-  RefreshCw,
-  Search,
   ShieldCheck,
   Users,
   UserCog,
 } from "lucide-react";
-import { useMemo, useState } from "react";
 
 type StatCardProps = {
   title: string;
@@ -29,7 +25,7 @@ function StatCard({
   icon,
 }: StatCardProps) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md">
+    <div className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-slate-500">
@@ -45,7 +41,8 @@ function StatCard({
           </p>
         </div>
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+        {/* STAT CARD ICON */}
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors duration-200 group-hover:bg-blue-600 group-hover:text-white">
           {icon}
         </div>
       </div>
@@ -67,13 +64,16 @@ function QuickCard({
   return (
     <div className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-md">
       <div className="flex items-center justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+
+        {/* QUICK ACCESS ICON */}
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors duration-200 group-hover:bg-blue-600 group-hover:text-white">
           {icon}
         </div>
 
+        {/* ARROW */}
         <ChevronRight
           size={20}
-          className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-blue-500"
+          className="text-slate-300 transition duration-200 group-hover:translate-x-1 group-hover:text-blue-500"
         />
       </div>
 
@@ -89,9 +89,7 @@ function QuickCard({
 }
 
 export default function AdminDashboardPage() {
-  const [search, setSearch] = useState("");
-
-  const [stats] = useState({
+  const stats = {
     totalUsers: 2,
     clubs: 2,
     events: 1,
@@ -99,83 +97,38 @@ export default function AdminDashboardPage() {
     students: 1,
     faculty: 0,
     admins: 1,
-  });
+  };
 
-  const filteredQuickAccess = useMemo(() => {
-    const items = [
-      {
-        icon: <Users size={21} />,
-        title: "Users",
-        description:
-          "Manage students, faculty and administrators registered on CampusConnect.",
-      },
-      {
-        icon: <Building2 size={21} />,
-        title: "Clubs",
-        description:
-          "Manage campus clubs, coordinators, members and club activities.",
-      },
-      {
-        icon: <CalendarDays size={21} />,
-        title: "Events",
-        description:
-          "Create, manage and monitor events happening across the campus.",
-      },
-      {
-        icon: <UserCog size={21} />,
-        title: "Memberships",
-        description:
-          "View and manage student memberships across different campus clubs.",
-      },
-    ];
-
-    if (!search.trim()) {
-      return items;
-    }
-
-    return items.filter((item) =>
-      `${item.title} ${item.description}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-    );
-  }, [search]);
-
-  function handleRefresh() {
-    window.location.reload();
-  }
+  const quickAccess = [
+    {
+      icon: <Users size={21} />,
+      title: "Users",
+      description:
+        "Manage students, faculty and administrators registered on CampusConnect.",
+    },
+    {
+      icon: <Building2 size={21} />,
+      title: "Clubs",
+      description:
+        "Manage campus clubs, coordinators, members and club activities.",
+    },
+    {
+      icon: <CalendarDays size={21} />,
+      title: "Events",
+      description:
+        "Create, manage and monitor events happening across the campus.",
+    },
+    {
+      icon: <UserCog size={21} />,
+      title: "Memberships",
+      description:
+        "View and manage student memberships across different campus clubs.",
+    },
+  ];
 
   return (
     <main className="min-h-screen bg-[#f7fafc] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1600px]">
-
-        {/* SEARCH + REFRESH */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="relative w-full max-w-xl">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-
-            <input
-              type="text"
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-              placeholder="Search anything..."
-              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-600"
-          >
-            <RefreshCw size={17} />
-            Refresh
-          </button>
-        </div>
 
         {/* ADMIN WELCOME BANNER */}
         <section className="relative mb-7 overflow-hidden rounded-[26px] bg-gradient-to-r from-[#172554] via-[#1e3a8a] to-[#2563eb] px-8 py-9 shadow-lg sm:px-10 sm:py-10">
@@ -222,6 +175,7 @@ export default function AdminDashboardPage() {
               Manage Events
               <ChevronRight size={19} />
             </button>
+
           </div>
         </section>
 
@@ -290,7 +244,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {filteredQuickAccess.map((item) => (
+            {quickAccess.map((item) => (
               <QuickCard
                 key={item.title}
                 icon={item.icon}
@@ -299,25 +253,6 @@ export default function AdminDashboardPage() {
               />
             ))}
           </div>
-
-          {filteredQuickAccess.length === 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
-
-              <Search
-                size={28}
-                className="mx-auto text-slate-300"
-              />
-
-              <p className="mt-3 font-semibold text-slate-700">
-                No results found
-              </p>
-
-              <p className="mt-1 text-sm text-slate-400">
-                Try searching for users, clubs, events or memberships.
-              </p>
-
-            </div>
-          )}
 
         </section>
 
@@ -349,7 +284,6 @@ export default function AdminDashboardPage() {
             <div className="mt-8">
 
               <div className="mb-2 flex items-center justify-between">
-
                 <span className="text-sm font-medium text-slate-600">
                   Students
                 </span>
@@ -357,11 +291,9 @@ export default function AdminDashboardPage() {
                 <span className="text-sm font-bold text-slate-800">
                   {stats.students}
                 </span>
-
               </div>
 
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-
                 <div
                   className="h-full rounded-full bg-blue-600"
                   style={{
@@ -369,15 +301,14 @@ export default function AdminDashboardPage() {
                       stats.students > 0 ? "100%" : "0%",
                   }}
                 />
-
               </div>
+
             </div>
 
             {/* FACULTY */}
             <div className="mt-7">
 
               <div className="mb-2 flex items-center justify-between">
-
                 <span className="text-sm font-medium text-slate-600">
                   Faculty
                 </span>
@@ -385,11 +316,9 @@ export default function AdminDashboardPage() {
                 <span className="text-sm font-bold text-slate-800">
                   {stats.faculty}
                 </span>
-
               </div>
 
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-
                 <div
                   className="h-full rounded-full bg-blue-600"
                   style={{
@@ -397,15 +326,14 @@ export default function AdminDashboardPage() {
                       stats.faculty > 0 ? "100%" : "0%",
                   }}
                 />
-
               </div>
+
             </div>
 
             {/* ADMINS */}
             <div className="mt-7">
 
               <div className="mb-2 flex items-center justify-between">
-
                 <span className="text-sm font-medium text-slate-600">
                   Admins
                 </span>
@@ -413,11 +341,9 @@ export default function AdminDashboardPage() {
                 <span className="text-sm font-bold text-slate-800">
                   {stats.admins}
                 </span>
-
               </div>
 
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-
                 <div
                   className="h-full rounded-full bg-blue-600"
                   style={{
@@ -425,8 +351,8 @@ export default function AdminDashboardPage() {
                       stats.admins > 0 ? "100%" : "0%",
                   }}
                 />
-
               </div>
+
             </div>
 
           </div>
@@ -546,7 +472,6 @@ export default function AdminDashboardPage() {
               </div>
 
               <div>
-
                 <p className="text-base font-bold text-slate-900">
                   CampusConnect Administration
                 </p>
@@ -554,7 +479,6 @@ export default function AdminDashboardPage() {
                 <p className="mt-1 text-sm text-slate-500">
                   Your administration dashboard is active and ready.
                 </p>
-
               </div>
 
             </div>

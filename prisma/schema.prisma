@@ -20,6 +20,15 @@ model User {
   certificates Certificate[]
   memberships  Membership[]
 
+  // ==========================================
+  // APPROVAL SYSTEM - ADDED ONLY
+  // ==========================================
+
+  approvalStatus  ApprovalStatus @default(PENDING)
+  approvedAt      DateTime?
+  rejectionReason String?
+  approvals       UserApproval[]
+
   @@map("User")
 }
 
@@ -43,7 +52,6 @@ model Membership {
   userId   String
   clubId   String
   joinedAt DateTime @default(now())
-
   club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -61,7 +69,6 @@ model Event {
   eventDate   DateTime
   image       String?
   updatedAt   DateTime     @updatedAt
-
   attendances Attendance[]
   club        Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
 
@@ -75,7 +82,6 @@ model Announcement {
   clubId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
 
   @@map("Announcement")
@@ -88,7 +94,6 @@ model Certificate {
   fileUrl   String
   title     String
   updatedAt DateTime @updatedAt
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("Certificate")
@@ -112,12 +117,24 @@ model Attendance {
   status    String   @default("Present")
   markedAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@map("Attendance")
+}
+
+model UserApproval {
+  id              String         @id @default(cuid())
+  userId          String
+  actionById      String
+  status          ApprovalStatus
+  rejectionReason String?
+  createdAt       DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("UserApproval")
 }
 
 enum Role {
@@ -126,4 +143,10 @@ enum Role {
   FACULTY
   ADMIN
   SUPER_ADMIN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
