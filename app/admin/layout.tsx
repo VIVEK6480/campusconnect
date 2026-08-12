@@ -13,9 +13,7 @@ export default function AdminLayout({
 }: AdminLayoutProps) {
   const pathname = usePathname();
 
-  /*
-   * Login page should NOT contain admin sidebar.
-   */
+  // Admin login page should have no dashboard shell
   const isLoginPage =
     pathname === "/admin/login" ||
     pathname.startsWith("/admin/login/");
@@ -24,8 +22,11 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
+  // Top navbar ONLY on dashboard
+  const showTopNavbar = pathname === "/admin/dashboard";
+
   return (
-    <DashboardShell>
+    <DashboardShell showTopNavbar={showTopNavbar}>
       {children}
     </DashboardShell>
   );

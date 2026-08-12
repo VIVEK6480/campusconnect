@@ -1,24 +1,20 @@
 "use client";
 
 import { ReactNode, useState } from "react";
-import { usePathname } from "next/navigation";
 
 import Sidebar from "./Sidebar";
 import TopNavbar from "./TopNavbar";
 
 interface DashboardShellProps {
   children: ReactNode;
+  showTopNavbar?: boolean;
 }
 
 export default function DashboardShell({
   children,
+  showTopNavbar = false,
 }: DashboardShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const pathname = usePathname();
-
-  // Top navbar should appear ONLY on the admin dashboard.
-  const isDashboard = pathname === "/admin/dashboard";
 
   return (
     <div className="min-h-screen bg-[#f4f7fb]">
@@ -30,8 +26,8 @@ export default function DashboardShell({
 
       {/* MAIN AREA */}
       <main className="lg:ml-[252px]">
-        {/* TOP NAVBAR - DASHBOARD ONLY */}
-        {isDashboard && (
+        {/* TOP NAVBAR - ONLY WHEN ENABLED */}
+        {showTopNavbar && (
           <TopNavbar
             mobileMenuOpen={mobileMenuOpen}
             onMenuClick={() => setMobileMenuOpen(true)}
@@ -41,7 +37,7 @@ export default function DashboardShell({
         {/* PAGE CONTENT */}
         <div
           className={
-            isDashboard
+            showTopNavbar
               ? "relative min-h-[calc(100vh-76px)] overflow-hidden"
               : "relative min-h-screen overflow-hidden"
           }
