@@ -83,6 +83,37 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ==========================================
+    // GENERATE CAMPUS USER ID
+    // STUDENT → VKT-4 RANDOM DIGITS
+    // ==========================================
+
+    async function generateCampusUserId() {
+      while (true) {
+        const randomDigits = Math.floor(
+          1000 + Math.random() * 9000
+        );
+
+        const campusUserId = `VKT-${randomDigits}`;
+
+        const existingCampusUserId =
+          await prisma.user.findUnique({
+            where: {
+              campusUserId,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+        if (!existingCampusUserId) {
+          return campusUserId;
+        }
+      }
+    }
+
+    const campusUserId = await generateCampusUserId();
+
+    // ==========================================
     // STUDENT REGISTRATION
     // ==========================================
     // Faculty registration will have its own
@@ -96,6 +127,7 @@ export async function POST(request: Request) {
         name,
         email,
         password: hashedPassword,
+        campusUserId,
         role: "STUDENT",
         approvalStatus: "PENDING",
       },
@@ -124,6 +156,7 @@ export async function POST(request: Request) {
           "Student registration submitted successfully. Waiting for approval.",
         data: {
           id: user.id,
+          campusUserId: user.campusUserId,
           name: user.name,
           email: user.email,
           role: user.role,
