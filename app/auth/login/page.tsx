@@ -73,10 +73,10 @@ export default function StudentLoginPage() {
       // Validate
       // -------------------------------------------------------
 
-      const cleanEmail = email.trim().toLowerCase();
+      const cleanEmail = email.trim();
 
       if (!cleanEmail || !password) {
-        setError("Email and password are required.");
+        setError("Email / Campus User ID and password are required.");
         setLoading(false);
         return;
       }
@@ -93,7 +93,8 @@ export default function StudentLoginPage() {
         credentials: "include",
         cache: "no-store",
         body: JSON.stringify({
-          email: cleanEmail,
+          email: cleanEmail.toLowerCase(),
+          campusUserId: cleanEmail.toUpperCase(),
           password,
         }),
       });
@@ -106,12 +107,17 @@ export default function StudentLoginPage() {
         success?: boolean;
         message?: string;
         token?: string;
+        approvalStatus?: string;
+        rejectionReason?: string | null;
         user?: {
           id?: string;
+          campusUserId?: string | null;
           name?: string;
           email?: string;
           role?: string;
           profileImage?: string | null;
+          approvalStatus?: string;
+          rejectionReason?: string | null;
         };
       };
 
@@ -125,11 +131,59 @@ export default function StudentLoginPage() {
       console.log("STUDENT LOGIN RESPONSE:", data);
 
       // -------------------------------------------------------
+      // APPROVAL STATUS
+      // -------------------------------------------------------
+
+      const approvalStatus =
+        data.approvalStatus ||
+        data.user?.approvalStatus;
+
+      const rejectionReason =
+        data.rejectionReason ||
+        data.user?.rejectionReason;
+
+      // -------------------------------------------------------
+      // PENDING
+      // -------------------------------------------------------
+
+      if (approvalStatus === "PENDING") {
+        await clearAuthentication();
+
+        setError(
+          "Your account is still waiting for Admin/Faculty approval."
+        );
+
+        return;
+      }
+
+      // -------------------------------------------------------
+      // REJECTED
+      // -------------------------------------------------------
+
+      if (approvalStatus === "REJECTED") {
+        await clearAuthentication();
+
+        if (rejectionReason) {
+          setError(
+            `Your registration was rejected. Reason: ${rejectionReason}`
+          );
+        } else {
+          setError(
+            "Your registration was rejected."
+          );
+        }
+
+        return;
+      }
+
+      // -------------------------------------------------------
       // API ERROR
       // -------------------------------------------------------
 
       if (!res.ok || !data.success) {
-        setError(data.message || "Invalid email or password.");
+        setError(
+          data.message || "Invalid email / Campus User ID or password."
+        );
 
         await clearAuthentication();
 
@@ -170,6 +224,39 @@ export default function StudentLoginPage() {
         } else {
           setError(
             "This account is not a student account. Please use the correct portal."
+          );
+        }
+
+        return;
+      }
+
+      // -------------------------------------------------------
+      // FINAL APPROVAL CHECK
+      // -------------------------------------------------------
+
+      if (
+        data.user.approvalStatus &&
+        data.user.approvalStatus !== "APPROVED"
+      ) {
+        await clearAuthentication();
+
+        if (data.user.approvalStatus === "PENDING") {
+          setError(
+            "Your account is still waiting for Admin/Faculty approval."
+          );
+        } else if (data.user.approvalStatus === "REJECTED") {
+          if (data.user.rejectionReason) {
+            setError(
+              `Your registration was rejected. Reason: ${data.user.rejectionReason}`
+            );
+          } else {
+            setError(
+              "Your registration was rejected."
+            );
+          }
+        } else {
+          setError(
+            "Your account is not approved for student access."
           );
         }
 
@@ -480,7 +567,7 @@ export default function StudentLoginPage() {
               {/* ERROR */}
 
               {error && (
-                <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300">
                   {error}
                 </div>
               )}
@@ -492,7 +579,7 @@ export default function StudentLoginPage() {
                 className="mt-8 space-y-5"
               >
 
-                {/* EMAIL */}
+                {/* EMAIL / CAMPUS USER ID */}
 
                 <div>
 
@@ -500,7 +587,7 @@ export default function StudentLoginPage() {
                     htmlFor="email"
                     className="mb-2 block text-sm font-medium text-slate-300"
                   >
-                    Student Email
+                    Email / Campus User ID
                   </label>
 
                   <div className="relative">
@@ -513,14 +600,14 @@ export default function StudentLoginPage() {
                     <input
                       id="email"
                       name="email"
-                      type="email"
-                      placeholder="student@campusconnect.com"
+                      type="text"
+                      placeholder="Email or VKT-1234"
                       value={email}
                       onChange={(e) =>
                         setEmail(e.target.value)
                       }
                       required
-                      autoComplete="email"
+                      autoComplete="username"
                       disabled={loading}
                       className="h-14 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-500 focus:bg-white/[0.07] focus:ring-4 focus:ring-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     />

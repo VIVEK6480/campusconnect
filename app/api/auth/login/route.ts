@@ -49,9 +49,18 @@ export async function POST(req: Request) {
     // FIND USER
     // ==========================================
 
-    const user = await prisma.user.findUnique({
+    const loginValue = email.trim().toLowerCase();
+
+    const user = await prisma.user.findFirst({
       where: {
-        email: email.trim().toLowerCase(),
+        OR: [
+          {
+            email: loginValue,
+          },
+          {
+            campusUserId: loginValue.toUpperCase(),
+          },
+        ],
       },
     });
 
@@ -89,12 +98,73 @@ export async function POST(req: Request) {
     }
 
     // ==========================================
+    // STUDENT ROLE CHECK
+    // ==========================================
+
+    if (user.role === "STUDENT") {
+
+      // ========================================
+      // PENDING
+      // ========================================
+
+      if (user.approvalStatus === "PENDING") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Your account is still waiting for Admin/Faculty approval.",
+          },
+          {
+            status: 403,
+          }
+        );
+      }
+
+      // ========================================
+      // REJECTED
+      // ========================================
+
+      if (user.approvalStatus === "REJECTED") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Your registration was rejected.",
+            rejectionReason:
+              user.rejectionReason ||
+              "No rejection reason was provided.",
+          },
+          {
+            status: 403,
+          }
+        );
+      }
+
+      // ========================================
+      // APPROVED
+      // ========================================
+
+      if (user.approvalStatus !== "APPROVED") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Your account is not approved for login.",
+          },
+          {
+            status: 403,
+          }
+        );
+      }
+    }
+
+    // ==========================================
     // CREATE JWT
     // ==========================================
 
     const token = jwt.sign(
       {
         id: user.id,
+        campusUserId: user.campusUserId,
         email: user.email,
         role: user.role,
       },
@@ -119,10 +189,12 @@ export async function POST(req: Request) {
 
         user: {
           id: user.id,
+          campusUserId: user.campusUserId,
           name: user.name,
           email: user.email,
           role: user.role,
           profileImage: user.profileImage,
+          approvalStatus: user.approvalStatus,
         },
       },
       {

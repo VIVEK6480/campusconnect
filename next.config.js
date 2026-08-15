@@ -2,7 +2,8 @@
 const nextConfig = {
   allowedDevOrigins: [
     "localhost",
-    "10.96.38.183",
+    "127.0.0.1",
+    "10.47.65.183",
   ],
 };
 

@@ -32,11 +32,9 @@ export async function POST(req: Request) {
         ? body.confirmPassword
         : "";
 
-    /*
-     * =========================================
-     * VALIDATE INPUT
-     * =========================================
-     */
+    // =========================================
+    // VALIDATION
+    // =========================================
 
     if (!token) {
       return NextResponse.json(
@@ -69,10 +67,17 @@ export async function POST(req: Request) {
       );
     }
 
-    if (
-      confirmPassword &&
-      newPassword !== confirmPassword
-    ) {
+    if (!confirmPassword) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please confirm your password.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (newPassword !== confirmPassword) {
       return NextResponse.json(
         {
           success: false,
@@ -82,16 +87,14 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * =========================================
-     * JWT SECRET
-     * =========================================
-     */
+    // =========================================
+    // JWT SECRET
+    // =========================================
 
     const jwtSecret = process.env.JWT_SECRET;
 
     if (!jwtSecret) {
-      console.error("JWT_SECRET IS MISSING.");
+      console.error("RESET PASSWORD: JWT_SECRET IS MISSING");
 
       return NextResponse.json(
         {
@@ -103,11 +106,9 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * =========================================
-     * VERIFY JWT
-     * =========================================
-     */
+    // =========================================
+    // VERIFY TOKEN
+    // =========================================
 
     let payload: ResetTokenPayload;
 
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
       ) as ResetTokenPayload;
     } catch (error) {
       console.error(
-        "INVALID RESET TOKEN:",
+        "RESET PASSWORD: INVALID TOKEN",
         error
       );
 
@@ -132,17 +133,9 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * =========================================
-     * VALIDATE TOKEN PURPOSE
-     * =========================================
-     *
-     * ADMIN:
-     * admin-password-reset
-     *
-     * STUDENT:
-     * student-password-reset
-     */
+    // =========================================
+    // TOKEN PURPOSE
+    // =========================================
 
     const isAdminReset =
       payload.purpose === "admin-password-reset";
@@ -160,11 +153,9 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * =========================================
-     * VALIDATE USER ID
-     * =========================================
-     */
+    // =========================================
+    // USER ID
+    // =========================================
 
     if (!payload.userId) {
       return NextResponse.json(
@@ -176,11 +167,9 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * =========================================
-     * FIND USER
-     * =========================================
-     */
+    // =========================================
+    // FIND USER
+    // =========================================
 
     const user = await prisma.user.findUnique({
       where: {
@@ -198,15 +187,9 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * =========================================
-     * ROLE PROTECTION
-     * =========================================
-     *
-     * Admin token can ONLY reset an admin.
-     *
-     * Student token can ONLY reset a student.
-     */
+    // =========================================
+    // ROLE PROTECTION
+    // =========================================
 
     if (isAdminReset) {
       if (
@@ -237,13 +220,9 @@ export async function POST(req: Request) {
       }
     }
 
-    /*
-     * =========================================
-     * CHECK PASSWORD VERSION
-     * =========================================
-     *
-     * This prevents reuse of an old reset link.
-     */
+    // =========================================
+    // PASSWORD VERSION
+    // =========================================
 
     const currentPasswordVersion =
       crypto
@@ -266,20 +245,16 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * =========================================
-     * HASH NEW PASSWORD
-     * =========================================
-     */
+    // =========================================
+    // HASH PASSWORD
+    // =========================================
 
     const hashedPassword =
       await bcrypt.hash(newPassword, 12);
 
-    /*
-     * =========================================
-     * UPDATE PASSWORD
-     * =========================================
-     */
+    // =========================================
+    // UPDATE PASSWORD
+    // =========================================
 
     await prisma.user.update({
       where: {
@@ -290,15 +265,17 @@ export async function POST(req: Request) {
       },
     });
 
-    /*
-     * =========================================
-     * SUCCESS
-     * =========================================
-     */
+    // =========================================
+    // SUCCESS
+    // =========================================
 
     const loginPortal = isAdminReset
       ? "admin"
       : "student";
+
+    console.log(
+      `PASSWORD RESET SUCCESS: ${user.email} (${loginPortal})`
+    );
 
     return NextResponse.json(
       {
