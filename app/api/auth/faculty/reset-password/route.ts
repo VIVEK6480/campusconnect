@@ -5,7 +5,7 @@ import crypto from "crypto";
 
 import { prisma } from "@/lib/prisma";
 
-type ResetTokenPayload = {
+type FacultyResetTokenPayload = {
   purpose: string;
   userId: string;
   passwordVersion: string;
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         : "";
 
     // =========================================
-    // VALIDATION
+    // TOKEN
     // =========================================
 
     if (!token) {
@@ -45,6 +45,10 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    // =========================================
+    // PASSWORD
+    // =========================================
 
     if (!newPassword) {
       return NextResponse.json(
@@ -91,11 +95,11 @@ export async function POST(req: Request) {
     // JWT SECRET
     // =========================================
 
-    const jwtSecret = process.env.JWT_SECRET;
+    const jwtSecret = process.env.JWT_SECRET?.trim();
 
     if (!jwtSecret) {
       console.error(
-        "RESET PASSWORD: JWT_SECRET IS MISSING"
+        "FACULTY RESET: JWT_SECRET is missing."
       );
 
       return NextResponse.json(
@@ -112,16 +116,16 @@ export async function POST(req: Request) {
     // VERIFY TOKEN
     // =========================================
 
-    let payload: ResetTokenPayload;
+    let payload: FacultyResetTokenPayload;
 
     try {
       payload = jwt.verify(
         token,
         jwtSecret
-      ) as ResetTokenPayload;
+      ) as FacultyResetTokenPayload;
     } catch (error) {
       console.error(
-        "RESET PASSWORD: INVALID TOKEN",
+        "FACULTY RESET: INVALID OR EXPIRED TOKEN",
         error
       );
 
@@ -139,24 +143,15 @@ export async function POST(req: Request) {
     // TOKEN PURPOSE
     // =========================================
 
-    const isAdminReset =
-      payload.purpose === "admin-password-reset";
-
-    const isStudentReset =
-      payload.purpose === "student-password-reset";
-
-    const isFacultyReset =
-      payload.purpose === "faculty-password-reset";
-
     if (
-      !isAdminReset &&
-      !isStudentReset &&
-      !isFacultyReset
+      payload.purpose !==
+      "faculty-password-reset"
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid password reset token.",
+          message:
+            "This reset link is not valid for a faculty account.",
         },
         { status: 401 }
       );
@@ -177,69 +172,38 @@ export async function POST(req: Request) {
     }
 
     // =========================================
-    // FIND USER
+    // FIND FACULTY
     // =========================================
 
-    const user = await prisma.user.findUnique({
+    const faculty = await prisma.user.findUnique({
       where: {
         id: payload.userId,
       },
     });
 
-    if (!user) {
+    if (!faculty) {
       return NextResponse.json(
         {
           success: false,
-          message: "Account could not be found.",
+          message: "Faculty account could not be found.",
         },
         { status: 404 }
       );
     }
 
     // =========================================
-    // ROLE PROTECTION
+    // FACULTY ROLE PROTECTION
     // =========================================
 
-    if (isAdminReset) {
-      if (
-        user.role !== "ADMIN" &&
-        user.role !== "SUPER_ADMIN"
-      ) {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "This reset link is not valid for this account.",
-          },
-          { status: 403 }
-        );
-      }
-    }
-
-    if (isStudentReset) {
-      if (user.role !== "STUDENT") {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "This reset link is not valid for this account.",
-          },
-          { status: 403 }
-        );
-      }
-    }
-
-    if (isFacultyReset) {
-      if (user.role !== "FACULTY") {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "This reset link is not valid for this account.",
-          },
-          { status: 403 }
-        );
-      }
+    if (faculty.role !== "FACULTY") {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "This reset link is not valid for this account.",
+        },
+        { status: 403 }
+      );
     }
 
     // =========================================
@@ -249,7 +213,7 @@ export async function POST(req: Request) {
     const currentPasswordVersion =
       crypto
         .createHash("sha256")
-        .update(user.password)
+        .update(faculty.password)
         .digest("hex");
 
     if (
@@ -268,7 +232,7 @@ export async function POST(req: Request) {
     }
 
     // =========================================
-    // HASH PASSWORD
+    // HASH NEW PASSWORD
     // =========================================
 
     const hashedPassword =
@@ -280,7 +244,7 @@ export async function POST(req: Request) {
 
     await prisma.user.update({
       where: {
-        id: user.id,
+        id: faculty.id,
       },
       data: {
         password: hashedPassword,
@@ -291,28 +255,21 @@ export async function POST(req: Request) {
     // SUCCESS
     // =========================================
 
-    const loginPortal = isAdminReset
-      ? "admin"
-      : isStudentReset
-        ? "student"
-        : "faculty";
-
     console.log(
-      `PASSWORD RESET SUCCESS: ${user.email} (${loginPortal})`
+      `FACULTY PASSWORD RESET SUCCESS: ${faculty.email}`
     );
 
     return NextResponse.json(
       {
         success: true,
-        portal: loginPortal,
         message:
-          "Password updated successfully. You can now log in.",
+          "Faculty password updated successfully. You can now log in.",
       },
       { status: 200 }
     );
   } catch (error) {
     console.error(
-      "RESET PASSWORD ERROR:",
+      "FACULTY RESET PASSWORD ERROR:",
       error
     );
 
@@ -320,7 +277,7 @@ export async function POST(req: Request) {
       {
         success: false,
         message:
-          "Unable to reset password. Please try again.",
+          "Unable to reset faculty password. Please try again.",
       },
       { status: 500 }
     );

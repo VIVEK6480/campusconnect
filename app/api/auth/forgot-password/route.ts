@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
 import { prisma } from "@/lib/prisma";
+import { getAppUrl } from "@/lib/get-app-url";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
@@ -73,20 +74,23 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Authentication system is not configured.",
+          message:
+            "Authentication system is not configured.",
         },
         { status: 500 }
       );
     }
 
     // -----------------------------------------
-    // SMTP
+    // ADMIN SMTP
     // -----------------------------------------
 
     const smtpHost = process.env.SMTP_HOST;
+
     const smtpPort = Number(
       process.env.SMTP_PORT || "465"
     );
+
     const smtpUser = process.env.SMTP_USER;
     const smtpPassword = process.env.SMTP_PASSWORD;
 
@@ -130,17 +134,51 @@ export async function POST(req: Request) {
     );
 
     // -----------------------------------------
-    // RESET URL
+    // CURRENT APPLICATION URL
     // -----------------------------------------
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "http://localhost:3000";
+    const appUrl = getAppUrl(req);
+
+    console.log(
+      "========================================"
+    );
+
+    console.log(
+      "ADMIN PASSWORD RESET REQUEST"
+    );
+
+    console.log(
+      "ADMIN EMAIL:",
+      user.email
+    );
+
+    console.log(
+      "ADMIN RESET HOST:",
+      req.headers.get("host")
+    );
+
+    console.log(
+      "ADMIN RESET APP URL:",
+      appUrl
+    );
+
+    // -----------------------------------------
+    // RESET URL
+    // -----------------------------------------
 
     const resetUrl =
       `${appUrl}/auth/reset-password` +
       `?portal=admin` +
       `&token=${encodeURIComponent(token)}`;
+
+    console.log(
+      "ADMIN RESET URL:",
+      resetUrl
+    );
+
+    console.log(
+      "========================================"
+    );
 
     // -----------------------------------------
     // SMTP TRANSPORTER
@@ -172,7 +210,14 @@ export async function POST(req: Request) {
         "CampusConnect Admin Password Reset",
 
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:30px">
+        <div
+          style="
+            font-family:Arial,sans-serif;
+            max-width:600px;
+            margin:auto;
+            padding:30px;
+          "
+        >
 
           <h2>CampusConnect</h2>
 

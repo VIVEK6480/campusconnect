@@ -15,20 +15,23 @@ export default function proxy(req: NextRequest) {
     // Forgot password
     "/api/auth/forgot-password",
     "/api/auth/student-forgot-password",
+    "/api/auth/faculty/forgot-password",
 
     // Password reset
     "/api/auth/reset-password",
     "/api/auth/student-reset-password",
+    "/api/auth/faculty/reset-password",
 
     // Admin login
     "/api/admin/login",
   ];
 
-  const isPublicApiRoute = publicApiRoutes.some(
-    (route) =>
-      pathname === route ||
-      pathname.startsWith(`${route}/`)
-  );
+  const isPublicApiRoute =
+    publicApiRoutes.some(
+      (route) =>
+        pathname === route ||
+        pathname.startsWith(`${route}/`)
+    );
 
   // =========================================================
   // PUBLIC API
@@ -40,13 +43,11 @@ export default function proxy(req: NextRequest) {
 
   // =========================================================
   // FACULTY APPROVAL API
-  //
-  // Authentication/authorization is handled inside
-  // the Faculty Approval API route itself.
   // =========================================================
 
   const isFacultyApprovalApi =
-    pathname === "/api/admin/approvals/Faculty" ||
+    pathname ===
+      "/api/admin/approvals/Faculty" ||
     pathname.startsWith(
       "/api/admin/approvals/Faculty/"
     );
@@ -57,13 +58,11 @@ export default function proxy(req: NextRequest) {
 
   // =========================================================
   // STUDENT APPROVAL API
-  //
-  // Authentication/authorization is handled inside
-  // the Student Approval API route itself.
   // =========================================================
 
   const isStudentApprovalApi =
-    pathname === "/api/admin/approvals/students" ||
+    pathname ===
+      "/api/admin/approvals/students" ||
     pathname.startsWith(
       "/api/admin/approvals/students/"
     );
@@ -73,10 +72,11 @@ export default function proxy(req: NextRequest) {
   }
 
   // =========================================================
-  // CHECK AUTHORIZATION HEADER
+  // AUTHORIZATION HEADER
   // =========================================================
 
-  const authHeader = req.headers.get("authorization");
+  const authHeader =
+    req.headers.get("authorization");
 
   let token: string | undefined;
 
@@ -87,7 +87,7 @@ export default function proxy(req: NextRequest) {
   }
 
   // =========================================================
-  // CHECK HTTP-ONLY COOKIE
+  // HTTP-ONLY COOKIE
   // =========================================================
 
   if (!token) {
@@ -95,7 +95,7 @@ export default function proxy(req: NextRequest) {
   }
 
   // =========================================================
-  // OTHER PROTECTED API ROUTES
+  // PROTECTED API ROUTES
   // =========================================================
 
   if (!token) {

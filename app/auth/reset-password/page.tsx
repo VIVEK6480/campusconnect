@@ -32,7 +32,9 @@ function ResetPasswordForm() {
     setSuccess("");
 
     if (!token) {
-      setError("Invalid or missing password reset link.");
+      setError(
+        "Invalid or missing password reset link. Please request a new password reset link."
+      );
       return;
     }
 
@@ -42,7 +44,9 @@ function ResetPasswordForm() {
     }
 
     if (newPassword.length < 8) {
-      setError("Password must contain at least 8 characters.");
+      setError(
+        "Password must contain at least 8 characters."
+      );
       return;
     }
 
@@ -65,6 +69,7 @@ function ResetPasswordForm() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify({
             token,
@@ -82,13 +87,29 @@ function ResetPasswordForm() {
         portal?: string;
       } = {};
 
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        data = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          console.error(
+            "RESET PASSWORD INVALID JSON RESPONSE:",
+            text
+          );
+
+          throw new Error(
+            "The server returned an invalid response. Please try again."
+          );
+        }
       }
 
-      if (!response.ok || !data.success) {
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            `Unable to reset password. Server returned ${response.status}.`
+        );
+      }
+
+      if (data.success !== true) {
         throw new Error(
           data.message ||
             "Unable to reset password. Please try again."
@@ -108,11 +129,19 @@ function ResetPasswordForm() {
         err
       );
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to reset password. Please try again."
-      );
+      setSuccess("");
+
+      if (err instanceof TypeError) {
+        setError(
+          "Unable to connect to the server. Please check your internet/network connection and try again."
+        );
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to reset password. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -134,22 +163,15 @@ function ResetPasswordForm() {
           : "relative min-h-screen overflow-hidden bg-[#071411] text-white"
       }
     >
-
       {/* =========================================
           ADMIN / STUDENT BACKGROUND
       ========================================= */}
 
       {isAdmin ? (
         <>
-          {/* ADMIN NAVY BACKGROUND */}
-
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(69,103,220,0.30),transparent_34%),radial-gradient(circle_at_82%_75%,rgba(88,68,190,0.25),transparent_38%),linear-gradient(135deg,#071126_0%,#101b42_48%,#0a1028_100%)]" />
 
-          {/* ADMIN GRID */}
-
           <div className="absolute inset-0 opacity-30 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
-
-          {/* ADMIN GLOW */}
 
           <div className="absolute left-[7%] top-[27%] h-3 w-3 rounded-full bg-blue-300/70 shadow-[0_0_22px_rgba(96,165,250,0.9)]" />
 
@@ -159,8 +181,6 @@ function ResetPasswordForm() {
         </>
       ) : (
         <>
-          {/* STUDENT BACKGROUND — UNCHANGED */}
-
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.18),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(80,80,180,0.18),transparent_40%)]" />
 
           <div className="absolute inset-0 opacity-30 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
@@ -176,7 +196,6 @@ function ResetPasswordForm() {
       ========================================= */}
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-10">
-
         <section
           className={
             isAdmin
@@ -184,15 +203,12 @@ function ResetPasswordForm() {
               : "w-full max-w-[520px] rounded-[28px] border border-white/10 bg-[#081411]/95 p-7 shadow-2xl backdrop-blur-xl sm:p-10"
           }
         >
-
           {/* =========================================
               BRAND
           ========================================= */}
 
           <div className="flex items-center gap-4">
-
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500 text-white shadow-lg shadow-blue-500/25">
-
               <svg
                 width="28"
                 height="28"
@@ -205,11 +221,9 @@ function ResetPasswordForm() {
                 <path d="M6 10v5.5c0 1.7 2.7 3.5 6 3.5s6-1.8 6-3.5V10" />
                 <path d="M21 9v6" />
               </svg>
-
             </div>
 
             <div>
-
               <h1 className="text-2xl font-bold tracking-tight">
                 CampusConnect
               </h1>
@@ -217,9 +231,7 @@ function ResetPasswordForm() {
               <p className="text-sm text-slate-400">
                 Smart Campus Management
               </p>
-
             </div>
-
           </div>
 
           <div className="my-8 h-px bg-white/10" />
@@ -229,7 +241,6 @@ function ResetPasswordForm() {
           ========================================= */}
 
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-400/5 px-3 py-1.5 text-xs font-medium text-blue-300">
-
             <svg
               width="14"
               height="14"
@@ -245,7 +256,6 @@ function ResetPasswordForm() {
             {isAdmin
               ? "Secure administrator password reset"
               : "Secure student password reset"}
-
           </div>
 
           {/* =========================================
@@ -267,7 +277,7 @@ function ResetPasswordForm() {
           ========================================= */}
 
           {error && (
-            <div className="mt-7 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            <div className="mt-7 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300">
               {error}
             </div>
           )}
@@ -277,13 +287,12 @@ function ResetPasswordForm() {
           ========================================= */}
 
           {success && (
-            <div className="mt-7 rounded-xl border border-blue-400/20 bg-blue-400/10 px-4 py-4 text-blue-300">
-
+            <div className="mt-7 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-4 text-emerald-300">
               <div className="font-semibold">
                 Password reset successful
               </div>
 
-              <div className="mt-1 text-sm">
+              <div className="mt-1 text-sm leading-6">
                 {success}
               </div>
 
@@ -293,7 +302,6 @@ function ResetPasswordForm() {
               >
                 {loginText}
               </Link>
-
             </div>
           )}
 
@@ -306,11 +314,9 @@ function ResetPasswordForm() {
               onSubmit={handleSubmit}
               className="mt-7 space-y-5"
             >
-
               {/* NEW PASSWORD */}
 
               <div>
-
                 <label
                   htmlFor="newPassword"
                   className="mb-2 block text-sm font-medium text-slate-200"
@@ -319,7 +325,6 @@ function ResetPasswordForm() {
                 </label>
 
                 <div className="relative">
-
                   <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
                     🔒
                   </div>
@@ -340,10 +345,11 @@ function ResetPasswordForm() {
                     }
                     placeholder="Enter your new password"
                     autoComplete="new-password"
+                    disabled={loading}
                     className={
                       isAdmin
-                        ? "h-14 w-full rounded-xl border border-white/10 bg-white/[0.045] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/50 focus:bg-white/[0.065]"
-                        : "h-14 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-500/50 focus:bg-white/[0.07]"
+                        ? "h-14 w-full rounded-xl border border-white/10 bg-white/[0.045] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/50 focus:bg-white/[0.065] disabled:cursor-not-allowed disabled:opacity-60"
+                        : "h-14 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-500/50 focus:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
                     }
                   />
 
@@ -354,19 +360,17 @@ function ResetPasswordForm() {
                         !showPassword
                       )
                     }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400"
+                    disabled={loading}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 disabled:opacity-50"
                   >
                     {showPassword ? "🙈" : "👁"}
                   </button>
-
                 </div>
-
               </div>
 
               {/* CONFIRM PASSWORD */}
 
               <div>
-
                 <label
                   htmlFor="confirmPassword"
                   className="mb-2 block text-sm font-medium text-slate-200"
@@ -375,7 +379,6 @@ function ResetPasswordForm() {
                 </label>
 
                 <div className="relative">
-
                   <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
                     🔒
                   </div>
@@ -396,10 +399,11 @@ function ResetPasswordForm() {
                     }
                     placeholder="Confirm your new password"
                     autoComplete="new-password"
+                    disabled={loading}
                     className={
                       isAdmin
-                        ? "h-14 w-full rounded-xl border border-white/10 bg-white/[0.045] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/50 focus:bg-white/[0.065]"
-                        : "h-14 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-500/50 focus:bg-white/[0.07]"
+                        ? "h-14 w-full rounded-xl border border-white/10 bg-white/[0.045] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/50 focus:bg-white/[0.065] disabled:cursor-not-allowed disabled:opacity-60"
+                        : "h-14 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-500/50 focus:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
                     }
                   />
 
@@ -410,35 +414,24 @@ function ResetPasswordForm() {
                         !showConfirmPassword
                       )
                     }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400"
+                    disabled={loading}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 disabled:opacity-50"
                   >
                     {showConfirmPassword
                       ? "🙈"
                       : "👁"}
                   </button>
-
                 </div>
-
               </div>
 
-              {/* =========================================
-                  REQUIREMENTS
-              ========================================= */}
+              {/* REQUIREMENTS */}
 
-              <div
-                className={
-                  isAdmin
-                    ? "rounded-xl border border-white/10 bg-white/[0.025] p-4"
-                    : "rounded-xl border border-white/10 bg-white/[0.025] p-4"
-                }
-              >
-
+              <div className="rounded-xl border border-white/10 bg-white/[0.025] p-4">
                 <p className="text-sm font-medium text-slate-300">
                   Password requirements
                 </p>
 
                 <ul className="mt-2 space-y-1 text-xs text-slate-500">
-
                   <li>
                     • At least 8 characters
                   </li>
@@ -450,21 +443,16 @@ function ResetPasswordForm() {
                   <li>
                     • Avoid easily guessed information
                   </li>
-
                 </ul>
-
               </div>
 
-              {/* =========================================
-                  SUBMIT
-              ========================================= */}
+              {/* SUBMIT */}
 
               <button
                 type="submit"
                 disabled={loading}
                 className="flex h-14 w-full items-center justify-center gap-3 rounded-xl bg-blue-500 font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
-
                 {loading ? (
                   <>
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -478,18 +466,13 @@ function ResetPasswordForm() {
                     </span>
                   </>
                 )}
-
               </button>
-
             </form>
           )}
 
-          {/* =========================================
-              FOOTER
-          ========================================= */}
+          {/* FOOTER */}
 
           <div className="mt-7 border-t border-white/10 pt-7 text-center">
-
             <Link
               href={loginUrl}
               className="text-sm text-slate-500 transition hover:text-blue-400"
@@ -499,13 +482,9 @@ function ResetPasswordForm() {
                 ? "Admin Login"
                 : "Student Login"}
             </Link>
-
           </div>
-
         </section>
-
       </div>
-
     </main>
   );
 }

@@ -16,7 +16,9 @@ export default function FacultyForgotPasswordPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    e: FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
 
     if (loading) return;
@@ -27,7 +29,7 @@ export default function FacultyForgotPasswordPage() {
 
     try {
       const res = await fetch(
-        "/api/auth/forgot-password",
+        "/api/auth/faculty/forgot-password",
         {
           method: "POST",
           headers: {
@@ -36,7 +38,6 @@ export default function FacultyForgotPasswordPage() {
           credentials: "include",
           body: JSON.stringify({
             email: email.trim().toLowerCase(),
-            role: "FACULTY",
           }),
         }
       );
@@ -73,7 +74,6 @@ export default function FacultyForgotPasswordPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
 
-      {/* Background */}
       <div
         className="absolute inset-0"
         style={{
@@ -120,7 +120,6 @@ export default function FacultyForgotPasswordPage() {
 
         <div className="w-full max-w-md">
 
-          {/* Logo */}
           <div className="mb-8 flex items-center justify-center gap-3">
 
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-sky-500 shadow-lg shadow-cyan-500/20">
@@ -139,7 +138,6 @@ export default function FacultyForgotPasswordPage() {
 
           </div>
 
-          {/* Card */}
           <div className="rounded-3xl border border-white/10 bg-[#0d1727]/90 p-7 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-9">
 
             <div className="mb-7">
@@ -160,14 +158,12 @@ export default function FacultyForgotPasswordPage() {
 
             </div>
 
-            {/* Error */}
             {error && (
               <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300">
                 {error}
               </div>
             )}
 
-            {/* Success */}
             {message && (
               <div className="mb-5 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm leading-6 text-cyan-300">
                 {message}
@@ -219,6 +215,7 @@ export default function FacultyForgotPasswordPage() {
                 disabled={loading}
                 className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
+
                 {loading ? (
                   <>
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -230,6 +227,7 @@ export default function FacultyForgotPasswordPage() {
                     <Send size={18} />
                   </>
                 )}
+
               </button>
 
             </form>
