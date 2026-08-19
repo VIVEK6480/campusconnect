@@ -3,24 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 export default function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  /*
-   * =========================================
-   * PUBLIC AUTHENTICATION APIs
-   * =========================================
-   *
-   * These routes must work without an existing
-   * login token because they are used for:
-   *
-   * - Login
-   * - Registration
-   * - Forgot password
-   * - Password reset
-   */
+  // =========================================================
+  // PUBLIC AUTHENTICATION APIs
+  // =========================================================
 
   const publicApiRoutes = [
-    // Normal authentication
     "/api/auth/login",
     "/api/auth/register",
+    "/api/auth/logout",
 
     // Forgot password
     "/api/auth/forgot-password",
@@ -34,49 +24,79 @@ export default function proxy(req: NextRequest) {
     "/api/admin/login",
   ];
 
-  const isPublicApiRoute = publicApiRoutes.some((route) =>
-    pathname.startsWith(route)
+  const isPublicApiRoute = publicApiRoutes.some(
+    (route) =>
+      pathname === route ||
+      pathname.startsWith(`${route}/`)
   );
 
-  /*
-   * =========================================
-   * ALLOW PUBLIC AUTH APIs
-   * =========================================
-   */
+  // =========================================================
+  // PUBLIC API
+  // =========================================================
 
   if (isPublicApiRoute) {
     return NextResponse.next();
   }
 
-  /*
-   * =========================================
-   * CHECK AUTHORIZATION HEADER
-   * =========================================
-   */
+  // =========================================================
+  // FACULTY APPROVAL API
+  //
+  // Authentication/authorization is handled inside
+  // the Faculty Approval API route itself.
+  // =========================================================
+
+  const isFacultyApprovalApi =
+    pathname === "/api/admin/approvals/Faculty" ||
+    pathname.startsWith(
+      "/api/admin/approvals/Faculty/"
+    );
+
+  if (isFacultyApprovalApi) {
+    return NextResponse.next();
+  }
+
+  // =========================================================
+  // STUDENT APPROVAL API
+  //
+  // Authentication/authorization is handled inside
+  // the Student Approval API route itself.
+  // =========================================================
+
+  const isStudentApprovalApi =
+    pathname === "/api/admin/approvals/students" ||
+    pathname.startsWith(
+      "/api/admin/approvals/students/"
+    );
+
+  if (isStudentApprovalApi) {
+    return NextResponse.next();
+  }
+
+  // =========================================================
+  // CHECK AUTHORIZATION HEADER
+  // =========================================================
 
   const authHeader = req.headers.get("authorization");
 
   let token: string | undefined;
 
   if (authHeader?.startsWith("Bearer ")) {
-    token = authHeader.substring(7);
+    token = authHeader
+      .substring(7)
+      .trim();
   }
 
-  /*
-   * =========================================
-   * CHECK HTTP-ONLY COOKIE
-   * =========================================
-   */
+  // =========================================================
+  // CHECK HTTP-ONLY COOKIE
+  // =========================================================
 
   if (!token) {
     token = req.cookies.get("token")?.value;
   }
 
-  /*
-   * =========================================
-   * PROTECT OTHER API ROUTES
-   * =========================================
-   */
+  // =========================================================
+  // OTHER PROTECTED API ROUTES
+  // =========================================================
 
   if (!token) {
     return NextResponse.json(
@@ -92,6 +112,10 @@ export default function proxy(req: NextRequest) {
 
   return NextResponse.next();
 }
+
+// =========================================================
+// API MATCHER
+// =========================================================
 
 export const config = {
   matcher: ["/api/:path*"],

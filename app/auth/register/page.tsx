@@ -18,14 +18,15 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // STUDENT ONLY
+  // STUDENT REGISTRATION ONLY
   const role = "STUDENT";
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -150,8 +151,8 @@ export default function RegisterPage() {
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-slate-400">
-                    Your registration will be reviewed by an authorized
-                    Admin or Faculty member before you can access the
+                    Your registration will be reviewed by an
+                    authorized Admin before you can access the
                     student portal.
                   </p>
 
@@ -389,8 +390,7 @@ export default function RegisterPage() {
 
                   <p className="mt-1 text-xs leading-5 text-slate-500">
                     Your student account must be approved by
-                    an Admin or Faculty member before you can
-                    sign in.
+                    an Admin before you can sign in.
                   </p>
 
                 </div>
@@ -485,9 +485,9 @@ export default function RegisterPage() {
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-slate-400">
-                    An authorized Admin or Faculty member
-                    must approve your account before you can
-                    access the Student Portal.
+                    An authorized Admin must approve your
+                    account before you can access the Student
+                    Portal.
                   </p>
 
                 </div>

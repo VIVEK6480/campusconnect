@@ -168,9 +168,7 @@ export default function StudentLoginPage() {
             `Your registration was rejected. Reason: ${rejectionReason}`
           );
         } else {
-          setError(
-            "Your registration was rejected."
-          );
+          setError("Your registration was rejected.");
         }
 
         return;
@@ -182,7 +180,8 @@ export default function StudentLoginPage() {
 
       if (!res.ok || !data.success) {
         setError(
-          data.message || "Invalid email / Campus User ID or password."
+          data.message ||
+            "Invalid email / Campus User ID or password."
         );
 
         await clearAuthentication();
@@ -195,7 +194,9 @@ export default function StudentLoginPage() {
       // -------------------------------------------------------
 
       if (!data.user) {
-        setError("User information was not returned by the server.");
+        setError(
+          "User information was not returned by the server."
+        );
 
         await clearAuthentication();
 
@@ -244,15 +245,15 @@ export default function StudentLoginPage() {
           setError(
             "Your account is still waiting for Admin/Faculty approval."
           );
-        } else if (data.user.approvalStatus === "REJECTED") {
+        } else if (
+          data.user.approvalStatus === "REJECTED"
+        ) {
           if (data.user.rejectionReason) {
             setError(
               `Your registration was rejected. Reason: ${data.user.rejectionReason}`
             );
           } else {
-            setError(
-              "Your registration was rejected."
-            );
+            setError("Your registration was rejected.");
           }
         } else {
           setError(
@@ -285,13 +286,7 @@ export default function StudentLoginPage() {
         data.user.email
       );
 
-      // IMPORTANT:
-      // Student dashboard is /dashboard/student
-      // NOT /dashboard
-
       router.replace("/dashboard/student");
-
-      // Refresh server components
       router.refresh();
     } catch (err) {
       console.error("STUDENT LOGIN ERROR:", err);
@@ -306,16 +301,10 @@ export default function StudentLoginPage() {
     }
   }
 
-  // =========================================================
-  // UI
-  // =========================================================
-
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#061512] text-white">
 
-      {/* =====================================================
-          BACKGROUND
-      ====================================================== */}
+      {/* BACKGROUND */}
 
       <div className="absolute inset-0 overflow-hidden">
 
@@ -374,23 +363,17 @@ export default function StudentLoginPage() {
 
       </div>
 
-      {/* =====================================================
-          CONTENT
-      ====================================================== */}
+      {/* CONTENT */}
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-10">
 
         <div className="grid w-full max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/50 backdrop-blur-xl lg:grid-cols-2">
 
-          {/* =================================================
-              LEFT SIDE
-          ================================================= */}
+          {/* LEFT */}
 
           <section className="relative hidden min-h-[680px] overflow-hidden border-r border-white/10 bg-gradient-to-br from-emerald-500/15 via-slate-950/60 to-blue-700/15 p-12 lg:flex lg:flex-col lg:justify-between">
 
             <div>
-
-              {/* LOGO */}
 
               <div className="flex items-center gap-4">
 
@@ -409,8 +392,6 @@ export default function StudentLoginPage() {
                 </div>
 
               </div>
-
-              {/* HERO */}
 
               <div className="mt-28">
 
@@ -435,14 +416,9 @@ export default function StudentLoginPage() {
 
               </div>
 
-              {/* FEATURES */}
-
               <div className="mt-12 grid grid-cols-3 gap-3">
 
-                {/* CLUBS */}
-
                 <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-
                   <Building2
                     size={21}
                     className="text-emerald-400"
@@ -455,13 +431,9 @@ export default function StudentLoginPage() {
                   <p className="mt-1 text-sm font-semibold">
                     Join &amp; Explore
                   </p>
-
                 </div>
 
-                {/* EVENTS */}
-
                 <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-
                   <CalendarDays
                     size={21}
                     className="text-teal-400"
@@ -474,13 +446,9 @@ export default function StudentLoginPage() {
                   <p className="mt-1 text-sm font-semibold">
                     Discover
                   </p>
-
                 </div>
 
-                {/* ACTIVITIES */}
-
                 <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-
                   <BookOpen
                     size={21}
                     className="text-blue-400"
@@ -493,37 +461,27 @@ export default function StudentLoginPage() {
                   <p className="mt-1 text-sm font-semibold">
                     Participate
                   </p>
-
                 </div>
 
               </div>
 
             </div>
 
-            {/* SECURITY */}
-
             <div className="flex items-center gap-2 text-xs text-slate-500">
-
               <ShieldCheck
                 size={15}
                 className="text-emerald-400"
               />
-
               Secure student access
-
             </div>
 
           </section>
 
-          {/* =================================================
-              RIGHT LOGIN
-          ================================================= */}
+          {/* RIGHT */}
 
           <section className="flex min-h-[680px] items-center justify-center bg-[#071512]/85 p-6 sm:p-10 lg:p-14">
 
             <div className="w-full max-w-md">
-
-              {/* MOBILE LOGO */}
 
               <div className="mb-10 flex items-center gap-3 lg:hidden">
 
@@ -532,7 +490,6 @@ export default function StudentLoginPage() {
                 </div>
 
                 <div>
-
                   <h1 className="font-bold">
                     CampusConnect
                   </h1>
@@ -540,12 +497,9 @@ export default function StudentLoginPage() {
                   <p className="text-xs text-slate-500">
                     Smart Campus Management
                   </p>
-
                 </div>
 
               </div>
-
-              {/* HEADING */}
 
               <div>
 
@@ -564,22 +518,16 @@ export default function StudentLoginPage() {
 
               </div>
 
-              {/* ERROR */}
-
               {error && (
                 <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300">
                   {error}
                 </div>
               )}
 
-              {/* FORM */}
-
               <form
                 onSubmit={handleLogin}
                 className="mt-8 space-y-5"
               >
-
-                {/* EMAIL / CAMPUS USER ID */}
 
                 <div>
 
@@ -616,8 +564,6 @@ export default function StudentLoginPage() {
 
                 </div>
 
-                {/* PASSWORD */}
-
                 <div>
 
                   <div className="mb-2 flex items-center justify-between">
@@ -628,13 +574,6 @@ export default function StudentLoginPage() {
                     >
                       Password
                     </label>
-
-                    {/* =================================================
-                        STUDENT FORGOT PASSWORD
-                        IMPORTANT:
-                        portal=student prevents the student page
-                        from opening the admin recovery flow.
-                    ================================================== */}
 
                     <Link
                       href="/auth/forgot-password?portal=student"
@@ -671,8 +610,6 @@ export default function StudentLoginPage() {
                       className="h-14 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-500 focus:bg-white/[0.07] focus:ring-4 focus:ring-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     />
 
-                    {/* SHOW PASSWORD */}
-
                     <button
                       type="button"
                       onClick={() =>
@@ -699,8 +636,6 @@ export default function StudentLoginPage() {
 
                 </div>
 
-                {/* LOGIN BUTTON */}
-
                 <button
                   type="submit"
                   disabled={loading}
@@ -710,7 +645,6 @@ export default function StudentLoginPage() {
                   {loading ? (
                     <>
                       <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-
                       Signing in...
                     </>
                   ) : (
@@ -728,10 +662,7 @@ export default function StudentLoginPage() {
 
               </form>
 
-              {/* REGISTER */}
-
               <div className="mt-6 text-center text-sm text-slate-500">
-
                 Don&apos;t have an account?{" "}
 
                 <Link
@@ -740,20 +671,12 @@ export default function StudentLoginPage() {
                 >
                   Create an account
                 </Link>
-
               </div>
-
-              {/* SECURITY */}
 
               <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-600">
-
                 <ShieldCheck size={14} />
-
                 Your connection is protected
-
               </div>
-
-              {/* FOOTER */}
 
               <div className="mt-10 border-t border-white/5 pt-6 text-center">
 
