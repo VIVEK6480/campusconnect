@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import Link from "next/link";
 
 import {
   LayoutDashboard,
@@ -100,18 +99,20 @@ export default function StudentDashboard() {
 
 
       {/* =====================================================
-          SIDEBAR
+          STUDENT SIDEBAR
       ====================================================== */}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col bg-[#071c16] text-white shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-[#071c16] text-white shadow-2xl transition-transform duration-300 ${
           mobileMenu
             ? "translate-x-0"
             : "-translate-x-full"
-        }`}
+        } lg:translate-x-0`}
       >
 
-        {/* LOGO */}
+        {/* =================================================
+            LOGO
+        ================================================== */}
 
         <div className="flex h-[82px] shrink-0 items-center gap-3 border-b border-white/10 px-6">
 
@@ -132,7 +133,9 @@ export default function StudentDashboard() {
         </div>
 
 
-        {/* NAVIGATION */}
+        {/* =================================================
+            NAVIGATION
+        ================================================== */}
 
         <div className="flex-1 overflow-y-auto px-4 py-6">
 
@@ -142,41 +145,65 @@ export default function StudentDashboard() {
 
           <nav className="space-y-1">
 
+            {/* DASHBOARD */}
+
             <SidebarItem
               href="/dashboard/student"
               icon={<LayoutDashboard size={18} />}
               label="Dashboard"
               active
+              onNavigate={() => setMobileMenu(false)}
             />
+
+
+            {/* CLUBS */}
 
             <SidebarItem
               href="/clubs"
               icon={<Building2 size={18} />}
               label="Clubs"
+              onNavigate={() => setMobileMenu(false)}
             />
+
+
+            {/* EVENTS */}
 
             <SidebarItem
               href="/events"
               icon={<CalendarDays size={18} />}
               label="Events"
+              onNavigate={() => setMobileMenu(false)}
             />
 
+
+            {/* =================================================
+                ACTIVITIES
+                FORCE NAVIGATION TO /activities
+            ================================================== */}
+
             <SidebarItem
-              href="/dashboard/student"
+              href="/activities"
               icon={<BookOpen size={18} />}
               label="Activities"
+              onNavigate={() => setMobileMenu(false)}
             />
+
+
+            {/* NOTIFICATIONS */}
 
             <SidebarItem
               href="/notifications"
               icon={<Bell size={18} />}
               label="Notifications"
+              onNavigate={() => setMobileMenu(false)}
             />
 
           </nav>
 
 
-          {/* CAMPUS */}
+          {/* =================================================
+              CAMPUS
+          ================================================== */}
 
           <p className="mb-3 mt-9 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300/40">
             Campus
@@ -188,12 +215,14 @@ export default function StudentDashboard() {
               href="/clubs"
               icon={<Users size={18} />}
               label="My Clubs"
+              onNavigate={() => setMobileMenu(false)}
             />
 
             <SidebarItem
               href="/events"
               icon={<CalendarDays size={18} />}
               label="My Events"
+              onNavigate={() => setMobileMenu(false)}
             />
 
           </nav>
@@ -201,7 +230,9 @@ export default function StudentDashboard() {
         </div>
 
 
-        {/* STUDENT PROFILE */}
+        {/* =================================================
+            STUDENT PROFILE
+        ================================================== */}
 
         <div className="border-t border-white/10 p-4">
 
@@ -256,15 +287,17 @@ export default function StudentDashboard() {
 
       {/* =====================================================
           MAIN CONTENT
+
+          Sidebar = 280px
       ====================================================== */}
 
-      <main className="min-h-screen lg:pl-[250px]">
+      <main className="min-h-screen w-full lg:pl-[280px]">
 
         {/* =================================================
             DESKTOP TOPBAR
         ================================================== */}
 
-        <header className="sticky top-0 z-30 hidden h-[82px] items-center justify-between border-b border-slate-200 bg-white/90 px-8 backdrop-blur lg:flex">
+        <header className="sticky top-0 z-30 hidden h-[82px] items-center justify-between border-b border-slate-200 bg-white/90 px-6 backdrop-blur lg:flex xl:px-8">
 
           <div>
 
@@ -281,15 +314,18 @@ export default function StudentDashboard() {
 
           <div className="flex items-center gap-5">
 
-            <Link
-              href="/notifications"
+            <button
+              type="button"
               aria-label="Notifications"
+              onClick={() => {
+                window.location.href = "/notifications";
+              }}
               className="relative rounded-xl border border-slate-200 p-2.5 text-slate-500 transition hover:bg-slate-50 hover:text-emerald-600"
             >
               <Bell size={19} />
 
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-            </Link>
+            </button>
 
 
             <div className="h-8 w-px bg-slate-200" />
@@ -324,7 +360,7 @@ export default function StudentDashboard() {
             PAGE CONTENT
         ================================================== */}
 
-        <section className="mx-auto max-w-[1500px] px-5 py-7 sm:px-7 lg:px-9">
+        <section className="w-full px-5 py-7 sm:px-7 lg:px-8 xl:px-9">
 
           {/* =================================================
               WELCOME HERO
@@ -364,13 +400,16 @@ export default function StudentDashboard() {
               </div>
 
 
-              <Link
-                href="/events"
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/events";
+                }}
                 className="inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-800 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
               >
                 Explore Events
                 <ArrowRight size={17} />
-              </Link>
+              </button>
 
             </div>
 
@@ -453,8 +492,13 @@ export default function StudentDashboard() {
                 description="Discover workshops, competitions and campus events."
               />
 
+              {/* =================================================
+                  ACTIVITIES QUICK ACCESS
+                  FORCE NAVIGATION TO /activities
+              ================================================== */}
+
               <FeatureCard
-                href="/dashboard/student"
+                href="/activities"
                 icon={<BookOpen size={22} />}
                 title="Activities"
                 description="Track your participation and campus activities."
@@ -478,7 +522,9 @@ export default function StudentDashboard() {
 
           <div className="grid gap-6 xl:grid-cols-3">
 
-            {/* UPCOMING EVENTS */}
+            {/* =================================================
+                UPCOMING EVENTS
+            ================================================== */}
 
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">
 
@@ -496,13 +542,16 @@ export default function StudentDashboard() {
 
                 </div>
 
-                <Link
-                  href="/events"
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/events";
+                  }}
                   className="flex items-center gap-1 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
                 >
                   View all
                   <ChevronRight size={16} />
-                </Link>
+                </button>
 
               </div>
 
@@ -522,20 +571,25 @@ export default function StudentDashboard() {
                   when they are available.
                 </p>
 
-                <Link
-                  href="/events"
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/events";
+                  }}
                   className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
                 >
                   Browse Events
                   <ArrowRight size={16} />
-                </Link>
+                </button>
 
               </div>
 
             </div>
 
 
-            {/* RECENT ACTIVITY */}
+            {/* =================================================
+                RECENT ACTIVITY
+            ================================================== */}
 
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -617,21 +671,40 @@ function SidebarItem({
   icon,
   label,
   active = false,
+  onNavigate,
 }: {
   href: string;
   icon: ReactNode;
   label: string;
   active?: boolean;
+  onNavigate?: () => void;
 }) {
+
+  const handleNavigation = () => {
+
+    if (onNavigate) {
+      onNavigate();
+    }
+
+    /*
+     * IMPORTANT:
+     * Force browser navigation.
+     * This fixes Dashboard -> Activities navigation.
+     */
+    window.location.href = href;
+  };
+
   return (
-    <Link
-      href={href}
-      className={`group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition ${
+    <button
+      type="button"
+      onClick={handleNavigation}
+      className={`group flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-medium transition ${
         active
           ? "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-lg shadow-emerald-950/30"
           : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
       }`}
     >
+
       <span
         className={`transition ${
           active
@@ -642,7 +715,9 @@ function SidebarItem({
         {icon}
       </span>
 
-      <span>{label}</span>
+      <span>
+        {label}
+      </span>
 
       {active && (
         <ChevronRight
@@ -650,7 +725,8 @@ function SidebarItem({
           className="ml-auto text-white/70"
         />
       )}
-    </Link>
+
+    </button>
   );
 }
 
@@ -717,10 +793,21 @@ function FeatureCard({
   title: string;
   description: string;
 }) {
+
+  const handleNavigation = () => {
+
+    /*
+     * Force browser navigation.
+     * Especially important for Dashboard -> Activities.
+     */
+    window.location.href = href;
+  };
+
   return (
-    <Link
-      href={href}
-      className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg"
+    <button
+      type="button"
+      onClick={handleNavigation}
+      className="group w-full rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg"
     >
 
       <div className="mb-5 flex items-center justify-between">
@@ -744,7 +831,7 @@ function FeatureCard({
         {description}
       </p>
 
-    </Link>
+    </button>
   );
 }
 

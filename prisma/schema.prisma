@@ -22,7 +22,7 @@ model User {
   memberships  Membership[]
 
   // ==========================================
-  // APPROVAL SYSTEM - ADDED ONLY
+  // APPROVAL SYSTEM
   // ==========================================
 
   approvalStatus  ApprovalStatus @default(PENDING)
@@ -53,8 +53,9 @@ model Membership {
   userId   String
   clubId   String
   joinedAt DateTime @default(now())
-  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  club     Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, clubId])
   @@map("Membership")
@@ -83,7 +84,8 @@ model Announcement {
   clubId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
 
   @@map("Announcement")
 }
@@ -95,7 +97,8 @@ model Certificate {
   fileUrl   String
   title     String
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("Certificate")
 }
@@ -118,11 +121,24 @@ model Attendance {
   status    String   @default("Present")
   markedAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@map("Attendance")
+}
+
+model Activity {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  venue        String
+  activityDate DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("Activity")
 }
 
 model UserApproval {
