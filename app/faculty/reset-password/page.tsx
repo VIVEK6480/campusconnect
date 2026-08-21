@@ -1,6 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import {
+  FormEvent,
+  Suspense,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -13,22 +17,37 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-export default function FacultyResetPasswordPage() {
+function FacultyResetPasswordContent() {
   const searchParams = useSearchParams();
 
-  const token = searchParams.get("token") || "";
+  const token =
+    searchParams.get("token") || "";
 
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newPassword, setNewPassword] =
+    useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
+  const [showPassword, setShowPassword] =
     useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState(false);
 
   async function handleSubmit(
     e: FormEvent<HTMLFormElement>
@@ -53,9 +72,12 @@ export default function FacultyResetPasswordPage() {
         "/api/auth/faculty/reset-password",
         {
           method: "POST",
+
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
+
           body: JSON.stringify({
             token,
             newPassword,
@@ -100,6 +122,10 @@ export default function FacultyResetPasswordPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
 
+      {/* =====================================================
+          BACKGROUND
+      ====================================================== */}
+
       <div
         className="absolute inset-0"
         style={{
@@ -142,17 +168,28 @@ export default function FacultyResetPasswordPage() {
         }}
       />
 
+      {/* =====================================================
+          CONTENT
+      ====================================================== */}
+
       <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-10">
 
         <div className="w-full max-w-md">
 
+          {/* =================================================
+              LOGO
+          ================================================== */}
+
           <div className="mb-8 flex items-center justify-center gap-3">
 
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-sky-500 shadow-lg shadow-cyan-500/20">
+
               <GraduationCap size={26} />
+
             </div>
 
             <div>
+
               <h1 className="text-xl font-bold">
                 CampusConnect
               </h1>
@@ -160,20 +197,32 @@ export default function FacultyResetPasswordPage() {
               <p className="text-xs text-slate-400">
                 Smart Campus Management
               </p>
+
             </div>
 
           </div>
+
+          {/* =================================================
+              CARD
+          ================================================== */}
 
           <div className="rounded-3xl border border-white/10 bg-[#0d1727]/90 p-7 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-9">
 
             {!success ? (
               <>
 
+                {/* =========================================
+                    HEADER
+                ========================================== */}
+
                 <div className="mb-7">
 
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-300">
+
                     <ShieldCheck size={14} />
+
                     Faculty Account
+
                   </div>
 
                   <h2 className="text-3xl font-bold">
@@ -187,16 +236,28 @@ export default function FacultyResetPasswordPage() {
 
                 </div>
 
+                {/* =========================================
+                    ERROR
+                ========================================== */}
+
                 {error && (
                   <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300">
                     {error}
                   </div>
                 )}
 
+                {/* =========================================
+                    FORM
+                ========================================== */}
+
                 <form
                   onSubmit={handleSubmit}
                   className="space-y-5"
                 >
+
+                  {/* =======================================
+                      NEW PASSWORD
+                  ======================================== */}
 
                   <div>
 
@@ -226,6 +287,7 @@ export default function FacultyResetPasswordPage() {
                           setNewPassword(
                             e.target.value
                           );
+
                           setError("");
                         }}
                         placeholder="Enter new password"
@@ -241,6 +303,7 @@ export default function FacultyResetPasswordPage() {
                             !showPassword
                           )
                         }
+                        disabled={loading}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
                       >
                         {showPassword ? (
@@ -253,6 +316,10 @@ export default function FacultyResetPasswordPage() {
                     </div>
 
                   </div>
+
+                  {/* =======================================
+                      CONFIRM PASSWORD
+                  ======================================== */}
 
                   <div>
 
@@ -282,6 +349,7 @@ export default function FacultyResetPasswordPage() {
                           setConfirmPassword(
                             e.target.value
                           );
+
                           setError("");
                         }}
                         placeholder="Confirm new password"
@@ -297,6 +365,7 @@ export default function FacultyResetPasswordPage() {
                             !showConfirmPassword
                           )
                         }
+                        disabled={loading}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
                       >
                         {showConfirmPassword ? (
@@ -310,25 +379,37 @@ export default function FacultyResetPasswordPage() {
 
                   </div>
 
+                  {/* =======================================
+                      BUTTON
+                  ======================================== */}
+
                   <button
                     type="submit"
                     disabled={loading}
                     className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
                   >
+
                     {loading ? (
                       <>
                         <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+
                         Updating...
                       </>
                     ) : (
                       <>
                         Update Password
+
                         <Lock size={18} />
                       </>
                     )}
+
                   </button>
 
                 </form>
+
+                {/* =========================================
+                    BACK TO LOGIN
+                ========================================== */}
 
                 <div className="mt-7 text-center">
 
@@ -336,18 +417,28 @@ export default function FacultyResetPasswordPage() {
                     href="/faculty/login"
                     className="inline-flex items-center gap-2 text-sm font-medium text-cyan-400 transition hover:text-cyan-300"
                   >
+
                     <ArrowLeft size={15} />
+
                     Back to Faculty Login
+
                   </Link>
 
                 </div>
 
               </>
             ) : (
+
+              /* ===========================================
+                 SUCCESS
+              ============================================ */
+
               <div className="text-center">
 
                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-400">
+
                   <CheckCircle2 size={36} />
+
                 </div>
 
                 <h2 className="text-2xl font-bold">
@@ -362,11 +453,15 @@ export default function FacultyResetPasswordPage() {
                   href="/faculty/login"
                   className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 px-6 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20"
                 >
+
                   <ArrowLeft size={16} />
+
                   Go to Faculty Login
+
                 </Link>
 
               </div>
+
             )}
 
           </div>
@@ -376,5 +471,31 @@ export default function FacultyResetPasswordPage() {
       </div>
 
     </main>
+  );
+}
+
+// =========================================================
+// PAGE
+// =========================================================
+
+export default function FacultyResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#07111f] text-white">
+
+          <div className="flex items-center gap-3 text-sm text-slate-400">
+
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-600 border-t-cyan-400" />
+
+            Loading password reset...
+
+          </div>
+
+        </main>
+      }
+    >
+      <FacultyResetPasswordContent />
+    </Suspense>
   );
 }

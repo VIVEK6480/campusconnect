@@ -1,7 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import {
+  FormEvent,
+  Suspense,
+  useState,
+} from "react";
+import {
+  useSearchParams,
+  useRouter,
+} from "next/navigation";
 import {
   CheckCircle2,
   Eye,
@@ -12,40 +19,32 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export default function StudentResetPasswordPage() {
+function StudentResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const token = searchParams.get("token");
 
   const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  /*
-   * =========================================
-   * SUBMIT
-   * =========================================
-   */
-
-  const handleSubmit = async (
+  async function handleSubmit(
     event: FormEvent<HTMLFormElement>
-  ) => {
+  ) {
     event.preventDefault();
 
     setError("");
-
-    /*
-     * =========================================
-     * CHECK TOKEN
-     * =========================================
-     */
 
     if (!token) {
       setError(
@@ -53,12 +52,6 @@ export default function StudentResetPasswordPage() {
       );
       return;
     }
-
-    /*
-     * =========================================
-     * CHECK PASSWORD
-     * =========================================
-     */
 
     if (!newPassword) {
       setError(
@@ -84,25 +77,15 @@ export default function StudentResetPasswordPage() {
     try {
       setLoading(true);
 
-      console.log(
-        "STUDENT RESET REQUEST STARTED"
-      );
-
-      /*
-       * =========================================
-       * SEND RESET REQUEST
-       * =========================================
-       */
-
       const response = await fetch(
         "/api/auth/student-reset-password",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
-
+          credentials: "include",
+          cache: "no-store",
           body: JSON.stringify({
             token,
             newPassword,
@@ -110,12 +93,6 @@ export default function StudentResetPasswordPage() {
           }),
         }
       );
-
-      /*
-       * =========================================
-       * READ RESPONSE
-       * =========================================
-       */
 
       const data = await response.json();
 
@@ -125,12 +102,6 @@ export default function StudentResetPasswordPage() {
         data
       );
 
-      /*
-       * =========================================
-       * HANDLE ERROR
-       * =========================================
-       */
-
       if (!response.ok) {
         throw new Error(
           data.message ||
@@ -138,20 +109,10 @@ export default function StudentResetPasswordPage() {
         );
       }
 
-      /*
-       * =========================================
-       * SUCCESS
-       * =========================================
-       */
-
-      console.log(
-        "STUDENT PASSWORD RESET SUCCESSFULLY"
-      );
-
       setSuccess(true);
     } catch (error) {
       console.error(
-        "STUDENT RESET PASSWORD FRONTEND ERROR:",
+        "STUDENT RESET PASSWORD ERROR:",
         error
       );
 
@@ -163,20 +124,12 @@ export default function StudentResetPasswordPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  /*
-   * =========================================
-   * SUCCESS SCREEN
-   * =========================================
-   */
+  }
 
   if (success) {
     return (
-      <main className="min-h-screen bg-[#071312] text-white flex items-center justify-center p-6">
+      <main className="flex min-h-screen items-center justify-center bg-[#071312] p-6 text-white">
         <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[#0b1917] p-10 text-center shadow-2xl">
-
-          {/* SUCCESS ICON */}
 
           <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-400/10">
             <CheckCircle2
@@ -185,20 +138,14 @@ export default function StudentResetPasswordPage() {
             />
           </div>
 
-          {/* TITLE */}
-
           <h1 className="text-4xl font-bold">
             Password changed
           </h1>
-
-          {/* MESSAGE */}
 
           <p className="mt-4 text-slate-400">
             Your CampusConnect student password
             has been changed successfully.
           </p>
-
-          {/* LOGIN BUTTON */}
 
           <button
             type="button"
@@ -208,7 +155,6 @@ export default function StudentResetPasswordPage() {
             className="mt-8 inline-flex items-center gap-3 rounded-xl bg-emerald-400 px-7 py-4 font-semibold text-black transition hover:bg-emerald-300"
           >
             Go to Student Login
-
             <ArrowRight size={20} />
           </button>
 
@@ -217,20 +163,10 @@ export default function StudentResetPasswordPage() {
     );
   }
 
-  /*
-   * =========================================
-   * RESET FORM
-   * =========================================
-   */
-
   return (
-    <main className="min-h-screen bg-[#071312] text-white flex items-center justify-center p-6">
+    <main className="flex min-h-screen items-center justify-center bg-[#071312] p-6 text-white">
 
       <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[#0b1917] p-8 shadow-2xl sm:p-10">
-
-        {/* =========================================
-            BRAND
-           ========================================= */}
 
         <div className="flex items-center gap-4">
 
@@ -253,19 +189,12 @@ export default function StudentResetPasswordPage() {
 
         </div>
 
-        {/* DIVIDER */}
-
         <div className="my-8 border-t border-white/10" />
-
-        {/* =========================================
-            HEADER
-           ========================================= */}
 
         <div className="mb-7">
 
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
             <ShieldCheck size={16} />
-
             Secure student password reset
           </div>
 
@@ -280,65 +209,56 @@ export default function StudentResetPasswordPage() {
 
         </div>
 
-        {/* =========================================
-            ERROR
-           ========================================= */}
-
         {error && (
           <div className="mb-6 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm leading-6 text-red-300">
             {error}
           </div>
         )}
 
-        {/* =========================================
-            FORM
-           ========================================= */}
-
         <form
           onSubmit={handleSubmit}
           className="space-y-5"
         >
 
-          {/* =========================================
-              NEW PASSWORD
-             ========================================= */}
-
           <div>
 
-            <label className="mb-2 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="newPassword"
+              className="mb-2 block text-sm font-medium text-slate-300"
+            >
               New password
             </label>
 
             <div className="relative">
-
-              {/* LOCK ICON */}
 
               <Lock
                 size={19}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
               />
 
-              {/* PASSWORD INPUT */}
-
               <input
+                id="newPassword"
                 type={
                   showPassword
                     ? "text"
                     : "password"
                 }
                 value={newPassword}
-                onChange={(event) =>
+                onChange={(event) => {
                   setNewPassword(
                     event.target.value
-                  )
-                }
+                  );
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
                 placeholder="Enter new password"
                 className="w-full rounded-xl border border-white/10 bg-[#111f1d] py-4 pl-12 pr-12 text-white outline-none transition focus:border-emerald-400"
                 disabled={loading}
                 autoComplete="new-password"
+                required
               />
-
-              {/* SHOW PASSWORD */}
 
               <button
                 type="button"
@@ -347,6 +267,7 @@ export default function StudentResetPasswordPage() {
                     (current) => !current
                   )
                 }
+                disabled={loading}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
                 aria-label={
                   showPassword
@@ -365,46 +286,45 @@ export default function StudentResetPasswordPage() {
 
           </div>
 
-          {/* =========================================
-              CONFIRM PASSWORD
-             ========================================= */}
-
           <div>
 
-            <label className="mb-2 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="confirmPassword"
+              className="mb-2 block text-sm font-medium text-slate-300"
+            >
               Confirm new password
             </label>
 
             <div className="relative">
-
-              {/* LOCK ICON */}
 
               <Lock
                 size={19}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
               />
 
-              {/* CONFIRM PASSWORD INPUT */}
-
               <input
+                id="confirmPassword"
                 type={
                   showConfirmPassword
                     ? "text"
                     : "password"
                 }
                 value={confirmPassword}
-                onChange={(event) =>
+                onChange={(event) => {
                   setConfirmPassword(
                     event.target.value
-                  )
-                }
+                  );
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
                 placeholder="Confirm new password"
                 className="w-full rounded-xl border border-white/10 bg-[#111f1d] py-4 pl-12 pr-12 text-white outline-none transition focus:border-emerald-400"
                 disabled={loading}
                 autoComplete="new-password"
+                required
               />
-
-              {/* SHOW CONFIRM PASSWORD */}
 
               <button
                 type="button"
@@ -413,6 +333,7 @@ export default function StudentResetPasswordPage() {
                     (current) => !current
                   )
                 }
+                disabled={loading}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
                 aria-label={
                   showConfirmPassword
@@ -431,18 +352,10 @@ export default function StudentResetPasswordPage() {
 
           </div>
 
-          {/* =========================================
-              PASSWORD REQUIREMENT
-             ========================================= */}
-
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
             Password must contain at least
             8 characters.
           </div>
-
-          {/* =========================================
-              CHANGE PASSWORD BUTTON
-             ========================================= */}
 
           <button
             type="submit"
@@ -460,10 +373,6 @@ export default function StudentResetPasswordPage() {
 
         </form>
 
-        {/* =========================================
-            RETURN TO LOGIN
-           ========================================= */}
-
         <div className="mt-8 border-t border-white/10 pt-6 text-center">
 
           <button
@@ -473,7 +382,7 @@ export default function StudentResetPasswordPage() {
             }
             className="text-sm text-slate-400 hover:text-emerald-300"
           >
-            ← Return to Student Portal
+            Return to Student Login
           </button>
 
         </div>
@@ -481,5 +390,26 @@ export default function StudentResetPasswordPage() {
       </div>
 
     </main>
+  );
+}
+
+// =========================================================
+// PAGE + SUSPENSE
+// =========================================================
+
+export default function StudentResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#071312] text-white">
+          <div className="flex items-center gap-3 text-sm text-slate-400">
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-600 border-t-emerald-400" />
+            Loading password reset...
+          </div>
+        </main>
+      }
+    >
+      <StudentResetPasswordContent />
+    </Suspense>
   );
 }
