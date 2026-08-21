@@ -79,3 +79,68 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// ======================================
+// DELETE NOTIFICATION
+// ======================================
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Notification ID is required",
+        },
+        { status: 400 }
+      );
+    }
+
+    const existingNotification =
+      await prisma.notification.findUnique({
+        where: {
+          id,
+        },
+      });
+
+    if (!existingNotification) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Notification not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    await prisma.notification.delete({
+      where: {
+        id,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Notification deleted successfully",
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(
+      "DELETE NOTIFICATION ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to delete notification",
+      },
+      { status: 500 }
+    );
+  }
+}

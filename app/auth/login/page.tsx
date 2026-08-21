@@ -49,7 +49,41 @@ export default function StudentLoginPage() {
   }
 
   // =========================================================
-  // STUDENT LOGIN
+  // ROLE BASED REDIRECT
+  // =========================================================
+
+  function redirectByRole(role?: string) {
+    switch (role) {
+      case "STUDENT":
+        router.replace("/dashboard/student");
+        break;
+
+      case "FACULTY":
+        router.replace("/dashboard/faculty");
+        break;
+
+      case "COORDINATOR":
+        router.replace("/dashboard/coordinator");
+        break;
+
+      case "ADMIN":
+        router.replace("/dashboard/admin");
+        break;
+
+      case "SUPER_ADMIN":
+        router.replace("/dashboard/super-admin");
+        break;
+
+      default:
+        setError(
+          "Your account role is not configured for dashboard access."
+        );
+        break;
+    }
+  }
+
+  // =========================================================
+  // LOGIN
   // =========================================================
 
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
@@ -64,25 +98,28 @@ export default function StudentLoginPage() {
 
     try {
       // -------------------------------------------------------
-      // Clean previous session
+      // CLEAN PREVIOUS SESSION
       // -------------------------------------------------------
 
       await clearAuthentication();
 
       // -------------------------------------------------------
-      // Validate
+      // VALIDATION
       // -------------------------------------------------------
 
       const cleanEmail = email.trim();
 
       if (!cleanEmail || !password) {
-        setError("Email / Campus User ID and password are required.");
+        setError(
+          "Email / Campus User ID and password are required."
+        );
+
         setLoading(false);
         return;
       }
 
       // -------------------------------------------------------
-      // Login API
+      // LOGIN API
       // -------------------------------------------------------
 
       const res = await fetch("/api/auth/login", {
@@ -100,7 +137,7 @@ export default function StudentLoginPage() {
       });
 
       // -------------------------------------------------------
-      // Read response
+      // RESPONSE TYPE
       // -------------------------------------------------------
 
       let data: {
@@ -109,6 +146,7 @@ export default function StudentLoginPage() {
         token?: string;
         approvalStatus?: string;
         rejectionReason?: string | null;
+
         user?: {
           id?: string;
           campusUserId?: string | null;
@@ -121,6 +159,10 @@ export default function StudentLoginPage() {
         };
       };
 
+      // -------------------------------------------------------
+      // READ RESPONSE
+      // -------------------------------------------------------
+
       try {
         data = await res.json();
       } catch {
@@ -128,7 +170,7 @@ export default function StudentLoginPage() {
         return;
       }
 
-      console.log("STUDENT LOGIN RESPONSE:", data);
+      console.log("LOGIN RESPONSE:", data);
 
       // -------------------------------------------------------
       // APPROVAL STATUS
@@ -149,9 +191,15 @@ export default function StudentLoginPage() {
       if (approvalStatus === "PENDING") {
         await clearAuthentication();
 
-        setError(
-          "Your account is still waiting for Admin/Faculty approval."
-        );
+        if (data.user?.role === "FACULTY") {
+          setError(
+            "Your faculty account is still waiting for approval."
+          );
+        } else {
+          setError(
+            "Your account is still waiting for Admin/Faculty approval."
+          );
+        }
 
         return;
       }
@@ -204,47 +252,45 @@ export default function StudentLoginPage() {
       }
 
       // -------------------------------------------------------
-      // STUDENT ROLE CHECK
+      // ROLE CHECK
       // -------------------------------------------------------
 
-      if (data.user.role !== "STUDENT") {
-        console.warn(
-          "NON-STUDENT LOGIN ATTEMPT:",
-          data.user.role
+      const role = data.user.role;
+
+      if (!role) {
+        setError(
+          "Your account role was not returned by the server."
         );
 
         await clearAuthentication();
-
-        if (
-          data.user.role === "ADMIN" ||
-          data.user.role === "SUPER_ADMIN"
-        ) {
-          setError(
-            "This is an administrator account. Please use the Admin Portal."
-          );
-        } else {
-          setError(
-            "This account is not a student account. Please use the correct portal."
-          );
-        }
 
         return;
       }
 
       // -------------------------------------------------------
-      // FINAL APPROVAL CHECK
+      // APPROVAL CHECK
+      //
+      // Keep the existing approval behavior for Student
+      // and Faculty accounts.
       // -------------------------------------------------------
 
       if (
+        (role === "STUDENT" || role === "FACULTY") &&
         data.user.approvalStatus &&
         data.user.approvalStatus !== "APPROVED"
       ) {
         await clearAuthentication();
 
         if (data.user.approvalStatus === "PENDING") {
-          setError(
-            "Your account is still waiting for Admin/Faculty approval."
-          );
+          if (role === "FACULTY") {
+            setError(
+              "Your faculty account is still waiting for approval."
+            );
+          } else {
+            setError(
+              "Your account is still waiting for Admin/Faculty approval."
+            );
+          }
         } else if (
           data.user.approvalStatus === "REJECTED"
         ) {
@@ -253,11 +299,13 @@ export default function StudentLoginPage() {
               `Your registration was rejected. Reason: ${data.user.rejectionReason}`
             );
           } else {
-            setError("Your registration was rejected.");
+            setError(
+              "Your registration was rejected."
+            );
           }
         } else {
           setError(
-            "Your account is not approved for student access."
+            "Your account is not approved for access."
           );
         }
 
@@ -265,12 +313,19 @@ export default function StudentLoginPage() {
       }
 
       // -------------------------------------------------------
-      // STORE USER INFORMATION
+      // STORE TOKEN
       // -------------------------------------------------------
 
       if (data.token) {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem(
+          "token",
+          data.token
+        );
       }
+
+      // -------------------------------------------------------
+      // STORE USER
+      // -------------------------------------------------------
 
       localStorage.setItem(
         "user",
@@ -278,18 +333,26 @@ export default function StudentLoginPage() {
       );
 
       // -------------------------------------------------------
-      // STUDENT LOGIN SUCCESS
+      // SUCCESS
       // -------------------------------------------------------
 
       console.log(
-        "STUDENT LOGIN SUCCESS:",
-        data.user.email
+        "LOGIN SUCCESS:",
+        data.user.email,
+        "ROLE:",
+        role
       );
 
-      router.replace("/dashboard/student");
+      // -------------------------------------------------------
+      // ROLE BASED DASHBOARD
+      // -------------------------------------------------------
+
+      redirectByRole(role);
+
       router.refresh();
+
     } catch (err) {
-      console.error("STUDENT LOGIN ERROR:", err);
+      console.error("LOGIN ERROR:", err);
 
       await clearAuthentication();
 
@@ -304,7 +367,9 @@ export default function StudentLoginPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#061512] text-white">
 
-      {/* BACKGROUND */}
+      {/* =====================================================
+          BACKGROUND
+      ====================================================== */}
 
       <div className="absolute inset-0 overflow-hidden">
 
@@ -363,13 +428,17 @@ export default function StudentLoginPage() {
 
       </div>
 
-      {/* CONTENT */}
+      {/* =====================================================
+          CONTENT
+      ====================================================== */}
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-10">
 
         <div className="grid w-full max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/50 backdrop-blur-xl lg:grid-cols-2">
 
-          {/* LEFT */}
+          {/* =================================================
+              LEFT
+          ================================================== */}
 
           <section className="relative hidden min-h-[680px] overflow-hidden border-r border-white/10 bg-gradient-to-br from-emerald-500/15 via-slate-950/60 to-blue-700/15 p-12 lg:flex lg:flex-col lg:justify-between">
 
@@ -397,7 +466,7 @@ export default function StudentLoginPage() {
 
                 <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
                   <GraduationCap size={15} />
-                  Student Portal
+                  Campus Portal
                 </div>
 
                 <h2 className="max-w-xl text-5xl font-bold leading-tight tracking-tight">
@@ -410,8 +479,9 @@ export default function StudentLoginPage() {
                 </h2>
 
                 <p className="mt-6 max-w-lg text-base leading-7 text-slate-400">
-                  Access clubs, events, activities, announcements and
-                  everything happening around your campus.
+                  Access your CampusConnect dashboard,
+                  clubs, events, activities, announcements
+                  and everything happening around your campus.
                 </p>
 
               </div>
@@ -472,12 +542,14 @@ export default function StudentLoginPage() {
                 size={15}
                 className="text-emerald-400"
               />
-              Secure student access
+              Secure campus access
             </div>
 
           </section>
 
-          {/* RIGHT */}
+          {/* =================================================
+              RIGHT
+          ================================================== */}
 
           <section className="flex min-h-[680px] items-center justify-center bg-[#071512]/85 p-6 sm:p-10 lg:p-14">
 
@@ -505,7 +577,7 @@ export default function StudentLoginPage() {
 
                 <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300">
                   <GraduationCap size={14} />
-                  Student Portal
+                  Campus Portal
                 </div>
 
                 <h2 className="text-3xl font-bold tracking-tight text-white">
@@ -513,7 +585,7 @@ export default function StudentLoginPage() {
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Sign in to access your CampusConnect student dashboard.
+                  Sign in to access your CampusConnect dashboard.
                 </p>
 
               </div>
@@ -649,7 +721,7 @@ export default function StudentLoginPage() {
                     </>
                   ) : (
                     <>
-                      Sign in to Student Portal
+                      Sign in
 
                       <ArrowRight
                         size={18}
@@ -681,7 +753,7 @@ export default function StudentLoginPage() {
               <div className="mt-10 border-t border-white/5 pt-6 text-center">
 
                 <p className="text-xs text-slate-600">
-                  CampusConnect Student Portal
+                  CampusConnect Login Portal
                 </p>
 
                 <p className="mt-1 text-xs text-slate-700">

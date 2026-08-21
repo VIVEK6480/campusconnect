@@ -1000,7 +1000,7 @@ export default function FacultyStudentApprovalPage() {
           MAIN AREA
       ====================================================== */}
 
-      <div className="min-h-screen w-full min-w-0">
+      <div className="min-h-screen w-full min-w-0 lg:ml-[270px] lg:w-[calc(100%-270px)]">
 
         {/* ===================================================
             TOP HEADER

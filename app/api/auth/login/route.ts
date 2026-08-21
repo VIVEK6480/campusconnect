@@ -7,17 +7,22 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { email, password } = body;
+    const {
+      email,
+      password,
+      portal,
+    } = body;
 
-    // ==========================================
+    // =========================================================
     // VALIDATION
-    // ==========================================
+    // =========================================================
 
     if (!email || !password) {
       return NextResponse.json(
         {
           success: false,
-          message: "Email and password are required",
+          message:
+            "Email / User ID and password are required",
         },
         {
           status: 400,
@@ -25,9 +30,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==========================================
+    // =========================================================
     // JWT SECRET
-    // ==========================================
+    // =========================================================
 
     const secret = process.env.JWT_SECRET;
 
@@ -37,7 +42,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Server authentication configuration error",
+          message:
+            "Server authentication configuration error",
         },
         {
           status: 500,
@@ -45,11 +51,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==========================================
+    // =========================================================
     // FIND USER
-    // ==========================================
+    // =========================================================
 
-    const loginValue = email.trim().toLowerCase();
+    const loginValue = String(email)
+      .trim()
+      .toLowerCase();
 
     const user = await prisma.user.findFirst({
       where: {
@@ -58,17 +66,23 @@ export async function POST(req: Request) {
             email: loginValue,
           },
           {
-            campusUserId: loginValue.toUpperCase(),
+            campusUserId:
+              loginValue.toUpperCase(),
           },
         ],
       },
     });
 
+    // =========================================================
+    // USER NOT FOUND
+    // =========================================================
+
     if (!user) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid email or password",
+          message:
+            "Invalid email or password",
         },
         {
           status: 401,
@@ -76,20 +90,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==========================================
-    // CHECK PASSWORD
-    // ==========================================
+    // =========================================================
+    // PASSWORD CHECK
+    // =========================================================
 
-    const passwordCorrect = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const passwordCorrect =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
 
     if (!passwordCorrect) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid email or password",
+          message:
+            "Invalid email or password",
         },
         {
           status: 401,
@@ -97,22 +113,120 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==========================================
-    // STUDENT ROLE CHECK
-    // ==========================================
+    // =========================================================
+    // ROLE
+    // =========================================================
 
-    if (user.role === "STUDENT") {
+    const role = String(
+      user.role || ""
+    ).toUpperCase();
 
-      // ========================================
+    // =========================================================
+    // STUDENT PORTAL ROLE CHECK
+    // =========================================================
+    //
+    // IMPORTANT:
+    // If login request comes from Student Login,
+    // ONLY STUDENT accounts are allowed.
+    //
+    // Faculty/Admin/etc. credentials must NEVER
+    // receive a JWT or authentication cookie from
+    // the Student Login request.
+    //
+    // =========================================================
+
+    if (
+      String(portal || "").toLowerCase() ===
+      "student" &&
+      role !== "STUDENT"
+    ) {
+      let message =
+        "This account is not a student account. Please use the correct portal.";
+
+      if (role === "FACULTY") {
+        message =
+          "This is a faculty account. Please use the Faculty Portal.";
+      } else if (
+        role === "ADMIN" ||
+        role === "SUPER_ADMIN"
+      ) {
+        message =
+          "This is an administrator account. Please use the Admin Portal.";
+      } else if (
+        role === "COORDINATOR"
+      ) {
+        message =
+          "This is a coordinator account. Please use the Coordinator Portal.";
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          message,
+
+          user: {
+            id: user.id,
+            campusUserId:
+              user.campusUserId,
+            name: user.name,
+            email: user.email,
+            role,
+            profileImage:
+              user.profileImage,
+            approvalStatus:
+              user.approvalStatus,
+            rejectionReason:
+              user.rejectionReason,
+          },
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    // =========================================================
+    // APPROVAL STATUS
+    // STUDENT + FACULTY
+    // =========================================================
+
+    if (
+      role === "STUDENT" ||
+      role === "FACULTY"
+    ) {
+      // -------------------------------------------------------
       // PENDING
-      // ========================================
+      // -------------------------------------------------------
 
-      if (user.approvalStatus === "PENDING") {
+      if (
+        user.approvalStatus ===
+        "PENDING"
+      ) {
         return NextResponse.json(
           {
             success: false,
             message:
-              "Your account is still waiting for Admin/Faculty approval.",
+              role === "FACULTY"
+                ? "Your faculty account is still waiting for approval."
+                : "Your account is still waiting for Admin/Faculty approval.",
+
+            approvalStatus:
+              "PENDING",
+
+            user: {
+              id: user.id,
+              campusUserId:
+                user.campusUserId,
+              name: user.name,
+              email: user.email,
+              role: role,
+              profileImage:
+                user.profileImage,
+              approvalStatus:
+                user.approvalStatus,
+              rejectionReason:
+                user.rejectionReason,
+            },
           },
           {
             status: 403,
@@ -120,18 +234,43 @@ export async function POST(req: Request) {
         );
       }
 
-      // ========================================
+      // -------------------------------------------------------
       // REJECTED
-      // ========================================
+      // -------------------------------------------------------
 
-      if (user.approvalStatus === "REJECTED") {
+      if (
+        user.approvalStatus ===
+        "REJECTED"
+      ) {
         return NextResponse.json(
           {
             success: false,
-            message: "Your registration was rejected.",
+            message:
+              role === "FACULTY"
+                ? "Your faculty registration was rejected."
+                : "Your registration was rejected.",
+
+            approvalStatus:
+              "REJECTED",
+
             rejectionReason:
               user.rejectionReason ||
               "No rejection reason was provided.",
+
+            user: {
+              id: user.id,
+              campusUserId:
+                user.campusUserId,
+              name: user.name,
+              email: user.email,
+              role: role,
+              profileImage:
+                user.profileImage,
+              approvalStatus:
+                user.approvalStatus,
+              rejectionReason:
+                user.rejectionReason,
+            },
           },
           {
             status: 403,
@@ -139,16 +278,39 @@ export async function POST(req: Request) {
         );
       }
 
-      // ========================================
-      // APPROVED
-      // ========================================
+      // -------------------------------------------------------
+      // NOT APPROVED
+      // -------------------------------------------------------
 
-      if (user.approvalStatus !== "APPROVED") {
+      if (
+        user.approvalStatus !==
+        "APPROVED"
+      ) {
         return NextResponse.json(
           {
             success: false,
             message:
-              "Your account is not approved for login.",
+              role === "FACULTY"
+                ? "Your faculty account is not approved for login."
+                : "Your account is not approved for login.",
+
+            approvalStatus:
+              user.approvalStatus,
+
+            user: {
+              id: user.id,
+              campusUserId:
+                user.campusUserId,
+              name: user.name,
+              email: user.email,
+              role: role,
+              profileImage:
+                user.profileImage,
+              approvalStatus:
+                user.approvalStatus,
+              rejectionReason:
+                user.rejectionReason,
+            },
           },
           {
             status: 403,
@@ -157,16 +319,17 @@ export async function POST(req: Request) {
       }
     }
 
-    // ==========================================
+    // =========================================================
     // CREATE JWT
-    // ==========================================
+    // =========================================================
 
     const token = jwt.sign(
       {
         id: user.id,
-        campusUserId: user.campusUserId,
+        campusUserId:
+          user.campusUserId,
         email: user.email,
-        role: user.role,
+        role: role,
       },
       secret,
       {
@@ -174,56 +337,71 @@ export async function POST(req: Request) {
       }
     );
 
-    // ==========================================
+    // =========================================================
     // RESPONSE
-    // ==========================================
+    // =========================================================
 
-    const response = NextResponse.json(
-      {
-        success: true,
-        message: "Login Successful",
+    const response =
+      NextResponse.json(
+        {
+          success: true,
+          message:
+            "Login Successful",
 
-        // Keep this for API compatibility.
-        // Frontend does not store it in localStorage.
-        token,
+          token,
 
-        user: {
-          id: user.id,
-          campusUserId: user.campusUserId,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          profileImage: user.profileImage,
-          approvalStatus: user.approvalStatus,
+          approvalStatus:
+            user.approvalStatus,
+
+          user: {
+            id: user.id,
+            campusUserId:
+              user.campusUserId,
+            name: user.name,
+            email: user.email,
+            role: role,
+            profileImage:
+              user.profileImage,
+            approvalStatus:
+              user.approvalStatus,
+            rejectionReason:
+              user.rejectionReason,
+          },
         },
-      },
-      {
-        status: 200,
-      }
-    );
+        {
+          status: 200,
+        }
+      );
 
-    // ==========================================
-    // HTTP-ONLY AUTH COOKIE
-    // ==========================================
+    // =========================================================
+    // HTTP ONLY COOKIE
+    // =========================================================
 
     response.cookies.set({
       name: "token",
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure:
+        process.env.NODE_ENV ===
+        "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge:
+        60 * 60 * 24 * 7,
     });
 
     return response;
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    console.error(
+      "LOGIN ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Internal Server Error",
+        message:
+          "Internal Server Error",
       },
       {
         status: 500,

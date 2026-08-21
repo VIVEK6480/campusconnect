@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import type { ElementType } from "react";
 import { useRouter } from "next/navigation";
 
 type FacultyUser = {
@@ -24,7 +25,9 @@ type FacultyUser = {
   name?: string;
   email?: string;
   facultyId?: string;
+  campusUserId?: string | null;
   role?: string;
+  approvalStatus?: string;
 };
 
 const defaultFaculty: FacultyUser = {
@@ -33,6 +36,7 @@ const defaultFaculty: FacultyUser = {
   email: "faculty@campusconnect.com",
   facultyId: "RNT-9457",
   role: "Faculty Member",
+  approvalStatus: "APPROVED",
 };
 
 /* =========================================================
@@ -119,10 +123,11 @@ export default function FacultyDashboardPage() {
   const router = useRouter();
 
   const [user, setUser] = useState<FacultyUser>(defaultFaculty);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] =
+    useState(false);
 
   /* =========================================================
-     LOAD FACULTY
+     LOAD FACULTY USER
   ========================================================== */
 
   useEffect(() => {
@@ -138,14 +143,16 @@ export default function FacultyDashboardPage() {
         let parsed: FacultyUser | null = null;
 
         for (const key of possibleKeys) {
-          const storedFaculty = localStorage.getItem(key);
+          const storedFaculty =
+            localStorage.getItem(key);
 
           if (!storedFaculty) {
             continue;
           }
 
           try {
-            const candidate = JSON.parse(storedFaculty);
+            const candidate =
+              JSON.parse(storedFaculty);
 
             if (
               candidate &&
@@ -166,11 +173,22 @@ export default function FacultyDashboardPage() {
 
         setUser({
           id: parsed.id || defaultFaculty.id,
-          name: parsed.name || defaultFaculty.name,
-          email: parsed.email || defaultFaculty.email,
+          name:
+            parsed.name ||
+            defaultFaculty.name,
+          email:
+            parsed.email ||
+            defaultFaculty.email,
           facultyId:
-            parsed.facultyId || defaultFaculty.facultyId,
-          role: parsed.role || defaultFaculty.role,
+            parsed.facultyId ||
+            parsed.campusUserId ||
+            defaultFaculty.facultyId,
+          role:
+            parsed.role ||
+            defaultFaculty.role,
+          approvalStatus:
+            parsed.approvalStatus ||
+            defaultFaculty.approvalStatus,
         });
       } catch {
         // Keep default faculty information.
@@ -182,16 +200,25 @@ export default function FacultyDashboardPage() {
     };
   }, []);
 
-  const facultyName = user.name || "Vivek Kumar";
+  const facultyName =
+    user.name || "Vivek Kumar";
+
   const facultyEmail =
-    user.email || "faculty@campusconnect.com";
-  const facultyId = user.facultyId || "RNT-9457";
-  const facultyRole = user.role || "Faculty Member";
+    user.email ||
+    "faculty@campusconnect.com";
+
+  const facultyId =
+    user.facultyId || "RNT-9457";
+
+  const facultyRole =
+    user.role || "Faculty Member";
 
   const initials = facultyName
     .split(" ")
     .filter(Boolean)
-    .map((part) => part.charAt(0))
+    .map((part) =>
+      part.charAt(0)
+    )
     .join("")
     .slice(0, 2)
     .toUpperCase();
@@ -200,18 +227,43 @@ export default function FacultyDashboardPage() {
      SIGN OUT
   ========================================================== */
 
-  function handleSignOut() {
+  async function handleSignOut() {
     try {
-      localStorage.removeItem("facultyUser");
-      localStorage.removeItem("faculty");
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("facultyToken");
-    } catch {
-      // Ignore localStorage errors.
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+    } catch (error) {
+      console.error(
+        "Faculty logout error:",
+        error
+      );
     }
 
-    router.push("/faculty/login");
+    try {
+      localStorage.removeItem(
+        "facultyUser"
+      );
+      localStorage.removeItem(
+        "faculty"
+      );
+      localStorage.removeItem(
+        "currentFaculty"
+      );
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      localStorage.removeItem(
+        "facultyToken"
+      );
+    } catch (error) {
+      console.error(
+        "Local storage cleanup error:",
+        error
+      );
+    }
+
+    router.replace("/faculty/login");
   }
 
   return (
@@ -219,20 +271,22 @@ export default function FacultyDashboardPage() {
 
       {/* =====================================================
           MOBILE OVERLAY
-      ===================================================== */}
+      ====================================================== */}
 
       {mobileSidebarOpen && (
         <button
           type="button"
           aria-label="Close sidebar"
-          onClick={() => setMobileSidebarOpen(false)}
+          onClick={() =>
+            setMobileSidebarOpen(false)
+          }
           className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
         />
       )}
 
       {/* =====================================================
           SIDEBAR
-      ===================================================== */}
+      ====================================================== */}
 
       <aside
         className={`
@@ -252,19 +306,27 @@ export default function FacultyDashboardPage() {
           }
         `}
       >
-        {/* BRAND */}
+
+        {/* =================================================
+            BRAND
+        ================================================== */}
 
         <div className="flex h-[92px] shrink-0 items-center justify-between border-b border-[#223149] px-6">
+
           <div className="flex min-w-0 items-center gap-3">
+
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_8px_25px_rgba(84,188,229,0.25)]">
+
               <GraduationCap
                 size={25}
                 strokeWidth={2}
                 className="text-white"
               />
+
             </div>
 
             <div className="min-w-0">
+
               <h1 className="font-serif text-[19px] font-bold tracking-tight text-white">
                 CampusConnect
               </h1>
@@ -272,70 +334,89 @@ export default function FacultyDashboardPage() {
               <p className="mt-0.5 text-[11px] font-medium text-[#91a4bb]">
                 Faculty Portal
               </p>
+
             </div>
+
           </div>
 
           <button
             type="button"
-            onClick={() => setMobileSidebarOpen(false)}
+            onClick={() =>
+              setMobileSidebarOpen(false)
+            }
+            aria-label="Close sidebar"
             className="rounded-lg p-2 text-[#8fa3bb] transition hover:bg-white/10 hover:text-white lg:hidden"
           >
             <X size={19} />
           </button>
+
         </div>
 
-        {/* NAVIGATION */}
+        {/* =================================================
+            NAVIGATION
+        ================================================== */}
 
         <div className="flex-1 overflow-y-auto px-4 py-7">
+
           <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
             Main Menu
           </p>
 
           <nav className="space-y-1.5">
-            {navigation.map((item, index) => {
-              const Icon = item.icon;
-              const active = index === 0;
 
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={() =>
-                    setMobileSidebarOpen(false)
-                  }
-                  className={`
-                    group flex h-11 w-full items-center gap-3
-                    rounded-xl px-3.5
-                    text-[13px] font-medium
-                    transition-all duration-200
-                    ${
-                      active
-                        ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
-                        : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
+            {navigation.map(
+              (item, index) => {
+                const Icon = item.icon;
+                const active = index === 0;
+
+                return (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    onClick={() =>
+                      setMobileSidebarOpen(
+                        false
+                      )
                     }
-                  `}
-                >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    className={
-                      active
-                        ? "text-[#63c9ef]"
-                        : "text-[#8195ad] group-hover:text-[#63c9ef]"
-                    }
-                  />
+                    className={`
+                      group flex h-11 w-full items-center gap-3
+                      rounded-xl px-3.5
+                      text-[13px] font-medium
+                      transition-all duration-200
+                      ${
+                        active
+                          ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
+                          : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
+                      }
+                    `}
+                  >
 
-                  <span>{item.title}</span>
-
-                  {active && (
-                    <ChevronRight
-                      size={16}
-                      className="ml-auto text-[#63c9ef]"
+                    <Icon
+                      size={18}
+                      strokeWidth={1.8}
+                      className={
+                        active
+                          ? "text-[#63c9ef]"
+                          : "text-[#8195ad] group-hover:text-[#63c9ef]"
+                      }
                     />
-                  )}
-                </Link>
-              );
-            })}
+
+                    <span>
+                      {item.title}
+                    </span>
+
+                    {active && (
+                      <ChevronRight
+                        size={16}
+                        className="ml-auto text-[#63c9ef]"
+                      />
+                    )}
+
+                  </Link>
+                );
+              }
+            )}
+
           </nav>
 
           <div className="my-7 h-px bg-[#223149]" />
@@ -345,54 +426,74 @@ export default function FacultyDashboardPage() {
           </p>
 
           <nav className="space-y-1.5">
-            {accountNavigation.map((item) => {
-              const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={() =>
-                    setMobileSidebarOpen(false)
-                  }
-                  className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-                >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    className="text-[#8195ad] group-hover:text-[#63c9ef]"
-                  />
+            {accountNavigation.map(
+              (item) => {
+                const Icon = item.icon;
 
-                  <span>{item.title}</span>
-                </Link>
-              );
-            })}
+                return (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    onClick={() =>
+                      setMobileSidebarOpen(
+                        false
+                      )
+                    }
+                    className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
+                  >
+
+                    <Icon
+                      size={18}
+                      strokeWidth={1.8}
+                      className="text-[#8195ad] group-hover:text-[#63c9ef]"
+                    />
+
+                    <span>
+                      {item.title}
+                    </span>
+
+                  </Link>
+                );
+              }
+            )}
 
             <button
               type="button"
               onClick={handleSignOut}
               className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
             >
+
               <LogOut
                 size={18}
                 strokeWidth={1.8}
                 className="text-[#8195ad] group-hover:text-[#63c9ef]"
               />
 
-              <span>Sign Out</span>
+              <span>
+                Sign Out
+              </span>
+
             </button>
+
           </nav>
+
         </div>
 
-        {/* SIDEBAR USER */}
+        {/* =================================================
+            SIDEBAR USER
+        ================================================== */}
 
         <div className="shrink-0 border-t border-[#223149] p-4">
+
           <div className="flex items-center gap-3 rounded-2xl bg-[#111e2f] px-3.5 py-3">
+
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold text-white">
               {initials}
             </div>
 
             <div className="min-w-0">
+
               <p className="truncate text-[13px] font-semibold text-white">
                 {facultyName}
               </p>
@@ -400,14 +501,18 @@ export default function FacultyDashboardPage() {
               <p className="truncate text-[11px] text-[#8296ae]">
                 {facultyRole}
               </p>
+
             </div>
+
           </div>
+
         </div>
+
       </aside>
 
       {/* =====================================================
           MAIN AREA
-      ===================================================== */}
+      ====================================================== */}
 
       <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
 
@@ -416,20 +521,26 @@ export default function FacultyDashboardPage() {
         =================================================== */}
 
         <header className="sticky top-0 z-30 h-[86px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
+
           <div className="flex h-full w-full items-center justify-between px-5 sm:px-6">
 
             <div className="flex items-center gap-4">
+
               <button
                 type="button"
                 onClick={() =>
-                  setMobileSidebarOpen(true)
+                  setMobileSidebarOpen(
+                    true
+                  )
                 }
+                aria-label="Open sidebar"
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-sm lg:hidden"
               >
                 <Menu size={20} />
               </button>
 
               <div>
+
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
                   Faculty Portal
                 </p>
@@ -437,7 +548,9 @@ export default function FacultyDashboardPage() {
                 <p className="mt-1 hidden text-[11px] text-[#71839a] sm:block">
                   Academic management workspace
                 </p>
+
               </div>
+
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -447,12 +560,14 @@ export default function FacultyDashboardPage() {
                 aria-label="Notifications"
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe]"
               >
+
                 <Bell
                   size={18}
                   strokeWidth={1.8}
                 />
 
                 <span className="absolute right-[9px] top-[8px] h-1.5 w-1.5 rounded-full bg-[#54bce5]" />
+
               </button>
 
               <button
@@ -460,20 +575,24 @@ export default function FacultyDashboardPage() {
                 aria-label="Settings"
                 className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe] sm:flex"
               >
+
                 <Settings
                   size={18}
                   strokeWidth={1.8}
                 />
+
               </button>
 
               <div className="mx-1 hidden h-8 w-px bg-[#dce6f0] sm:block" />
 
               <div className="hidden items-center gap-2.5 sm:flex">
+
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-[12px] font-bold text-white">
                   {initials}
                 </div>
 
                 <div>
+
                   <p className="text-[12px] font-semibold text-[#18283d]">
                     {facultyName}
                   </p>
@@ -481,11 +600,15 @@ export default function FacultyDashboardPage() {
                   <p className="text-[10px] text-[#72849a]">
                     {facultyRole}
                   </p>
+
                 </div>
+
               </div>
 
             </div>
+
           </div>
+
         </header>
 
         {/* ===================================================
@@ -494,33 +617,33 @@ export default function FacultyDashboardPage() {
 
         <main className="relative min-h-[calc(100vh-86px)] w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6">
 
-          {/* BACKGROUND GRID */}
+          {/* =================================================
+              BACKGROUND
+          ================================================== */}
 
           <div className="pointer-events-none absolute inset-0 opacity-60">
+
             <div
               className="absolute inset-0"
               style={{
                 backgroundImage:
                   "linear-gradient(rgba(88,157,197,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(88,157,197,0.08) 1px, transparent 1px)",
-                backgroundSize: "42px 42px",
+                backgroundSize:
+                  "42px 42px",
               }}
             />
 
             <div className="absolute left-[20%] top-[8%] h-[450px] w-[450px] rounded-full bg-[#dceef8] opacity-50 blur-3xl" />
 
             <div className="absolute right-[5%] top-[30%] h-[350px] w-[350px] rounded-full bg-[#e4f2f9] opacity-60 blur-3xl" />
-          </div>
 
-          {/* IMPORTANT:
-              NO mx-auto
-              NO max-w
-          */}
+          </div>
 
           <div className="relative mx-auto w-full min-w-0 max-w-none">
 
             {/* =================================================
                 WELCOME
-            ================================================= */}
+            ================================================== */}
 
             <section className="relative w-full overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-6 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 sm:py-7 lg:px-10 lg:py-7">
 
@@ -533,56 +656,83 @@ export default function FacultyDashboardPage() {
               <div className="relative z-10 max-w-[1100px]">
 
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
-                  <GraduationCap size={14} />
+
+                  <GraduationCap
+                    size={14}
+                  />
+
                   Faculty Dashboard
+
                 </div>
 
                 <h1 className="font-serif text-[38px] font-bold leading-[0.98] tracking-[-0.03em] text-white sm:text-[45px] lg:text-[51px]">
+
                   Welcome back.
+
                   <br />
+
                   <span className="text-[#69c9ed]">
                     {facultyName}
                   </span>
+
                 </h1>
 
                 <p className="mt-4 max-w-[900px] text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
-                  Manage your academic responsibilities,
-                  students, attendance, schedules and campus
-                  activities from your Faculty Dashboard.
+
+                  Manage your academic
+                  responsibilities,
+                  students, attendance,
+                  schedules and campus
+                  activities from your
+                  Faculty Dashboard.
+
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-3">
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#49c997]/30 bg-[#49c997]/10 px-3.5 py-2 text-[11px] font-semibold text-[#72dcb4]">
-                    <CheckCircle2 size={14} />
+
+                    <CheckCircle2
+                      size={14}
+                    />
+
                     Account Approved
+
                   </div>
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3.5 py-2 text-[11px] font-medium text-[#b3c0d0]">
-                    <UserCircle size={14} />
+
+                    <UserCircle
+                      size={14}
+                    />
 
                     Faculty ID:
 
                     <span className="font-bold text-white">
                       {facultyId}
                     </span>
+
                   </div>
 
                 </div>
+
               </div>
 
               <div className="absolute bottom-6 right-7 hidden h-[92px] w-[92px] items-center justify-center rounded-[21px] border border-[#54bce5]/25 bg-[#15273b]/90 shadow-[0_20px_45px_rgba(0,0,0,0.2)] lg:flex">
+
                 <GraduationCap
                   size={46}
                   strokeWidth={1.5}
                   className="text-[#67bfe6]"
                 />
+
               </div>
+
             </section>
 
             {/* =================================================
                 STATS
-            ================================================= */}
+            ================================================== */}
 
             <section className="mt-5 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -618,11 +768,12 @@ export default function FacultyDashboardPage() {
 
             {/* =================================================
                 QUICK ACCESS
-            ================================================= */}
+            ================================================== */}
 
             <section className="mt-8 w-full">
 
               <div className="mb-4">
+
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#438bb8]">
                   Quick Access
                 </p>
@@ -630,48 +781,60 @@ export default function FacultyDashboardPage() {
                 <h2 className="mt-1 font-serif text-[25px] font-bold tracking-tight text-[#0d1728]">
                   Explore Faculty Portal
                 </h2>
+
               </div>
 
               <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-                {quickAccess.map((item) => {
-                  const Icon = item.icon;
+                {quickAccess.map(
+                  (item) => {
+                    const Icon =
+                      item.icon;
 
-                  return (
-                    <QuickAccessCard
-                      key={item.title}
-                      title={item.title}
-                      description={item.description}
-                      href={item.href}
-                      action={item.action}
-                      Icon={Icon}
-                    />
-                  );
-                })}
+                    return (
+                      <QuickAccessCard
+                        key={item.title}
+                        title={item.title}
+                        description={
+                          item.description
+                        }
+                        href={item.href}
+                        action={item.action}
+                        Icon={Icon}
+                      />
+                    );
+                  }
+                )}
 
               </div>
+
             </section>
 
             {/* =================================================
                 LOWER INFORMATION
-            ================================================= */}
+            ================================================== */}
 
             <section className="mt-5 grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
 
-              {/* FACULTY INFORMATION */}
+              {/* =================================================
+                  FACULTY INFORMATION
+              ================================================== */}
 
               <div className="rounded-[20px] border border-[#d9e4ee] bg-white p-6 shadow-[0_8px_25px_rgba(30,60,90,0.06)]">
 
                 <div className="flex items-start gap-4">
 
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eef7fc] text-[#4d9ac4]">
+
                     <UserCircle
                       size={21}
                       strokeWidth={1.7}
                     />
+
                   </div>
 
                   <div className="min-w-0">
+
                     <h3 className="font-serif text-[18px] font-bold text-[#142238]">
                       Faculty Information
                     </h3>
@@ -679,6 +842,7 @@ export default function FacultyDashboardPage() {
                     <p className="mt-1 text-[12px] text-[#72849a]">
                       Your CampusConnect faculty account details.
                     </p>
+
                   </div>
 
                 </div>
@@ -711,26 +875,36 @@ export default function FacultyDashboardPage() {
                   href="/faculty/profile"
                   className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3989b7] transition hover:text-[#1d658d]"
                 >
+
                   Open Faculty Profile
-                  <ChevronRight size={14} />
+
+                  <ChevronRight
+                    size={14}
+                  />
+
                 </Link>
 
               </div>
 
-              {/* ACCOUNT SECURITY */}
+              {/* =================================================
+                  ACCOUNT SECURITY
+              ================================================== */}
 
               <div className="rounded-[20px] border border-[#d9e4ee] bg-white p-6 shadow-[0_8px_25px_rgba(30,60,90,0.06)]">
 
                 <div className="flex items-start gap-4">
 
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eef8f4] text-[#3ba77c]">
+
                     <ShieldCheck
                       size={21}
                       strokeWidth={1.7}
                     />
+
                   </div>
 
                   <div>
+
                     <h3 className="font-serif text-[18px] font-bold text-[#142238]">
                       Account Security
                     </h3>
@@ -738,6 +912,7 @@ export default function FacultyDashboardPage() {
                     <p className="mt-1 text-[12px] leading-6 text-[#72849a]">
                       Review your account security and password settings.
                     </p>
+
                   </div>
 
                 </div>
@@ -747,10 +922,15 @@ export default function FacultyDashboardPage() {
                   <div className="flex items-center gap-2.5">
 
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#dff5e9] text-[#39a477]">
-                      <CheckCircle2 size={17} />
+
+                      <CheckCircle2
+                        size={17}
+                      />
+
                     </div>
 
                     <div>
+
                       <p className="text-[11px] font-semibold text-[#315b48]">
                         Account Status
                       </p>
@@ -758,6 +938,7 @@ export default function FacultyDashboardPage() {
                       <p className="text-[10px] text-[#6d8c7d]">
                         Your faculty account is active
                       </p>
+
                     </div>
 
                   </div>
@@ -772,8 +953,13 @@ export default function FacultyDashboardPage() {
                   href="/faculty/security"
                   className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3989b7] transition hover:text-[#1d658d]"
                 >
+
                   Open Security
-                  <ChevronRight size={14} />
+
+                  <ChevronRight
+                    size={14}
+                  />
+
                 </Link>
 
               </div>
@@ -783,8 +969,11 @@ export default function FacultyDashboardPage() {
             <div className="h-8" />
 
           </div>
+
         </main>
+
       </div>
+
     </div>
   );
 }
@@ -825,7 +1014,7 @@ type StatCardProps = {
   title: string;
   value: string;
   description: string;
-  icon: React.ElementType;
+  icon: ElementType;
 };
 
 function StatCard({
@@ -840,6 +1029,7 @@ function StatCard({
       <div className="flex items-start justify-between gap-4">
 
         <div className="min-w-0">
+
           <p className="text-[11px] font-medium text-[#687c93]">
             {title}
           </p>
@@ -847,13 +1037,16 @@ function StatCard({
           <p className="mt-2 font-serif text-[27px] font-bold leading-none text-[#0b1728]">
             {value}
           </p>
+
         </div>
 
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#53a7d4] transition-colors duration-200 group-hover:bg-[#54bce5] group-hover:text-white">
+
           <Icon
             size={18}
             strokeWidth={1.8}
           />
+
         </div>
 
       </div>
@@ -875,7 +1068,7 @@ type QuickAccessCardProps = {
   description: string;
   href: string;
   action: string;
-  Icon: React.ElementType;
+  Icon: ElementType;
 };
 
 function QuickAccessCard({
@@ -894,17 +1087,21 @@ function QuickAccessCard({
       <div className="flex items-start justify-between">
 
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#4ba4d2] transition-all duration-200 group-hover:bg-[#54bce5] group-hover:text-white">
+
           <Icon
             size={20}
             strokeWidth={1.7}
           />
+
         </div>
 
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#aec0d1] transition-all duration-200 group-hover:translate-x-0.5 group-hover:bg-[#54bce5] group-hover:text-white">
+
           <ChevronRight
             size={17}
             strokeWidth={1.8}
           />
+
         </div>
 
       </div>
