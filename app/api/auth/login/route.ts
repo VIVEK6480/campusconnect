@@ -22,7 +22,95 @@ export async function POST(req: Request) {
         {
           success: false,
           message:
-            "Email / User ID and password are required",
+            "Email / User ID and password are required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // =========================================================
+    // DETERMINE REQUESTED PORTAL
+    // =========================================================
+    //
+    // The frontend currently does not send `portal`.
+    // Therefore we also identify the portal from the page
+    // that submitted the login request.
+    //
+    // Student:
+    // /auth/login
+    //
+    // Faculty:
+    // /faculty/login
+    //
+    // If an explicit portal is provided, it is used first.
+    //
+    // =========================================================
+
+    const explicitPortal = String(
+      portal || ""
+    )
+      .trim()
+      .toLowerCase();
+
+    const referer =
+      req.headers.get("referer") || "";
+
+    let requestedPortal =
+      explicitPortal;
+
+    if (!requestedPortal) {
+      try {
+        const refererUrl =
+          new URL(referer);
+
+        const refererPath =
+          refererUrl.pathname;
+
+        if (
+          refererPath ===
+          "/auth/login"
+        ) {
+          requestedPortal =
+            "student";
+        } else if (
+          refererPath ===
+          "/faculty/login"
+        ) {
+          requestedPortal =
+            "faculty";
+        }
+      } catch {
+        // Invalid or missing Referer.
+        // Keep requestedPortal empty.
+      }
+    }
+
+    // =========================================================
+    // STRICT PORTAL VALIDATION
+    // =========================================================
+    //
+    // IMPORTANT:
+    // Never allow a generic login request without knowing
+    // which portal requested authentication.
+    //
+    // This prevents:
+    //
+    // Student portal -> Faculty account
+    // Faculty portal -> Student account
+    //
+    // =========================================================
+
+    if (
+      requestedPortal !== "student" &&
+      requestedPortal !== "faculty"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Unable to identify the login portal. Please open the correct Student or Faculty Login Portal.",
         },
         {
           status: 400,
@@ -34,16 +122,19 @@ export async function POST(req: Request) {
     // JWT SECRET
     // =========================================================
 
-    const secret = process.env.JWT_SECRET;
+    const secret =
+      process.env.JWT_SECRET;
 
     if (!secret) {
-      console.error("JWT_SECRET is missing");
+      console.error(
+        "JWT_SECRET is missing"
+      );
 
       return NextResponse.json(
         {
           success: false,
           message:
-            "Server authentication configuration error",
+            "Server authentication configuration error.",
         },
         {
           status: 500,
@@ -59,19 +150,20 @@ export async function POST(req: Request) {
       .trim()
       .toLowerCase();
 
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          {
-            email: loginValue,
-          },
-          {
-            campusUserId:
-              loginValue.toUpperCase(),
-          },
-        ],
-      },
-    });
+    const user =
+      await prisma.user.findFirst({
+        where: {
+          OR: [
+            {
+              email: loginValue,
+            },
+            {
+              campusUserId:
+                loginValue.toUpperCase(),
+            },
+          ],
+        },
+      });
 
     // =========================================================
     // USER NOT FOUND
@@ -82,7 +174,7 @@ export async function POST(req: Request) {
         {
           success: false,
           message:
-            "Invalid email or password",
+            "Invalid email or password.",
         },
         {
           status: 401,
@@ -105,7 +197,7 @@ export async function POST(req: Request) {
         {
           success: false,
           message:
-            "Invalid email or password",
+            "Invalid email or password.",
         },
         {
           status: 401,
@@ -114,36 +206,37 @@ export async function POST(req: Request) {
     }
 
     // =========================================================
-    // ROLE
+    // NORMALIZE ROLE
     // =========================================================
 
     const role = String(
       user.role || ""
-    ).toUpperCase();
+    )
+      .trim()
+      .toUpperCase();
 
     // =========================================================
-    // STUDENT PORTAL ROLE CHECK
+    // STUDENT PORTAL
     // =========================================================
     //
-    // IMPORTANT:
-    // If login request comes from Student Login,
     // ONLY STUDENT accounts are allowed.
     //
-    // Faculty/Admin/etc. credentials must NEVER
-    // receive a JWT or authentication cookie from
-    // the Student Login request.
+    // Faculty/Admin/Coordinator/etc. can NEVER receive
+    // a JWT from Student Portal.
     //
     // =========================================================
 
     if (
-      String(portal || "").toLowerCase() ===
-      "student" &&
+      requestedPortal ===
+        "student" &&
       role !== "STUDENT"
     ) {
       let message =
         "This account is not a student account. Please use the correct portal.";
 
-      if (role === "FACULTY") {
+      if (
+        role === "FACULTY"
+      ) {
         message =
           "This is a faculty account. Please use the Faculty Portal.";
       } else if (
@@ -159,10 +252,85 @@ export async function POST(req: Request) {
           "This is a coordinator account. Please use the Coordinator Portal.";
       }
 
+      // IMPORTANT:
+      // No JWT.
+      // No cookie.
+      // No authentication.
       return NextResponse.json(
         {
           success: false,
           message,
+          approvalStatus:
+            user.approvalStatus,
+
+          user: {
+            id: user.id,
+            campusUserId:
+              user.campusUserId,
+            name: user.name,
+            email: user.email,
+            role,
+            profileImage:
+              user.profileImage,
+            approvalStatus:
+              user.approvalStatus,
+            rejectionReason:
+              user.rejectionReason,
+          },
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    // =========================================================
+    // FACULTY PORTAL
+    // =========================================================
+    //
+    // ONLY FACULTY accounts are allowed.
+    //
+    // Student/Admin/etc. credentials can NEVER receive
+    // a JWT from Faculty Portal.
+    //
+    // =========================================================
+
+    if (
+      requestedPortal ===
+        "faculty" &&
+      role !== "FACULTY"
+    ) {
+      let message =
+        "This account is not a faculty account. Please use the correct portal.";
+
+      if (
+        role === "STUDENT"
+      ) {
+        message =
+          "This is a student account. Please use the Student Portal.";
+      } else if (
+        role === "ADMIN" ||
+        role === "SUPER_ADMIN"
+      ) {
+        message =
+          "This is an administrator account. Please use the Admin Portal.";
+      } else if (
+        role === "COORDINATOR"
+      ) {
+        message =
+          "This is a coordinator account. Please use the Coordinator Portal.";
+      }
+
+      // IMPORTANT:
+      // No JWT.
+      // No cookie.
+      // No authentication.
+      return NextResponse.json(
+        {
+          success: false,
+          message,
+          approvalStatus:
+            user.approvalStatus,
 
           user: {
             id: user.id,
@@ -205,6 +373,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             success: false,
+
             message:
               role === "FACULTY"
                 ? "Your faculty account is still waiting for approval."
@@ -219,7 +388,7 @@ export async function POST(req: Request) {
                 user.campusUserId,
               name: user.name,
               email: user.email,
-              role: role,
+              role,
               profileImage:
                 user.profileImage,
               approvalStatus:
@@ -245,6 +414,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             success: false,
+
             message:
               role === "FACULTY"
                 ? "Your faculty registration was rejected."
@@ -263,7 +433,7 @@ export async function POST(req: Request) {
                 user.campusUserId,
               name: user.name,
               email: user.email,
-              role: role,
+              role,
               profileImage:
                 user.profileImage,
               approvalStatus:
@@ -289,6 +459,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             success: false,
+
             message:
               role === "FACULTY"
                 ? "Your faculty account is not approved for login."
@@ -303,7 +474,7 @@ export async function POST(req: Request) {
                 user.campusUserId,
               name: user.name,
               email: user.email,
-              role: role,
+              role,
               profileImage:
                 user.profileImage,
               approvalStatus:
@@ -323,19 +494,20 @@ export async function POST(req: Request) {
     // CREATE JWT
     // =========================================================
 
-    const token = jwt.sign(
-      {
-        id: user.id,
-        campusUserId:
-          user.campusUserId,
-        email: user.email,
-        role: role,
-      },
-      secret,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const token =
+      jwt.sign(
+        {
+          id: user.id,
+          campusUserId:
+            user.campusUserId,
+          email: user.email,
+          role,
+        },
+        secret,
+        {
+          expiresIn: "7d",
+        }
+      );
 
     // =========================================================
     // RESPONSE
@@ -359,7 +531,7 @@ export async function POST(req: Request) {
               user.campusUserId,
             name: user.name,
             email: user.email,
-            role: role,
+            role,
             profileImage:
               user.profileImage,
             approvalStatus:
@@ -401,7 +573,7 @@ export async function POST(req: Request) {
       {
         success: false,
         message:
-          "Internal Server Error",
+          "Internal Server Error.",
       },
       {
         status: 500,

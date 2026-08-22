@@ -25,8 +25,10 @@ export default function FacultyLoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
+  const [loading, setLoading] =
+    useState(false);
   const [error, setError] = useState("");
 
   // =========================================================
@@ -41,14 +43,20 @@ export default function FacultyLoginPage() {
         cache: "no-store",
       });
     } catch (error) {
-      console.warn("AUTH CLEANUP ERROR:", error);
+      console.warn(
+        "AUTH CLEANUP ERROR:",
+        error
+      );
     }
 
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     } catch (error) {
-      console.warn("LOCAL STORAGE CLEANUP ERROR:", error);
+      console.warn(
+        "LOCAL STORAGE CLEANUP ERROR:",
+        error
+      );
     }
   }
 
@@ -56,7 +64,9 @@ export default function FacultyLoginPage() {
   // FACULTY LOGIN
   // =========================================================
 
-  async function handleLogin(e: FormEvent<HTMLFormElement>) {
+  async function handleLogin(
+    e: FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
 
     if (loading) {
@@ -67,15 +77,7 @@ export default function FacultyLoginPage() {
     setError("");
 
     try {
-      // -------------------------------------------------------
-      // Clear previous session
-      // -------------------------------------------------------
-
       await clearAuthentication();
-
-      // -------------------------------------------------------
-      // Validate
-      // -------------------------------------------------------
 
       const cleanEmail = email.trim();
 
@@ -83,36 +85,39 @@ export default function FacultyLoginPage() {
         setError(
           "Email / Faculty User ID and password are required."
         );
+
         setLoading(false);
         return;
       }
 
-      // -------------------------------------------------------
-      // Login API
-      // -------------------------------------------------------
-
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        cache: "no-store",
-        body: JSON.stringify({
-          email: cleanEmail.toLowerCase(),
-          campusUserId: cleanEmail.toUpperCase(),
-          password,
-        }),
-      });
-
-      // -------------------------------------------------------
-      // Response type
-      // -------------------------------------------------------
+      const res = await fetch(
+        "/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          credentials: "include",
+          cache: "no-store",
+          body: JSON.stringify({
+            email:
+              cleanEmail.toLowerCase(),
+            campusUserId:
+              cleanEmail.toUpperCase(),
+            password,
+            portal: "faculty",
+          }),
+        }
+      );
 
       let data: {
         success?: boolean;
         message?: string;
         token?: string;
+        approvalStatus?: string;
+        rejectionReason?: string | null;
+
         user?: {
           id?: string;
           campusUserId?: string | null;
@@ -125,24 +130,28 @@ export default function FacultyLoginPage() {
         };
       };
 
-      // -------------------------------------------------------
-      // Read response
-      // -------------------------------------------------------
-
       try {
         data = await res.json();
       } catch {
-        setError("Invalid response from the server.");
+        setError(
+          "Invalid response from the server."
+        );
         return;
       }
 
-      console.log("FACULTY LOGIN RESPONSE:", data);
+      console.log(
+        "FACULTY LOGIN RESPONSE:",
+        data
+      );
 
-      // -------------------------------------------------------
+      // =====================================================
       // API ERROR
-      // -------------------------------------------------------
+      // =====================================================
 
-      if (!res.ok || !data.success) {
+      if (
+        !res.ok ||
+        !data.success
+      ) {
         setError(
           data.message ||
             "Invalid email / Faculty User ID or password."
@@ -152,9 +161,9 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
+      // =====================================================
       // USER CHECK
-      // -------------------------------------------------------
+      // =====================================================
 
       if (!data.user) {
         setError(
@@ -165,11 +174,15 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
+      // =====================================================
       // FACULTY ROLE CHECK
-      // -------------------------------------------------------
+      // =====================================================
 
-      const role = String(data.user.role || "").toUpperCase();
+      const role = String(
+        data.user.role || ""
+      )
+        .trim()
+        .toUpperCase();
 
       if (role !== "FACULTY") {
         console.warn(
@@ -179,13 +192,24 @@ export default function FacultyLoginPage() {
 
         await clearAuthentication();
 
-        if (role === "ADMIN" || role === "SUPER_ADMIN") {
+        if (
+          role === "ADMIN" ||
+          role === "SUPER_ADMIN"
+        ) {
           setError(
             "This is an administrator account. Please use the Admin Portal."
           );
-        } else if (role === "STUDENT") {
+        } else if (
+          role === "STUDENT"
+        ) {
           setError(
             "This is a student account. Please use the Student Portal."
+          );
+        } else if (
+          role === "COORDINATOR"
+        ) {
+          setError(
+            "This is a coordinator account. Please use the Coordinator Portal."
           );
         } else {
           setError(
@@ -196,22 +220,31 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
+      // =====================================================
       // APPROVAL CHECK
-      // -------------------------------------------------------
+      // =====================================================
 
       if (
         data.user.approvalStatus &&
-        data.user.approvalStatus !== "APPROVED"
+        data.user.approvalStatus !==
+          "APPROVED"
       ) {
         await clearAuthentication();
 
-        if (data.user.approvalStatus === "PENDING") {
+        if (
+          data.user.approvalStatus ===
+          "PENDING"
+        ) {
           setError(
             "Your faculty account is still waiting for approval."
           );
-        } else if (data.user.approvalStatus === "REJECTED") {
-          if (data.user.rejectionReason) {
+        } else if (
+          data.user.approvalStatus ===
+          "REJECTED"
+        ) {
+          if (
+            data.user.rejectionReason
+          ) {
             setError(
               `Your faculty registration was rejected. Reason: ${data.user.rejectionReason}`
             );
@@ -229,12 +262,15 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
+      // =====================================================
       // STORE USER INFORMATION
-      // -------------------------------------------------------
+      // =====================================================
 
       if (data.token) {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem(
+          "token",
+          data.token
+        );
       }
 
       localStorage.setItem(
@@ -242,19 +278,25 @@ export default function FacultyLoginPage() {
         JSON.stringify(data.user)
       );
 
-      // -------------------------------------------------------
+      // =====================================================
       // LOGIN SUCCESS
-      // -------------------------------------------------------
+      // =====================================================
 
       console.log(
         "FACULTY LOGIN SUCCESS:",
         data.user.email
       );
 
-      router.replace("/dashboard/faculty");
+      router.replace(
+        "/dashboard/faculty"
+      );
+
       router.refresh();
     } catch (err) {
-      console.error("FACULTY LOGIN ERROR:", err);
+      console.error(
+        "FACULTY LOGIN ERROR:",
+        err
+      );
 
       await clearAuthentication();
 
@@ -266,20 +308,15 @@ export default function FacultyLoginPage() {
     }
   }
 
-  // =========================================================
-  // UI
-  // =========================================================
-
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0b1220] text-white">
 
       {/* =====================================================
           BACKGROUND
-      ===================================================== */}
+      ====================================================== */}
 
       <div className="absolute inset-0 overflow-hidden">
 
-        {/* Main background */}
         <div
           className="absolute inset-0"
           style={{
@@ -309,14 +346,12 @@ export default function FacultyLoginPage() {
           }}
         />
 
-        {/* Cyan glow */}
         <div className="absolute -left-48 -top-40 h-[520px] w-[520px] rounded-full bg-cyan-400/10 blur-[130px]" />
 
         <div className="absolute -right-48 top-10 h-[580px] w-[580px] rounded-full bg-sky-400/10 blur-[140px]" />
 
         <div className="absolute -bottom-48 right-[5%] h-[500px] w-[500px] rounded-full bg-cyan-500/10 blur-[130px]" />
 
-        {/* Grid */}
         <div
           className="absolute inset-0 opacity-[0.045]"
           style={{
@@ -335,7 +370,6 @@ export default function FacultyLoginPage() {
           }}
         />
 
-        {/* Floating dots */}
         <div className="absolute left-[10%] top-[20%] h-3 w-3 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_35px_rgba(103,232,249,1)]" />
 
         <div className="absolute right-[14%] top-[28%] h-2.5 w-2.5 animate-pulse rounded-full bg-sky-300 shadow-[0_0_30px_rgba(125,211,252,1)]" />
@@ -348,7 +382,7 @@ export default function FacultyLoginPage() {
 
       {/* =====================================================
           MAIN CONTAINER
-      ===================================================== */}
+      ====================================================== */}
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
 
@@ -356,18 +390,15 @@ export default function FacultyLoginPage() {
 
           {/* =================================================
               LEFT SIDE
-          ================================================= */}
+          ================================================== */}
 
           <section className="relative hidden min-h-[680px] overflow-hidden border-r border-white/10 bg-gradient-to-br from-slate-900 via-[#0b1527] to-cyan-950/30 p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
 
-            {/* Background glow */}
             <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl" />
 
             <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-sky-500/10 blur-3xl" />
 
             <div className="relative z-10">
-
-              {/* LOGO */}
 
               <div className="flex items-center gap-4">
 
@@ -386,8 +417,6 @@ export default function FacultyLoginPage() {
                 </div>
 
               </div>
-
-              {/* HERO */}
 
               <div className="mt-28">
 
@@ -415,11 +444,7 @@ export default function FacultyLoginPage() {
 
               </div>
 
-              {/* FEATURE CARDS */}
-
               <div className="mt-12 grid grid-cols-3 gap-3">
-
-                {/* Students */}
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-cyan-400/[0.05]">
 
@@ -438,8 +463,6 @@ export default function FacultyLoginPage() {
 
                 </div>
 
-                {/* Attendance */}
-
                 <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-sky-400/30 hover:bg-sky-400/[0.05]">
 
                   <ClipboardCheck
@@ -456,8 +479,6 @@ export default function FacultyLoginPage() {
                   </p>
 
                 </div>
-
-                {/* Schedule */}
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-cyan-400/[0.05]">
 
@@ -480,8 +501,6 @@ export default function FacultyLoginPage() {
 
             </div>
 
-            {/* SECURITY */}
-
             <div className="relative z-10 flex items-center gap-2 text-xs text-slate-500">
 
               <ShieldCheck
@@ -497,13 +516,11 @@ export default function FacultyLoginPage() {
 
           {/* =================================================
               RIGHT SIDE
-          ================================================= */}
+          ================================================== */}
 
           <section className="flex min-h-[680px] items-center justify-center bg-[#0d1625]/95 p-6 sm:p-10 lg:p-14">
 
             <div className="w-full max-w-md">
-
-              {/* MOBILE LOGO */}
 
               <div className="mb-10 flex items-center gap-3 lg:hidden">
 
@@ -524,10 +541,6 @@ export default function FacultyLoginPage() {
                 </div>
 
               </div>
-
-              {/* =================================================
-                  HEADING
-              ================================================= */}
 
               <div>
 
@@ -550,10 +563,6 @@ export default function FacultyLoginPage() {
 
               </div>
 
-              {/* =================================================
-                  ERROR
-              ================================================= */}
-
               {error && (
                 <div
                   role="alert"
@@ -563,16 +572,10 @@ export default function FacultyLoginPage() {
                 </div>
               )}
 
-              {/* =================================================
-                  LOGIN FORM
-              ================================================= */}
-
               <form
                 onSubmit={handleLogin}
                 className="mt-8 space-y-5"
               >
-
-                {/* EMAIL */}
 
                 <div>
 
@@ -597,7 +600,9 @@ export default function FacultyLoginPage() {
                       placeholder="faculty@campusconnect.com"
                       value={email}
                       onChange={(e) => {
-                        setEmail(e.target.value);
+                        setEmail(
+                          e.target.value
+                        );
 
                         if (error) {
                           setError("");
@@ -612,8 +617,6 @@ export default function FacultyLoginPage() {
                   </div>
 
                 </div>
-
-                {/* PASSWORD */}
 
                 <div>
 
@@ -650,7 +653,9 @@ export default function FacultyLoginPage() {
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => {
-                        setPassword(e.target.value);
+                        setPassword(
+                          e.target.value
+                        );
 
                         if (error) {
                           setError("");
@@ -666,7 +671,8 @@ export default function FacultyLoginPage() {
                       type="button"
                       onClick={() => {
                         setShowPassword(
-                          (value) => !value
+                          (value) =>
+                            !value
                         );
                       }}
                       disabled={loading}
@@ -690,8 +696,6 @@ export default function FacultyLoginPage() {
 
                 </div>
 
-                {/* FORGOT PASSWORD */}
-
                 <div className="-mt-1 flex justify-end">
 
                   <Link
@@ -703,8 +707,6 @@ export default function FacultyLoginPage() {
                   </Link>
 
                 </div>
-
-                {/* LOGIN BUTTON */}
 
                 <button
                   type="submit"
@@ -735,10 +737,6 @@ export default function FacultyLoginPage() {
 
               </form>
 
-              {/* =================================================
-                  CREATE ACCOUNT
-              ================================================= */}
-
               <div className="mt-6">
 
                 <div className="relative">
@@ -748,9 +746,11 @@ export default function FacultyLoginPage() {
                   </div>
 
                   <div className="relative flex justify-center">
+
                     <span className="bg-[#0d1625] px-3 text-xs text-slate-600">
                       New to CampusConnect?
                     </span>
+
                   </div>
 
                 </div>
@@ -768,24 +768,16 @@ export default function FacultyLoginPage() {
 
               </div>
 
-              {/* =================================================
-                  BACK TO PORTALS
-              ================================================= */}
-
               <div className="mt-6 text-center">
 
                 <Link
                   href="/"
                   className="text-xs font-medium text-cyan-400 transition hover:text-cyan-300 hover:underline"
                 >
-                  ← Back to CampusConnect Portals
+                  ← Back to CampusConnect
                 </Link>
 
               </div>
-
-              {/* =================================================
-                  SECURITY
-              ================================================= */}
 
               <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-600">
 
@@ -795,11 +787,7 @@ export default function FacultyLoginPage() {
 
               </div>
 
-              {/* =================================================
-                  FOOTER
-              ================================================= */}
-
-              <div className="mt-10 border-t border-white/5 pt-6 text-center">
+              <div className="mt-8 border-t border-white/5 pt-6 text-center">
 
                 <p className="text-xs text-slate-600">
                   CampusConnect Faculty Portal
