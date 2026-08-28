@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Faculty email address is required.",
+          message:
+            "Faculty email address is required.",
         },
         { status: 400 }
       );
@@ -87,17 +88,15 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================
-    // FACULTY SMTP CONFIGURATION
+    // FACULTY SMTP
     // =========================================
 
     const smtpHost =
       process.env.FACULTY_SMTP_HOST?.trim();
 
-    const smtpPortRaw =
-      process.env.FACULTY_SMTP_PORT?.trim() ||
-      "465";
-
-    const smtpPort = Number(smtpPortRaw);
+    const smtpPort = Number(
+      process.env.FACULTY_SMTP_PORT || "465"
+    );
 
     const smtpUser =
       process.env.FACULTY_SMTP_USER?.trim();
@@ -108,47 +107,16 @@ export async function POST(req: NextRequest) {
     const smtpFrom =
       process.env.FACULTY_SMTP_FROM?.trim();
 
-    // =========================================
-    // SMTP VALIDATION
-    // =========================================
-
-    if (!smtpHost) {
-      console.error(
-        "FACULTY SMTP ERROR: FACULTY_SMTP_HOST is missing."
-      );
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Faculty email service is not configured.",
-        },
-        { status: 500 }
-      );
-    }
-
     if (
+      !smtpHost ||
+      !smtpUser ||
+      !smtpPassword ||
       !Number.isInteger(smtpPort) ||
       smtpPort < 1 ||
       smtpPort > 65535
     ) {
       console.error(
-        "FACULTY SMTP ERROR: Invalid SMTP port."
-      );
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Faculty email service has an invalid SMTP port.",
-        },
-        { status: 500 }
-      );
-    }
-
-    if (!smtpUser || !smtpPassword) {
-      console.error(
-        "FACULTY SMTP ERROR: SMTP credentials are missing."
+        "FACULTY SMTP CONFIGURATION IS MISSING OR INVALID."
       );
 
       return NextResponse.json(
@@ -176,7 +144,8 @@ export async function POST(req: NextRequest) {
 
     const token = jwt.sign(
       {
-        purpose: "faculty-password-reset",
+        purpose:
+          "faculty-password-reset",
         userId: faculty.id,
         passwordVersion,
       },
@@ -187,14 +156,16 @@ export async function POST(req: NextRequest) {
     );
 
     // =========================================
-    // DETERMINE CURRENT APP HOST
+    // APPLICATION URL
     //
-    // Uses the host/IP through which the current
-    // request reached the Next.js server.
-    //
-    // This prevents the reset URL from depending
-    // on one fixed local network IP.
+    // IMPORTANT:
+    // NEXT_PUBLIC_APP_URL is used first.
+    // Therefore localhost will not be used
+    // when a proper network URL is configured.
     // =========================================
+
+    const configuredAppUrl =
+      process.env.NEXT_PUBLIC_APP_URL?.trim();
 
     const forwardedHost =
       req.headers.get("x-forwarded-host");
@@ -212,7 +183,10 @@ export async function POST(req: NextRequest) {
         ? "https"
         : "http");
 
-    // Only allow valid protocols.
+    protocol = protocol
+      .split(",")[0]
+      .trim();
+
     if (
       protocol !== "http" &&
       protocol !== "https"
@@ -223,17 +197,13 @@ export async function POST(req: NextRequest) {
           : "http";
     }
 
-    // =========================================
-    // FALLBACK APP URL
-    // =========================================
-
-    const configuredAppUrl =
-      process.env.NEXT_PUBLIC_APP_URL?.trim();
-
-    const appUrl = requestHost
-      ? `${protocol}://${requestHost}`
-      : configuredAppUrl
-        ? configuredAppUrl.replace(/\/+$/, "")
+    const appUrl = configuredAppUrl
+      ? configuredAppUrl.replace(/\/+$/, "")
+      : requestHost
+        ? `${protocol}://${requestHost}`.replace(
+            /\/+$/,
+            ""
+          )
         : "http://localhost:3000";
 
     // =========================================
@@ -245,7 +215,7 @@ export async function POST(req: NextRequest) {
       `?token=${encodeURIComponent(token)}`;
 
     // =========================================
-    // LOG RESET URL
+    // LOG
     // =========================================
 
     console.log(
@@ -276,7 +246,7 @@ export async function POST(req: NextRequest) {
     );
 
     // =========================================
-    // CREATE SMTP TRANSPORTER
+    // SMTP TRANSPORTER
     // =========================================
 
     const transporter =
@@ -292,7 +262,7 @@ export async function POST(req: NextRequest) {
       });
 
     // =========================================
-    // VERIFY SMTP CONNECTION
+    // VERIFY SMTP
     // =========================================
 
     await transporter.verify();
@@ -302,7 +272,7 @@ export async function POST(req: NextRequest) {
     );
 
     // =========================================
-    // SEND FACULTY RESET EMAIL
+    // SEND EMAIL
     // =========================================
 
     await transporter.sendMail({
@@ -478,10 +448,6 @@ export async function POST(req: NextRequest) {
       `,
     });
 
-    // =========================================
-    // SUCCESS LOG
-    // =========================================
-
     console.log(
       "FACULTY RESET EMAIL SENT:",
       faculty.email
@@ -495,7 +461,6 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-
   } catch (error) {
     console.error(
       "FACULTY FORGOT PASSWORD ERROR:",

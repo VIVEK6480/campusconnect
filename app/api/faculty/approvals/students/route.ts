@@ -20,7 +20,8 @@ function getFacultyId(
   request: NextRequest,
   body?: FacultyBody
 ): string | null {
-  const fromHeader = request.headers.get("x-faculty-id")?.trim();
+  const fromHeader =
+    request.headers.get("x-faculty-id")?.trim();
 
   if (fromHeader) {
     return fromHeader;
@@ -76,7 +77,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Faculty account not found or unauthorized.",
+          message:
+            "Faculty account not found or unauthorized.",
         },
         { status: 403 }
       );
@@ -109,17 +111,20 @@ export async function GET(request: NextRequest) {
 
     const pending = students.filter(
       (student) =>
-        String(student.approvalStatus).toUpperCase() === "PENDING"
+        String(student.approvalStatus).toUpperCase() ===
+        "PENDING"
     );
 
     const approved = students.filter(
       (student) =>
-        String(student.approvalStatus).toUpperCase() === "APPROVED"
+        String(student.approvalStatus).toUpperCase() ===
+        "APPROVED"
     );
 
     const rejected = students.filter(
       (student) =>
-        String(student.approvalStatus).toUpperCase() === "REJECTED"
+        String(student.approvalStatus).toUpperCase() ===
+        "REJECTED"
     );
 
     return NextResponse.json({
@@ -152,7 +157,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load student approval requests.",
+        message:
+          "Failed to load student approval requests.",
       },
       { status: 500 }
     );
@@ -166,7 +172,8 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const body = (await request.json()) as ApprovalBody;
+    const body =
+      (await request.json()) as ApprovalBody;
 
     const {
       studentId,
@@ -190,7 +197,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const normalizedAction =
-      String(action || "").trim().toLowerCase() as ApprovalAction;
+      String(action || "")
+        .trim()
+        .toLowerCase() as ApprovalAction;
 
     if (
       normalizedAction !== "approve" &&
@@ -199,7 +208,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Action must be approve or reject.",
+          message:
+            "Action must be approve or reject.",
         },
         { status: 400 }
       );
@@ -209,9 +219,10 @@ export async function PATCH(request: NextRequest) {
        FACULTY ID
     ====================================================== */
 
-    const currentFacultyId = getFacultyId(request, {
-      facultyId,
-    });
+    const currentFacultyId =
+      getFacultyId(request, {
+        facultyId,
+      });
 
     if (!currentFacultyId) {
       return NextResponse.json(
@@ -227,26 +238,29 @@ export async function PATCH(request: NextRequest) {
        FACULTY CHECK
     ====================================================== */
 
-    const faculty = await prisma.user.findUnique({
-      where: {
-        id: currentFacultyId,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
-    });
+    const faculty =
+      await prisma.user.findUnique({
+        where: {
+          id: currentFacultyId,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      });
 
     if (
       !faculty ||
-      String(faculty.role).toUpperCase() !== "FACULTY"
+      String(faculty.role).toUpperCase() !==
+        "FACULTY"
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Only faculty members can approve students.",
+          message:
+            "Only faculty members can approve students.",
         },
         { status: 403 }
       );
@@ -256,27 +270,29 @@ export async function PATCH(request: NextRequest) {
        STUDENT CHECK
     ====================================================== */
 
-    const student = await prisma.user.findUnique({
-      where: {
-        id: studentId,
-      },
-      select: {
-        id: true,
-        campusUserId: true,
-        name: true,
-        email: true,
-        profileImage: true,
-        role: true,
-        approvalStatus: true,
-        createdAt: true,
-        approvedAt: true,
-        rejectionReason: true,
-      },
-    });
+    const student =
+      await prisma.user.findUnique({
+        where: {
+          id: studentId,
+        },
+        select: {
+          id: true,
+          campusUserId: true,
+          name: true,
+          email: true,
+          profileImage: true,
+          role: true,
+          approvalStatus: true,
+          createdAt: true,
+          approvedAt: true,
+          rejectionReason: true,
+        },
+      });
 
     if (
       !student ||
-      String(student.role).toUpperCase() !== "STUDENT"
+      String(student.role).toUpperCase() !==
+        "STUDENT"
     ) {
       return NextResponse.json(
         {
@@ -292,7 +308,9 @@ export async function PATCH(request: NextRequest) {
     ====================================================== */
 
     const currentStatus =
-      String(student.approvalStatus).toUpperCase();
+      String(
+        student.approvalStatus
+      ).toUpperCase();
 
     if (currentStatus !== "PENDING") {
       return NextResponse.json(
@@ -305,46 +323,128 @@ export async function PATCH(request: NextRequest) {
     }
 
     /* =====================================================
+       LOAD STUDENT ACADEMIC INFORMATION
+       
+       StudentRegistration contains:
+       - semester
+       - section
+       - subjectId
+
+       Subject contains:
+       - name
+    ====================================================== */
+
+    const studentRegistrations =
+      await prisma.studentRegistration.findMany({
+        where: {
+          studentId: student.id,
+        },
+        select: {
+          id: true,
+          semester: true,
+          section: true,
+          subjectId: true,
+
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              semester: true,
+            },
+          },
+        },
+        orderBy: [
+          {
+            semester: "asc",
+          },
+          {
+            subject: {
+              name: "asc",
+            },
+          },
+        ],
+      });
+
+    /* =====================================================
+       EXTRACT ACADEMIC INFORMATION
+    ====================================================== */
+
+    const studentSemester =
+      studentRegistrations.length > 0
+        ? studentRegistrations[0].semester
+        : null;
+
+    const studentSection =
+      studentRegistrations.length > 0
+        ? studentRegistrations[0].section
+        : null;
+
+    const studentSubjects =
+      studentRegistrations
+        .map(
+          (registration) =>
+            registration.subject?.name
+        )
+        .filter(
+          (
+            subjectName
+          ): subjectName is string =>
+            Boolean(subjectName)
+        );
+
+    /* =====================================================
        APPROVE STUDENT
     ====================================================== */
 
-    if (normalizedAction === "approve") {
-      const updatedStudent = await prisma.$transaction(
-        async (tx) => {
-          const updated = await tx.user.update({
-            where: {
-              id: studentId,
-            },
-            data: {
-              approvalStatus: "APPROVED",
-              approvedAt: new Date(),
-              rejectionReason: null,
-            },
-            select: {
-              id: true,
-              campusUserId: true,
-              name: true,
-              email: true,
-              profileImage: true,
-              role: true,
-              approvalStatus: true,
-              createdAt: true,
-              approvedAt: true,
-              rejectionReason: true,
-            },
-          });
+    if (
+      normalizedAction === "approve"
+    ) {
+      const updatedStudent =
+        await prisma.$transaction(
+          async (tx) => {
+            const updated =
+              await tx.user.update({
+                where: {
+                  id: studentId,
+                },
 
-          await tx.userApproval.create({
-            data: {
-              userId: studentId,
-              actionById: currentFacultyId,
-              status: "APPROVED",
-            },
-          });
+                data: {
+                  approvalStatus:
+                    "APPROVED",
 
-          return updated;
-        }
-      );
+                  approvedAt:
+                    new Date(),
+
+                  rejectionReason:
+                    null,
+                },
+
+                select: {
+                  id: true,
+                  campusUserId: true,
+                  name: true,
+                  email: true,
+                  profileImage: true,
+                  role: true,
+                  approvalStatus: true,
+                  createdAt: true,
+                  approvedAt: true,
+                  rejectionReason: true,
+                },
+              });
+
+            await tx.userApproval.create({
+              data: {
+                userId: studentId,
+                actionById:
+                  currentFacultyId,
+                status: "APPROVED",
+              },
+            });
+
+            return updated;
+          }
+        );
 
       /* =====================================================
          SEND APPROVAL EMAIL
@@ -352,6 +452,8 @@ export async function PATCH(request: NextRequest) {
          IMPORTANT:
          Existing SMTP mail system is used.
          NO RESEND.
+         
+         Academic information is now passed.
       ====================================================== */
 
       let emailSent = false;
@@ -359,11 +461,28 @@ export async function PATCH(request: NextRequest) {
 
       try {
         await sendStudentApprovalEmail({
-          name: updatedStudent.name,
-          email: updatedStudent.email,
-          userId: updatedStudent.campusUserId || "",
+          name:
+            updatedStudent.name,
+
+          email:
+            updatedStudent.email,
+
+          userId:
+            updatedStudent.campusUserId ||
+            "",
+
           approved: true,
+
           rejectionReason: null,
+
+          semester:
+            studentSemester,
+
+          section:
+            studentSection,
+
+          subjects:
+            studentSubjects,
         });
 
         emailSent = true;
@@ -371,9 +490,23 @@ export async function PATCH(request: NextRequest) {
         console.log(
           "FACULTY STUDENT APPROVAL EMAIL SENT:",
           {
-            studentName: updatedStudent.name,
-            studentEmail: updatedStudent.email,
-            campusUserId: updatedStudent.campusUserId,
+            studentName:
+              updatedStudent.name,
+
+            studentEmail:
+              updatedStudent.email,
+
+            campusUserId:
+              updatedStudent.campusUserId,
+
+            semester:
+              studentSemester,
+
+            section:
+              studentSection,
+
+            subjects:
+              studentSubjects,
           }
         );
       } catch (error) {
@@ -397,7 +530,19 @@ export async function PATCH(request: NextRequest) {
           ? "Student approved successfully and email sent."
           : "Student approved successfully, but email could not be sent.",
 
-        student: updatedStudent,
+        student:
+          updatedStudent,
+
+        academic: {
+          semester:
+            studentSemester,
+
+          section:
+            studentSection,
+
+          subjects:
+            studentSubjects,
+        },
 
         emailSent,
 
@@ -414,53 +559,69 @@ export async function PATCH(request: NextRequest) {
     ====================================================== */
 
     const reason =
-      typeof rejectionReason === "string" &&
+      typeof rejectionReason ===
+        "string" &&
       rejectionReason.trim()
         ? rejectionReason.trim()
         : "Student registration rejected by faculty.";
 
-    const updatedStudent = await prisma.$transaction(
-      async (tx) => {
-        const updated = await tx.user.update({
-          where: {
-            id: studentId,
-          },
-          data: {
-            approvalStatus: "REJECTED",
-            approvedAt: null,
-            rejectionReason: reason,
-          },
-          select: {
-            id: true,
-            campusUserId: true,
-            name: true,
-            email: true,
-            profileImage: true,
-            role: true,
-            approvalStatus: true,
-            createdAt: true,
-            approvedAt: true,
-            rejectionReason: true,
-          },
-        });
+    const updatedStudent =
+      await prisma.$transaction(
+        async (tx) => {
+          const updated =
+            await tx.user.update({
+              where: {
+                id: studentId,
+              },
 
-        await tx.userApproval.create({
-          data: {
-            userId: studentId,
-            actionById: currentFacultyId,
-            status: "REJECTED",
-            rejectionReason: reason,
-          },
-        });
+              data: {
+                approvalStatus:
+                  "REJECTED",
 
-        return updated;
-      }
-    );
+                approvedAt: null,
+
+                rejectionReason:
+                  reason,
+              },
+
+              select: {
+                id: true,
+                campusUserId: true,
+                name: true,
+                email: true,
+                profileImage: true,
+                role: true,
+                approvalStatus: true,
+                createdAt: true,
+                approvedAt: true,
+                rejectionReason: true,
+              },
+            });
+
+          await tx.userApproval.create({
+            data: {
+              userId: studentId,
+
+              actionById:
+                currentFacultyId,
+
+              status: "REJECTED",
+
+              rejectionReason:
+                reason,
+            },
+          });
+
+          return updated;
+        }
+      );
 
     /* =====================================================
        REJECTION EMAIL
        
        Same existing SMTP mail function.
+       
+       Academic information is also passed here.
     ====================================================== */
 
     let emailSent = false;
@@ -468,11 +629,29 @@ export async function PATCH(request: NextRequest) {
 
     try {
       await sendStudentApprovalEmail({
-        name: updatedStudent.name,
-        email: updatedStudent.email,
-        userId: updatedStudent.campusUserId || "",
+        name:
+          updatedStudent.name,
+
+        email:
+          updatedStudent.email,
+
+        userId:
+          updatedStudent.campusUserId ||
+          "",
+
         approved: false,
-        rejectionReason: updatedStudent.rejectionReason,
+
+        rejectionReason:
+          updatedStudent.rejectionReason,
+
+        semester:
+          studentSemester,
+
+        section:
+          studentSection,
+
+        subjects:
+          studentSubjects,
       });
 
       emailSent = true;
@@ -480,9 +659,23 @@ export async function PATCH(request: NextRequest) {
       console.log(
         "FACULTY STUDENT REJECTION EMAIL SENT:",
         {
-          studentName: updatedStudent.name,
-          studentEmail: updatedStudent.email,
-          campusUserId: updatedStudent.campusUserId,
+          studentName:
+            updatedStudent.name,
+
+          studentEmail:
+            updatedStudent.email,
+
+          campusUserId:
+            updatedStudent.campusUserId,
+
+          semester:
+            studentSemester,
+
+          section:
+            studentSection,
+
+          subjects:
+            studentSubjects,
         }
       );
     } catch (error) {
@@ -506,7 +699,19 @@ export async function PATCH(request: NextRequest) {
         ? "Student rejected successfully and email sent."
         : "Student rejected successfully, but email could not be sent.",
 
-      student: updatedStudent,
+      student:
+        updatedStudent,
+
+      academic: {
+        semester:
+          studentSemester,
+
+        section:
+          studentSection,
+
+        subjects:
+          studentSubjects,
+      },
 
       emailSent,
 
@@ -525,7 +730,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update student approval.",
+        message:
+          "Failed to update student approval.",
       },
       { status: 500 }
     );

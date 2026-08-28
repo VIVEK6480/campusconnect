@@ -11,6 +11,7 @@ import {
   CalendarCheck2,
   CalendarDays,
   ChevronRight,
+  ClipboardCheck,
   Clock3,
   GraduationCap,
   MapPin,
@@ -217,13 +218,16 @@ export default function StudentEventsPage() {
         <div className="flex items-center gap-3">
 
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/20">
+
             <GraduationCap
               size={21}
               className="text-white"
             />
+
           </div>
 
           <div>
+
             <p className="text-sm font-bold text-slate-900">
               CampusConnect
             </p>
@@ -231,6 +235,7 @@ export default function StudentEventsPage() {
             <p className="text-[11px] text-emerald-600">
               Student Portal
             </p>
+
           </div>
 
         </div>
@@ -243,11 +248,13 @@ export default function StudentEventsPage() {
           }
           className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50"
         >
+
           {mobileMenu ? (
             <X size={21} />
           ) : (
             <Menu size={21} />
           )}
+
         </button>
 
       </header>
@@ -270,7 +277,9 @@ export default function StudentEventsPage() {
         <div className="flex h-[82px] shrink-0 items-center gap-3 border-b border-white/10 px-6">
 
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/20">
+
             <GraduationCap size={23} />
+
           </div>
 
           <div>
@@ -318,10 +327,19 @@ export default function StudentEventsPage() {
             />
 
             {/* ACTIVITIES - FIXED */}
+
             <SidebarItem
               href="/activities"
               icon={<BookOpen size={18} />}
               label="Activities"
+            />
+
+            {/* ATTENDANCE */}
+
+            <SidebarItem
+              href="/dashboard/student/attendance"
+              icon={<ClipboardCheck size={18} />}
+              label="Attendance"
             />
 
             <SidebarItem
@@ -388,8 +406,13 @@ export default function StudentEventsPage() {
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-red-500/10 hover:text-red-300"
           >
-            <span className="text-lg">↪</span>
+
+            <span className="text-lg">
+              ↪
+            </span>
+
             Logout
+
           </button>
 
         </div>
@@ -502,8 +525,11 @@ export default function StudentEventsPage() {
               <div>
 
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
+
                   <Sparkles size={13} />
+
                   Discover campus life
+
                 </div>
 
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -522,7 +548,9 @@ export default function StudentEventsPage() {
               <div className="flex w-fit items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-5 py-4 backdrop-blur-sm">
 
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-300">
+
                   <CalendarCheck2 size={22} />
+
                 </div>
 
                 <div>
@@ -593,6 +621,7 @@ export default function StudentEventsPage() {
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
               {[1, 2, 3].map((item) => (
+
                 <div
                   key={item}
                   className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
@@ -613,6 +642,7 @@ export default function StudentEventsPage() {
                   </div>
 
                 </div>
+
               ))}
 
             </div>
@@ -624,10 +654,13 @@ export default function StudentEventsPage() {
           ================================================== */}
 
           {!loading && error && (
+
             <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center shadow-sm">
 
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-500">
+
                 <CalendarDays size={25} />
+
               </div>
 
               <h3 className="font-bold text-red-800">
@@ -643,11 +676,15 @@ export default function StudentEventsPage() {
                 onClick={fetchEvents}
                 className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
               >
+
                 <RefreshCw size={16} />
+
                 Try Again
+
               </button>
 
             </div>
+
           )}
 
 
@@ -658,25 +695,33 @@ export default function StudentEventsPage() {
           {!loading &&
             !error &&
             filteredEvents.length === 0 && (
+
               <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
 
                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-500">
+
                   <CalendarDays size={29} />
+
                 </div>
 
                 <h3 className="text-lg font-bold text-slate-900">
+
                   {search
                     ? "No events found"
                     : "No upcoming events"}
+
                 </h3>
 
                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+
                   {search
                     ? "Try searching with a different event name, venue or club."
                     : "New campus events will appear here when they are available."}
+
                 </p>
 
                 {search && (
+
                   <button
                     type="button"
                     onClick={() => setSearch("")}
@@ -684,9 +729,11 @@ export default function StudentEventsPage() {
                   >
                     Clear Search
                   </button>
+
                 )}
 
               </div>
+
             )}
 
 
@@ -697,9 +744,11 @@ export default function StudentEventsPage() {
           {!loading &&
             !error &&
             filteredEvents.length > 0 && (
+
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
                 {filteredEvents.map((event) => (
+
                   <article
                     key={event.id}
                     className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:border-emerald-200 hover:shadow-xl"
@@ -710,13 +759,17 @@ export default function StudentEventsPage() {
                     <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#0b2d22] via-[#0e3b2d] to-[#15513f]">
 
                       {event.image ? (
+
                         <img
                           src={event.image}
                           alt={event.title}
                           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         />
+
                       ) : (
+
                         <>
+
                           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-emerald-300/10" />
 
                           <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-emerald-300/10 blur-2xl" />
@@ -724,11 +777,15 @@ export default function StudentEventsPage() {
                           <div className="flex h-full items-center justify-center">
 
                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-200/10 bg-white/[0.06] text-emerald-200/70 backdrop-blur-sm">
+
                               <CalendarDays size={31} />
+
                             </div>
 
                           </div>
+
                         </>
+
                       )}
 
 
@@ -739,11 +796,15 @@ export default function StudentEventsPage() {
                         <div className="flex w-12 flex-col items-center justify-center bg-emerald-500 px-1 py-2 text-white">
 
                           <span className="text-lg font-bold leading-none">
+
                             {formatDay(event.eventDate)}
+
                           </span>
 
                           <span className="mt-1 text-[9px] font-bold uppercase">
+
                             {formatMonth(event.eventDate)}
+
                           </span>
 
                         </div>
@@ -760,23 +821,31 @@ export default function StudentEventsPage() {
                       <div className="mb-3 flex items-center gap-2">
 
                         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
+
                           <Building2 size={14} />
+
                         </span>
 
                         <span className="truncate text-xs font-semibold text-emerald-600">
+
                           {event.club?.name || "Campus Event"}
+
                         </span>
 
                       </div>
 
 
                       <h3 className="text-lg font-bold text-slate-900 transition group-hover:text-emerald-700">
+
                         {event.title}
+
                       </h3>
 
 
                       <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">
+
                         {event.description}
+
                       </p>
 
 
@@ -785,7 +854,9 @@ export default function StudentEventsPage() {
                         <div className="flex items-center gap-3 text-sm text-slate-500">
 
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-emerald-500">
+
                             <Clock3 size={15} />
+
                           </span>
 
                           <div>
@@ -795,7 +866,9 @@ export default function StudentEventsPage() {
                             </p>
 
                             <p className="font-medium text-slate-700">
+
                               {formatTime(event.eventDate)}
+
                             </p>
 
                           </div>
@@ -806,7 +879,9 @@ export default function StudentEventsPage() {
                         <div className="flex items-center gap-3 text-sm text-slate-500">
 
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-emerald-500">
+
                             <MapPin size={15} />
+
                           </span>
 
                           <div className="min-w-0">
@@ -816,7 +891,9 @@ export default function StudentEventsPage() {
                             </p>
 
                             <p className="truncate font-medium text-slate-700">
+
                               {event.venue}
+
                             </p>
 
                           </div>
@@ -831,7 +908,9 @@ export default function StudentEventsPage() {
                       <div className="mt-5 border-t border-slate-100 pt-4">
 
                         <span className="text-xs font-medium text-slate-400">
+
                           {formatDate(event.eventDate)}
+
                         </span>
 
                       </div>
@@ -839,9 +918,11 @@ export default function StudentEventsPage() {
                     </div>
 
                   </article>
+
                 ))}
 
               </div>
+
             )}
 
         </section>
@@ -906,7 +987,9 @@ function SidebarItem({
             : "text-slate-500 group-hover:text-emerald-300"
         }`}
       >
+
         {icon}
+
       </span>
 
       <span>
@@ -914,10 +997,12 @@ function SidebarItem({
       </span>
 
       {active && (
+
         <ChevronRight
           size={15}
           className="ml-auto text-white/70"
         />
+
       )}
 
     </Link>

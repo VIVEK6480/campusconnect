@@ -15,6 +15,7 @@ import {
   BellRing,
   Check,
   CheckCheck,
+  ClipboardCheck,
   ChevronRight,
   Clock3,
   GraduationCap,
@@ -482,6 +483,17 @@ export default function NotificationsPage() {
                 <ActivityIcon />
               }
               label="Activities"
+              onNavigate={() =>
+                setMobileMenu(false)
+              }
+            />
+
+            <SidebarItem
+              href="/dashboard/student/attendance"
+              icon={
+                <ClipboardCheck size={18} />
+              }
+              label="Attendance"
               onNavigate={() =>
                 setMobileMenu(false)
               }

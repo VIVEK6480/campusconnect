@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
@@ -17,42 +18,21 @@ export async function POST(request: Request) {
         ? body.email.trim().toLowerCase()
         : "";
 
-    const phone =
-      typeof body.phone === "string"
-        ? body.phone.trim()
-        : "";
-
-    const department =
-      typeof body.department === "string"
-        ? body.department.trim()
-        : "";
-
     const password =
       typeof body.password === "string"
         ? body.password
-        : "";
-
-    const role =
-      typeof body.role === "string"
-        ? body.role.trim().toUpperCase()
         : "";
 
     // ==========================================
     // VALIDATION
     // ==========================================
 
-    if (
-      !name ||
-      !email ||
-      !phone ||
-      !department ||
-      !password
-    ) {
+    if (!name || !email || !password) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Name, email, phone, department and password are required.",
+            "Name, email and password are required.",
         },
         { status: 400 }
       );
@@ -62,7 +42,22 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Please enter a valid full name.",
+          message:
+            "Please enter a valid full name.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Please enter a valid email address.",
         },
         { status: 400 }
       );
@@ -80,14 +75,18 @@ export async function POST(request: Request) {
     }
 
     // ==========================================
-    // FACULTY ROLE ONLY
+    // FACULTY ONLY
     // ==========================================
 
-    if (role !== "FACULTY") {
+    if (
+      typeof body.role !== "string" ||
+      body.role.toUpperCase() !== "FACULTY"
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid faculty registration request.",
+          message:
+            "Invalid faculty registration request.",
         },
         { status: 400 }
       );
@@ -97,11 +96,17 @@ export async function POST(request: Request) {
     // CHECK EXISTING EMAIL
     // ==========================================
 
-    const existingUser = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
+    const existingUser =
+      await prisma.user.findUnique({
+        where: {
+          email,
+        },
+        select: {
+          id: true,
+          role: true,
+          approvalStatus: true,
+        },
+      });
 
     if (existingUser) {
       return NextResponse.json(
@@ -118,33 +123,39 @@ export async function POST(request: Request) {
     // HASH PASSWORD
     // ==========================================
 
-    const hashedPassword = await bcrypt.hash(
-      password,
-      10
-    );
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
 
     // ==========================================
-    // CREATE FACULTY
-    // ==========================================
+    // CREATE FACULTY ACCOUNT
     //
-    // Faculty User ID is intentionally NOT generated
-    // during registration.
-    //
-    // It will remain NULL until the faculty account
-    // is approved by the administrator.
-    //
+    // Faculty ID is generated only after approval.
     // ==========================================
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        campusUserId: null,
-        role: "FACULTY",
-        approvalStatus: "PENDING",
-      },
-    });
+    const user =
+      await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+
+          // Faculty ID is generated after approval
+          campusUserId: null,
+
+          role: "FACULTY",
+          approvalStatus: "PENDING",
+        },
+
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          approvalStatus: true,
+          campusUserId: true,
+          createdAt: true,
+        },
+      });
 
     // ==========================================
     // CREATE APPROVAL RECORD
@@ -159,23 +170,15 @@ export async function POST(request: Request) {
     });
 
     // ==========================================
-    // SUCCESS RESPONSE
+    // SUCCESS
     // ==========================================
 
     return NextResponse.json(
       {
         success: true,
         message:
-          "Faculty registration submitted successfully. Your account is waiting for administrator approval.",
-
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          approvalStatus: user.approvalStatus,
-          campusUserId: user.campusUserId,
-        },
+          "Faculty registration submitted successfully. Your account will be reviewed by the administrator. Your Faculty ID will be generated after approval.",
+        user,
       },
       { status: 201 }
     );
@@ -185,12 +188,32 @@ export async function POST(request: Request) {
       error
     );
 
+    // ==========================================
+    // PRISMA UNIQUE ERROR
+    // ==========================================
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "An account with the provided information already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: false,
         message:
           "Something went wrong while creating the faculty account.",
-      },
+        },
       { status: 500 }
     );
   }

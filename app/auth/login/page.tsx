@@ -25,10 +25,6 @@ export default function StudentLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // =========================================================
-  // CLEAR OLD AUTHENTICATION
-  // =========================================================
-
   async function clearAuthentication() {
     try {
       await fetch("/api/auth/logout", {
@@ -47,10 +43,6 @@ export default function StudentLoginPage() {
       console.warn("LOCAL STORAGE CLEANUP ERROR:", error);
     }
   }
-
-  // =========================================================
-  // ROLE BASED REDIRECT
-  // =========================================================
 
   function redirectByRole(role?: string) {
     switch (role) {
@@ -82,11 +74,9 @@ export default function StudentLoginPage() {
     }
   }
 
-  // =========================================================
-  // LOGIN
-  // =========================================================
-
-  async function handleLogin(e: FormEvent<HTMLFormElement>) {
+  async function handleLogin(
+    e: FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
 
     if (loading) {
@@ -97,15 +87,7 @@ export default function StudentLoginPage() {
     setError("");
 
     try {
-      // -------------------------------------------------------
-      // CLEAN PREVIOUS SESSION
-      // -------------------------------------------------------
-
       await clearAuthentication();
-
-      // -------------------------------------------------------
-      // VALIDATION
-      // -------------------------------------------------------
 
       const cleanEmail = email.trim();
 
@@ -118,27 +100,25 @@ export default function StudentLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
-      // LOGIN API
-      // -------------------------------------------------------
-
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        cache: "no-store",
-        body: JSON.stringify({
-          email: cleanEmail.toLowerCase(),
-          campusUserId: cleanEmail.toUpperCase(),
-          password,
-        }),
-      });
-
-      // -------------------------------------------------------
-      // RESPONSE TYPE
-      // -------------------------------------------------------
+      const res = await fetch(
+        "/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          cache: "no-store",
+          body: JSON.stringify({
+            email:
+              cleanEmail.toLowerCase(),
+            campusUserId:
+              cleanEmail.toUpperCase(),
+            password,
+            portal: "student",
+          }),
+        }
+      );
 
       let data: {
         success?: boolean;
@@ -159,22 +139,19 @@ export default function StudentLoginPage() {
         };
       };
 
-      // -------------------------------------------------------
-      // READ RESPONSE
-      // -------------------------------------------------------
-
       try {
         data = await res.json();
       } catch {
-        setError("Invalid response from the server.");
+        setError(
+          "Invalid response from the server."
+        );
         return;
       }
 
-      console.log("LOGIN RESPONSE:", data);
-
-      // -------------------------------------------------------
-      // APPROVAL STATUS
-      // -------------------------------------------------------
+      console.log(
+        "LOGIN RESPONSE:",
+        data
+      );
 
       const approvalStatus =
         data.approvalStatus ||
@@ -184,14 +161,16 @@ export default function StudentLoginPage() {
         data.rejectionReason ||
         data.user?.rejectionReason;
 
-      // -------------------------------------------------------
-      // PENDING
-      // -------------------------------------------------------
-
-      if (approvalStatus === "PENDING") {
+      if (
+        approvalStatus ===
+        "PENDING"
+      ) {
         await clearAuthentication();
 
-        if (data.user?.role === "FACULTY") {
+        if (
+          data.user?.role ===
+          "FACULTY"
+        ) {
           setError(
             "Your faculty account is still waiting for approval."
           );
@@ -204,11 +183,10 @@ export default function StudentLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
-      // REJECTED
-      // -------------------------------------------------------
-
-      if (approvalStatus === "REJECTED") {
+      if (
+        approvalStatus ===
+        "REJECTED"
+      ) {
         await clearAuthentication();
 
         if (rejectionReason) {
@@ -216,17 +194,18 @@ export default function StudentLoginPage() {
             `Your registration was rejected. Reason: ${rejectionReason}`
           );
         } else {
-          setError("Your registration was rejected.");
+          setError(
+            "Your registration was rejected."
+          );
         }
 
         return;
       }
 
-      // -------------------------------------------------------
-      // API ERROR
-      // -------------------------------------------------------
-
-      if (!res.ok || !data.success) {
+      if (
+        !res.ok ||
+        !data.success
+      ) {
         setError(
           data.message ||
             "Invalid email / Campus User ID or password."
@@ -236,10 +215,6 @@ export default function StudentLoginPage() {
 
         return;
       }
-
-      // -------------------------------------------------------
-      // USER CHECK
-      // -------------------------------------------------------
 
       if (!data.user) {
         setError(
@@ -251,11 +226,12 @@ export default function StudentLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
-      // ROLE CHECK
-      // -------------------------------------------------------
-
-      const role = data.user.role;
+      const role =
+        String(
+          data.user.role || ""
+        )
+          .trim()
+          .toUpperCase();
 
       if (!role) {
         setError(
@@ -267,34 +243,61 @@ export default function StudentLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
-      // APPROVAL CHECK
-      //
-      // Keep the existing approval behavior for Student
-      // and Faculty accounts.
-      // -------------------------------------------------------
+      // =====================================================
+      // EXTRA CLIENT-SIDE STUDENT PORTAL PROTECTION
+      // =====================================================
+
+      if (role !== "STUDENT") {
+        await clearAuthentication();
+
+        if (role === "FACULTY") {
+          setError(
+            "This is a faculty account. Please use the Faculty Portal."
+          );
+        } else if (
+          role === "ADMIN" ||
+          role === "SUPER_ADMIN"
+        ) {
+          setError(
+            "This is an administrator account. Please use the Admin Portal."
+          );
+        } else if (
+          role === "COORDINATOR"
+        ) {
+          setError(
+            "This is a coordinator account. Please use the Coordinator Portal."
+          );
+        } else {
+          setError(
+            "This account is not a student account. Please use the correct portal."
+          );
+        }
+
+        return;
+      }
 
       if (
-        (role === "STUDENT" || role === "FACULTY") &&
+        role === "STUDENT" &&
         data.user.approvalStatus &&
-        data.user.approvalStatus !== "APPROVED"
+        data.user.approvalStatus !==
+          "APPROVED"
       ) {
         await clearAuthentication();
 
-        if (data.user.approvalStatus === "PENDING") {
-          if (role === "FACULTY") {
-            setError(
-              "Your faculty account is still waiting for approval."
-            );
-          } else {
-            setError(
-              "Your account is still waiting for Admin/Faculty approval."
-            );
-          }
-        } else if (
-          data.user.approvalStatus === "REJECTED"
+        if (
+          data.user.approvalStatus ===
+          "PENDING"
         ) {
-          if (data.user.rejectionReason) {
+          setError(
+            "Your account is still waiting for Admin/Faculty approval."
+          );
+        } else if (
+          data.user.approvalStatus ===
+          "REJECTED"
+        ) {
+          if (
+            data.user.rejectionReason
+          ) {
             setError(
               `Your registration was rejected. Reason: ${data.user.rejectionReason}`
             );
@@ -312,10 +315,6 @@ export default function StudentLoginPage() {
         return;
       }
 
-      // -------------------------------------------------------
-      // STORE TOKEN
-      // -------------------------------------------------------
-
       if (data.token) {
         localStorage.setItem(
           "token",
@@ -323,18 +322,10 @@ export default function StudentLoginPage() {
         );
       }
 
-      // -------------------------------------------------------
-      // STORE USER
-      // -------------------------------------------------------
-
       localStorage.setItem(
         "user",
         JSON.stringify(data.user)
       );
-
-      // -------------------------------------------------------
-      // SUCCESS
-      // -------------------------------------------------------
 
       console.log(
         "LOGIN SUCCESS:",
@@ -343,16 +334,16 @@ export default function StudentLoginPage() {
         role
       );
 
-      // -------------------------------------------------------
-      // ROLE BASED DASHBOARD
-      // -------------------------------------------------------
-
-      redirectByRole(role);
+      router.replace(
+        "/dashboard/student"
+      );
 
       router.refresh();
-
     } catch (err) {
-      console.error("LOGIN ERROR:", err);
+      console.error(
+        "LOGIN ERROR:",
+        err
+      );
 
       await clearAuthentication();
 
@@ -366,10 +357,6 @@ export default function StudentLoginPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#061512] text-white">
-
-      {/* =====================================================
-          BACKGROUND
-      ====================================================== */}
 
       <div className="absolute inset-0 overflow-hidden">
 
@@ -428,17 +415,9 @@ export default function StudentLoginPage() {
 
       </div>
 
-      {/* =====================================================
-          CONTENT
-      ====================================================== */}
-
       <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-10">
 
         <div className="grid w-full max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/50 backdrop-blur-xl lg:grid-cols-2">
-
-          {/* =================================================
-              LEFT
-          ================================================== */}
 
           <section className="relative hidden min-h-[680px] overflow-hidden border-r border-white/10 bg-gradient-to-br from-emerald-500/15 via-slate-950/60 to-blue-700/15 p-12 lg:flex lg:flex-col lg:justify-between">
 
@@ -546,10 +525,6 @@ export default function StudentLoginPage() {
             </div>
 
           </section>
-
-          {/* =================================================
-              RIGHT
-          ================================================== */}
 
           <section className="flex min-h-[680px] items-center justify-center bg-[#071512]/85 p-6 sm:p-10 lg:p-14">
 

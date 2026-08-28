@@ -1,15 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import Link from "next/link";
+
 import {
   ArrowLeft,
   GraduationCap,
-  Users,
-  Search,
   Mail,
+  Search,
   ShieldCheck,
+  Users,
 } from "lucide-react";
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 type Student = {
   id: string;
@@ -21,43 +30,84 @@ type Student = {
   profileImage?: string | null;
 };
 
+type StudentsApiResponse = {
+  success?: boolean;
+  message?: string;
+  students?: Student[];
+  users?: Student[];
+};
+
+/* =========================================================
+   PAGE
+========================================================= */
+
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [students, setStudents] =
+    useState<Student[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [search, setSearch] =
+    useState("");
+
+  /* =======================================================
+     LOAD STUDENTS
+  ======================================================== */
 
   async function loadStudents() {
-    setLoading(true);
-    setError("");
-
     try {
       const studentToken =
-        localStorage.getItem("studentToken");
+        localStorage.getItem(
+          "studentToken"
+        );
 
       const facultyToken =
-        localStorage.getItem("facultyToken");
+        localStorage.getItem(
+          "facultyToken"
+        );
 
       const token =
-        studentToken || facultyToken;
+        facultyToken ||
+        studentToken;
 
-      const response = await fetch(
-        "/api/students",
-        {
-          method: "GET",
-          headers: token
-            ? {
-                Authorization: `Bearer ${token}`,
-              }
-            : undefined,
-          credentials: "include",
-          cache: "no-store",
-        }
-      );
+      const headers: HeadersInit =
+        token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : {};
 
-      const data = await response.json();
+      const response =
+        await fetch(
+          "/api/students",
+          {
+            method: "GET",
+            headers,
+            credentials:
+              "include",
+            cache: "no-store",
+          }
+        );
 
-      if (!response.ok || !data.success) {
+      let data: StudentsApiResponse =
+        {};
+
+      try {
+        data =
+          await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (
+        !response.ok ||
+        !data.success
+      ) {
         setError(
           data.message ||
             "Unable to load students."
@@ -65,17 +115,24 @@ export default function StudentsPage() {
         return;
       }
 
-      setStudents(
-        Array.isArray(data.students)
+      const studentList =
+        Array.isArray(
+          data.students
+        )
           ? data.students
-          : Array.isArray(data.users)
+          : Array.isArray(
+              data.users
+            )
           ? data.users
-          : []
+          : [];
+
+      setStudents(
+        studentList
       );
-    } catch (err) {
+    } catch (loadError) {
       console.error(
         "STUDENTS LOAD ERROR:",
-        err
+        loadError
       );
 
       setError(
@@ -86,32 +143,154 @@ export default function StudentsPage() {
     }
   }
 
+  /* =======================================================
+     INITIAL LOAD
+  ======================================================== */
+
   useEffect(() => {
-    loadStudents();
+    let cancelled = false;
+
+    async function fetchStudents() {
+      try {
+        const studentToken =
+          localStorage.getItem(
+            "studentToken"
+          );
+
+        const facultyToken =
+          localStorage.getItem(
+            "facultyToken"
+          );
+
+        const token =
+          facultyToken ||
+          studentToken;
+
+        const headers: HeadersInit =
+          token
+            ? {
+                Authorization:
+                  `Bearer ${token}`,
+              }
+            : {};
+
+        const response =
+          await fetch(
+            "/api/students",
+            {
+              method: "GET",
+              headers,
+              credentials:
+                "include",
+              cache: "no-store",
+            }
+          );
+
+        let data: StudentsApiResponse =
+          {};
+
+        try {
+          data =
+            await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+          if (!cancelled) {
+            setError(
+              data.message ||
+                "Unable to load students."
+            );
+          }
+
+          return;
+        }
+
+        const studentList =
+          Array.isArray(
+            data.students
+          )
+            ? data.students
+            : Array.isArray(
+                data.users
+              )
+            ? data.users
+            : [];
+
+        if (!cancelled) {
+          setStudents(
+            studentList
+          );
+        }
+      } catch (loadError) {
+        console.error(
+          "STUDENTS LOAD ERROR:",
+          loadError
+        );
+
+        if (!cancelled) {
+          setError(
+            "Unable to connect to the server."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void fetchStudents();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  /* =======================================================
+     FILTER
+  ======================================================== */
+
   const filteredStudents =
-    students.filter((student) => {
-      const value = search
-        .trim()
-        .toLowerCase();
+    students.filter(
+      (student) => {
+        const value =
+          search
+            .trim()
+            .toLowerCase();
 
-      if (!value) {
-        return true;
+        if (!value) {
+          return true;
+        }
+
+        return (
+          String(
+            student.name || ""
+          )
+            .toLowerCase()
+            .includes(value) ||
+          String(
+            student.email || ""
+          )
+            .toLowerCase()
+            .includes(value) ||
+          String(
+            student.campusUserId ||
+              ""
+          )
+            .toLowerCase()
+            .includes(value)
+        );
       }
+    );
 
-      return (
-        String(student.name || "")
-          .toLowerCase()
-          .includes(value) ||
-        String(student.email || "")
-          .toLowerCase()
-          .includes(value) ||
-        String(student.campusUserId || "")
-          .toLowerCase()
-          .includes(value)
-      );
-    });
+  /* =======================================================
+     JSX
+  ======================================================== */
 
   return (
     <div className="min-h-screen bg-[#f5f8f7] text-slate-900">
@@ -125,7 +304,11 @@ export default function StudentsPage() {
         <div className="flex items-center gap-3">
 
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-lg shadow-emerald-500/20">
-            <GraduationCap size={21} />
+
+            <GraduationCap
+              size={21}
+            />
+
           </div>
 
           <div>
@@ -144,14 +327,15 @@ export default function StudentsPage() {
 
         <div className="hidden items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-600 sm:flex">
 
-          <ShieldCheck size={15} />
+          <ShieldCheck
+            size={15}
+          />
 
           Campus Access
 
         </div>
 
       </header>
-
 
       {/* =====================================================
           MAIN
@@ -166,22 +350,23 @@ export default function StudentsPage() {
           className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-emerald-600"
         >
 
-          <ArrowLeft size={16} />
+          <ArrowLeft
+            size={16}
+          />
 
           Back to Student Dashboard
 
         </Link>
 
-
-        {/* =================================================
-            PAGE HEADER
-        ================================================== */}
+        {/* PAGE HEADER */}
 
         <div className="mb-7">
 
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600">
 
-            <Users size={14} />
+            <Users
+              size={14}
+            />
 
             Students
 
@@ -192,16 +377,14 @@ export default function StudentsPage() {
           </h1>
 
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            View student information available through
+            View student information
+            available through
             CampusConnect.
           </p>
 
         </div>
 
-
-        {/* =================================================
-            SEARCH
-        ================================================== */}
+        {/* SEARCH */}
 
         <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
 
@@ -216,31 +399,32 @@ export default function StudentsPage() {
               type="text"
               placeholder="Search by name, email or Campus User ID..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
+              onChange={(
+                event
+              ) =>
+                setSearch(
+                  event.target
+                    .value
+                )
               }
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
             />
 
           </div>
 
         </div>
 
-
-        {/* =================================================
-            ERROR
-        ================================================== */}
+        {/* ERROR */}
 
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-600">
-            {error}
+            {
+              error
+            }
           </div>
         )}
 
-
-        {/* =================================================
-            STUDENT CARD
-        ================================================== */}
+        {/* STUDENT DIRECTORY */}
 
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
@@ -253,22 +437,34 @@ export default function StudentsPage() {
               </h2>
 
               <p className="mt-1 text-xs text-slate-500">
-                {filteredStudents.length} student
-                {filteredStudents.length === 1
-                  ? ""
-                  : "s"} found
+
+                {
+                  filteredStudents.length
+                }{" "}
+                student
+                {
+                  filteredStudents.length ===
+                  1
+                    ? ""
+                    : "s"
+                }{" "}
+                found
+
               </p>
 
             </div>
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500">
 
-              <Users size={20} />
+              <Users
+                size={20}
+              />
 
             </div>
 
           </div>
 
+          {/* LOADING */}
 
           {loading ? (
 
@@ -290,7 +486,9 @@ export default function StudentsPage() {
 
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
 
-                <Users size={25} />
+                <Users
+                  size={25}
+                />
 
               </div>
 
@@ -299,8 +497,10 @@ export default function StudentsPage() {
               </h3>
 
               <p className="mt-2 max-w-md text-sm text-slate-500">
-                No student records are available or
-                no students match your search.
+                No student records
+                are available or
+                no students match
+                your search.
               </p>
 
             </div>
@@ -312,7 +512,9 @@ export default function StudentsPage() {
               {filteredStudents.map(
                 (student) => (
                   <div
-                    key={student.id}
+                    key={
+                      student.id
+                    }
                     className="p-6 transition hover:bg-slate-50"
                   >
 
@@ -341,7 +543,9 @@ export default function StudentsPage() {
                               student.name ||
                               "S"
                             )
-                              .charAt(0)
+                              .charAt(
+                                0
+                              )
                               .toUpperCase()
 
                           )}
@@ -351,18 +555,26 @@ export default function StudentsPage() {
                         <div>
 
                           <h3 className="font-bold text-slate-900">
-                            {student.name ||
-                              "Unnamed Student"}
+                            {
+                              student.name ||
+                              "Unnamed Student"
+                            }
                           </h3>
 
                           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
 
                             <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
 
-                              <Mail size={14} />
+                              <Mail
+                                size={
+                                  14
+                                }
+                              />
 
-                              {student.email ||
-                                "No email available"}
+                              {
+                                student.email ||
+                                "No email available"
+                              }
 
                             </span>
 
@@ -372,15 +584,16 @@ export default function StudentsPage() {
 
                             Campus ID:{" "}
 
-                            {student.campusUserId ||
-                              "Not assigned"}
+                            {
+                              student.campusUserId ||
+                              "Not assigned"
+                            }
 
                           </p>
 
                         </div>
 
                       </div>
-
 
                       <div className="flex items-center">
 
@@ -407,15 +620,14 @@ export default function StudentsPage() {
 
         </div>
 
-
-        {/* =================================================
-            FOOTER
-        ================================================== */}
+        {/* FOOTER */}
 
         <footer className="mt-8 border-t border-slate-200 py-6">
 
           <p className="text-center text-xs text-slate-400">
-            © 2026 CampusConnect. Smart Campus Management.
+            © 2026 CampusConnect.
+            Smart Campus
+            Management.
           </p>
 
         </footer>

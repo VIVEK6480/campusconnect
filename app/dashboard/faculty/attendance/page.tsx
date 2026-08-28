@@ -1,141 +1,576 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
 import {
-  ArrowLeft,
+  Bell,
   CalendarDays,
+  CheckCircle2,
+  ChevronRight,
   ClipboardCheck,
+  GraduationCap,
+  LogOut,
+  Menu,
+  Settings,
   Users,
+  X,
 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function FacultyAttendancePage() {
+type FacultyUser = {
+  name?: string;
+  email?: string;
+  facultyId?: string;
+  campusUserId?: string | null;
+  role?: string;
+};
+
+const navigation = [
+  {
+    title: "Dashboard",
+    href: "/dashboard/faculty",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Students",
+    href: "/dashboard/faculty/students",
+    icon: Users,
+  },
+  {
+    title: "Student Approval",
+    href: "/dashboard/faculty/approvals/students",
+    icon: CheckCircle2,
+  },
+  {
+    title: "Attendance",
+    href: "/dashboard/faculty/attendance",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Events",
+    href: "/dashboard/faculty/events",
+    icon: CalendarDays,
+  },
+  {
+    title: "Faculty Profile",
+    href: "/dashboard/faculty/profile",
+    icon: Users,
+  },
+];
+
+export default function FacultyAttendanceLandingPage() {
+  const router = useRouter();
+
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [attendanceMenuOpen, setAttendanceMenuOpen] = useState(true);
+  const [user, setUser] = useState<FacultyUser>({});
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const raw =
+          localStorage.getItem("facultyUser") ||
+          localStorage.getItem("faculty") ||
+          localStorage.getItem("currentFaculty");
+
+        if (raw) {
+          setUser(JSON.parse(raw) as FacultyUser);
+        }
+      } catch {}
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const facultyName = user.name || "Faculty Member";
+  const facultyId =
+    user.facultyId || user.campusUserId || "RNT-9457";
+
+  const initials =
+    facultyName
+      .split(" ")
+      .filter(Boolean)
+      .map((p) => p[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "FM";
+
+  function logout() {
+    try {
+      [
+        "facultyUser",
+        "faculty",
+        "currentFaculty",
+        "token",
+        "facultyToken",
+        "user",
+      ].forEach((key) => localStorage.removeItem(key));
+    } catch {}
+
+    router.replace("/faculty/login");
+  }
+
   return (
-    <main className="min-h-screen bg-[#edf4fa] px-4 py-6 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-[1500px]">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fa] text-[#0d1728]">
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          onClick={() => setMobileSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
+        />
+      )}
 
-        <Link
-          href="/dashboard/faculty"
-          className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#3989b7] hover:text-[#1d658d]"
-        >
-          <ArrowLeft size={17} />
-          Back to Faculty Dashboard
-        </Link>
-
-        <section className="rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] p-7 text-white shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:p-9">
-
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      {/* SIDEBAR */}
+      <aside
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[270px] flex-col border-r border-[#23344d] bg-[#0b1423] text-white shadow-[8px_0_35px_rgba(5,15,30,0.16)] transition-transform duration-300 lg:translate-x-0 ${
+          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* LOGO */}
+        <div className="flex h-[92px] shrink-0 items-center border-b border-[#223149] px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#54bce5]">
+              <GraduationCap size={25} className="text-white" />
+            </div>
 
             <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3 py-1.5 text-xs font-semibold text-[#76d0f1]">
-                <ClipboardCheck size={14} />
-                Faculty Attendance
-              </div>
-
-              <h1 className="font-serif text-3xl font-bold sm:text-4xl">
-                Attendance Management
+              <h1 className="font-serif text-[19px] font-bold text-white">
+                CampusConnect
               </h1>
 
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a7b7c9]">
-                Record and monitor attendance for students assigned to you.
+              <p className="text-[11px] text-[#91a4bb]">
+                Faculty Portal
               </p>
             </div>
-
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#54bce5]/25 bg-[#15273b]">
-              <ClipboardCheck
-                size={32}
-                strokeWidth={1.6}
-                className="text-[#67bfe6]"
-              />
-            </div>
-
-          </div>
-        </section>
-
-        <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-
-          <div className="rounded-[20px] border border-[#d8e3ed] bg-white p-5 shadow-[0_7px_22px_rgba(30,60,90,0.05)]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-[#687c93]">
-                  Total Students
-                </p>
-                <p className="mt-2 text-3xl font-bold text-[#0b1728]">
-                  0
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf7fc] text-[#4ba4d2]">
-                <Users size={20} />
-              </div>
-            </div>
           </div>
 
-          <div className="rounded-[20px] border border-[#d8e3ed] bg-white p-5 shadow-[0_7px_22px_rgba(30,60,90,0.05)]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-[#687c93]">
-                  Attendance Records
-                </p>
-                <p className="mt-2 text-3xl font-bold text-[#0b1728]">
-                  0
-                </p>
-              </div>
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="ml-auto rounded-lg p-2 text-[#8fa3bb] lg:hidden"
+          >
+            <X size={19} />
+          </button>
+        </div>
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf7fc] text-[#4ba4d2]">
-                <ClipboardCheck size={20} />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[20px] border border-[#d8e3ed] bg-white p-5 shadow-[0_7px_22px_rgba(30,60,90,0.05)]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-[#687c93]">
-                  Today
-                </p>
-                <p className="mt-2 text-lg font-bold text-[#0b1728]">
-                  {new Date().toLocaleDateString()}
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf7fc] text-[#4ba4d2]">
-                <CalendarDays size={20} />
-              </div>
-            </div>
-          </div>
-
-        </section>
-
-        <section className="mt-6 rounded-[20px] border border-[#d9e4ee] bg-white p-6 shadow-[0_8px_25px_rgba(30,60,90,0.06)]">
-
-          <h2 className="font-serif text-xl font-bold text-[#142238]">
-            Attendance Records
-          </h2>
-
-          <p className="mt-2 text-sm text-[#72849a]">
-            Attendance records will appear here once students are assigned
-            and attendance data is available.
+        {/* NAVIGATION */}
+        <div className="flex-1 overflow-y-auto px-4 py-7">
+          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
+            Main Menu
           </p>
 
-          <div className="mt-6 rounded-xl border border-dashed border-[#cbd9e5] bg-[#fafcfe] px-5 py-10 text-center">
-            <ClipboardCheck
-              size={30}
-              className="mx-auto text-[#8aa5bb]"
-              strokeWidth={1.5}
-            />
+          <nav className="space-y-1.5">
+            {navigation.map((item) => {
+              const Icon = item.icon;
 
-            <p className="mt-3 text-sm font-semibold text-[#41566d]">
-              No attendance records yet
-            </p>
+              if (item.title === "Attendance") {
+                return (
+                  <div key={item.title} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAttendanceMenuOpen((v) => !v)
+                      }
+                      className="flex h-11 w-full items-center gap-3 rounded-xl bg-[#17263a] px-3.5 text-left text-[13px] font-medium text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
+                    >
+                      <Icon size={18} />
 
-            <p className="mt-1 text-xs text-[#8194a8]">
-              Attendance data will be displayed here.
-            </p>
+                      <span className="flex-1">
+                        Attendance
+                      </span>
+
+                      <ChevronRight
+                        size={16}
+                        className={`transition-transform ${
+                          attendanceMenuOpen ? "rotate-90" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {attendanceMenuOpen && (
+                      <div className="ml-3 border-l border-[#2b3d55] pl-2">
+                        <Link
+                          href="/dashboard/faculty/attendance/class"
+                          onClick={() =>
+                            setMobileSidebarOpen(false)
+                          }
+                          className="flex h-10 items-center rounded-lg px-3 text-[11px] font-semibold text-[#aab9ca] transition hover:bg-[#142135] hover:text-white"
+                        >
+                          Mark Class Attendance
+                        </Link>
+
+                        <Link
+                          href="/dashboard/faculty/attendance/event"
+                          onClick={() =>
+                            setMobileSidebarOpen(false)
+                          }
+                          className="flex h-10 items-center rounded-lg px-3 text-[11px] font-semibold text-[#aab9ca] transition hover:bg-[#142135] hover:text-white"
+                        >
+                          Mark Event Attendance
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  onClick={() =>
+                    setMobileSidebarOpen(false)
+                  }
+                  className="flex h-11 items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
+                >
+                  <Icon size={18} />
+                  {item.title}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="my-7 h-px bg-[#24344a]" />
+
+          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
+            Account
+          </p>
+
+          <Link
+            href="/dashboard/faculty/security"
+            className="flex h-11 items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
+          >
+            <Settings size={18} />
+            Account Security
+          </Link>
+
+          <button
+            type="button"
+            onClick={logout}
+            className="flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
+          >
+            <LogOut size={18} />
+            Sign Out
+          </button>
+        </div>
+
+        {/* FACULTY PROFILE */}
+        <div className="border-t border-[#223149] p-4">
+          <div className="flex items-center gap-3 rounded-xl bg-[#111e31] px-3 py-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-xs font-bold text-white">
+              {initials}
+            </div>
+
+            <div className="min-w-0">
+              <p className="truncate text-[12px] font-semibold text-white">
+                {facultyName}
+              </p>
+
+              <p className="text-[10px] text-[#8296ae]">
+                Faculty
+              </p>
+            </div>
           </div>
+        </div>
+      </aside>
 
-        </section>
+      {/* MAIN AREA */}
+      <div className="min-h-screen lg:pl-[270px]">
+        {/* HEADER */}
+        <header className="sticky top-0 z-30 h-[86px] border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
+          <div className="flex h-full items-center justify-between px-5 sm:px-6">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileSidebarOpen(true)
+                }
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white lg:hidden"
+              >
+                <Menu size={20} />
+              </button>
 
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
+                  Faculty Portal
+                </p>
+
+                <p className="mt-1 text-[11px] text-[#71839a]">
+                  Attendance management workspace
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white"
+              >
+                <Bell size={18} />
+              </button>
+
+              <button
+                type="button"
+                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white sm:flex"
+              >
+                <Settings size={18} />
+              </button>
+
+              <div className="hidden items-center gap-2 sm:flex">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-xs font-bold text-white">
+                  {initials}
+                </div>
+
+                <div>
+                  <p className="text-[12px] font-semibold">
+                    {facultyName}
+                  </p>
+
+                  <p className="text-[10px] text-[#72849a]">
+                    Faculty
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* PAGE CONTENT */}
+        <main className="min-h-[calc(100vh-86px)] bg-[#edf4fa] px-5 py-7 sm:px-6">
+          {/* FIX:
+              Removed max-width + mx-auto.
+              Page now uses the complete available width.
+          */}
+          <div className="w-full">
+            {/* BANNER */}
+            <section className="relative overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9">
+              <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
+
+              <div className="relative z-10 flex items-center justify-between gap-6">
+                <div>
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
+                    <ClipboardCheck size={14} />
+                    Faculty Attendance
+                  </div>
+
+                  <h1 className="font-serif text-[34px] font-bold text-white sm:text-[43px]">
+                    Attendance Management
+                  </h1>
+
+                  <p className="mt-3 text-sm leading-6 text-[#a7b7c9]">
+                    Choose the attendance type you want to
+                    manage.
+                  </p>
+
+                  <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3.5 py-2 text-[11px] text-[#b3c0d0]">
+                    Faculty ID:
+                    <span className="font-bold text-white">
+                      {facultyId}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.setProperty("--glow-opacity", "1");
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.setProperty("--glow-opacity", "0");
+                  }}
+                  className="
+                    group relative hidden h-[92px] w-[92px] cursor-pointer
+                    items-center justify-center overflow-hidden
+                    rounded-[21px] border border-[#54bce5]/25
+                    bg-[#15273b]/90 text-[#67bfe6]
+                    shadow-[0_10px_30px_rgba(0,0,0,0.12)]
+                    transition-all duration-300 ease-out
+                    hover:-translate-y-1 hover:scale-105
+                    hover:border-[#54bce5]
+                    hover:shadow-[0_0_0_5px_rgba(84,188,229,0.10),0_18px_45px_rgba(84,188,229,0.30)]
+                    active:scale-100
+                    sm:flex
+                  "
+                  style={
+                    {
+                      "--mouse-x": "50%",
+                      "--mouse-y": "50%",
+                      "--glow-opacity": "0",
+                    } as React.CSSProperties
+                  }
+                >
+                  {/* Cursor-following glow */}
+                  <span
+                    aria-hidden="true"
+                    className="
+                      pointer-events-none absolute inset-0 rounded-[21px]
+                      transition-opacity duration-150
+                    "
+                    style={{
+                      background:
+                        "radial-gradient(circle 42px at var(--mouse-x) var(--mouse-y), rgba(84,188,229,0.55), rgba(84,188,229,0.16) 38%, transparent 72%)",
+                      opacity: "var(--glow-opacity)",
+                    }}
+                  />
+
+                  {/* Inner highlight */}
+                  <span
+                    aria-hidden="true"
+                    className="
+                      pointer-events-none absolute inset-[1px] rounded-[20px]
+                      border border-white/0 transition-all duration-200
+                      group-hover:border-white/20
+                    "
+                  />
+
+                  <ClipboardCheck
+                    size={46}
+                    strokeWidth={1.8}
+                    className="
+                      relative z-10 transition-all duration-300 ease-out
+                      group-hover:scale-110
+                      group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.55)]
+                    "
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* ATTENDANCE OPTIONS */}
+            <section className="mt-5 grid gap-5 md:grid-cols-2">
+              {/* CLASS */}
+              <Link
+                href="/dashboard/faculty/attendance/class"
+                className="
+                  group relative overflow-hidden rounded-[20px]
+                  border border-[#d9e4ee] bg-white p-7
+                  shadow-[0_8px_25px_rgba(30,60,90,0.06)]
+                  transition-all duration-300 ease-out
+                  hover:-translate-y-1
+                  hover:border-[#69b9df]
+                  hover:shadow-[0_14px_34px_rgba(30,60,90,0.12),0_0_0_1px_rgba(105,185,223,0.22)]
+                "
+              >
+                <div className="flex items-center justify-between">
+                  <div className="
+                      flex h-12 w-12 items-center justify-center rounded-2xl
+                      bg-[#eef8fc] text-[#3989b7]
+                      transition-all duration-300 ease-out
+                      group-hover:bg-[#69b9df]
+                      group-hover:text-white
+                      group-hover:shadow-[0_6px_18px_rgba(105,185,223,0.30)]
+                      group-hover:scale-105
+                    ">
+                    <Users size={22} />
+                  </div>
+
+                  <span
+                    className="
+                      flex h-10 w-10 items-center justify-center rounded-xl
+                      bg-[#eef8fc] text-[#7e94a8]
+                      transition-all duration-300 ease-out
+                      group-hover:bg-[#69b9df]
+                      group-hover:text-white
+                      group-hover:shadow-[0_6px_18px_rgba(105,185,223,0.28)]
+                      group-hover:translate-x-0.5
+                    "
+                  >
+                    <ChevronRight size={20} />
+                  </span>
+                </div>
+
+                <h2 className="mt-6 font-serif text-[24px] font-bold text-[#142238]">
+                  Mark Class Attendance
+                </h2>
+
+                <p className="mt-2 text-[13px] leading-6 text-[#72849a]">
+                  Select semester, section and subject,
+                  then mark multiple students at once.
+                </p>
+              </Link>
+
+              {/* EVENT */}
+              <Link
+                href="/dashboard/faculty/attendance/event"
+                className="
+                  group relative overflow-hidden rounded-[20px]
+                  border border-[#d9e4ee] bg-white p-7
+                  shadow-[0_8px_25px_rgba(30,60,90,0.06)]
+                  transition-all duration-300 ease-out
+                  hover:-translate-y-1
+                  hover:border-[#69b9df]
+                  hover:shadow-[0_14px_34px_rgba(30,60,90,0.12),0_0_0_1px_rgba(105,185,223,0.22)]
+                "
+              >
+                <div className="flex items-center justify-between">
+                  <div className="
+                      flex h-12 w-12 items-center justify-center rounded-2xl
+                      bg-[#eef8fc] text-[#3989b7]
+                      transition-all duration-300 ease-out
+                      group-hover:bg-[#69b9df]
+                      group-hover:text-white
+                      group-hover:shadow-[0_6px_18px_rgba(105,185,223,0.30)]
+                      group-hover:scale-105
+                    ">
+                    <CalendarDays size={22} />
+                  </div>
+
+                  <span
+                    className="
+                      flex h-10 w-10 items-center justify-center rounded-xl
+                      bg-[#eef8fc] text-[#7e94a8]
+                      transition-all duration-300 ease-out
+                      group-hover:bg-[#69b9df]
+                      group-hover:text-white
+                      group-hover:shadow-[0_6px_18px_rgba(105,185,223,0.28)]
+                      group-hover:translate-x-0.5
+                    "
+                  >
+                    <ChevronRight size={20} />
+                  </span>
+                </div>
+
+                <h2 className="mt-6 font-serif text-[24px] font-bold text-[#142238]">
+                  Mark Event Attendance
+                </h2>
+
+                <p className="mt-2 text-[13px] leading-6 text-[#72849a]">
+                  Select an event and mark multiple
+                  students present or absent in one action.
+                </p>
+              </Link>
+            </section>
+
+            {/* INFORMATION PANEL */}
+            <section className="mt-5 rounded-[20px] border border-[#d9e4ee] bg-white p-5 shadow-[0_8px_25px_rgba(30,60,90,0.05)]">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eef8fc] text-[#3989b7]">
+                  <ClipboardCheck size={18} />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-[#263a51]">
+                    Attendance options
+                  </h3>
+
+                  <p className="mt-1 text-xs leading-5 text-[#72849a]">
+                    Use Class Attendance for regular classes
+                    and Event Attendance for campus events.
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
       </div>
-    </main>
+    </div>
   );
 }

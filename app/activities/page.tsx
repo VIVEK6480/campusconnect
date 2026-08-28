@@ -19,6 +19,7 @@ import {
   Sparkles,
   MapPin,
   RefreshCw,
+  ClipboardCheck,
 } from "lucide-react";
 
 type Activity = {
@@ -269,6 +270,17 @@ export default function ActivitiesPage() {
               icon={<BookOpen size={18} />}
               label="Activities"
               active
+              onNavigate={() => setMobileMenu(false)}
+            />
+
+            {/* ==================================================
+                ATTENDANCE - ADDED ONLY
+            =================================================== */}
+
+            <SidebarItem
+              href="/dashboard/student/attendance"
+              icon={<ClipboardCheck size={18} />}
+              label="Attendance"
               onNavigate={() => setMobileMenu(false)}
             />
 

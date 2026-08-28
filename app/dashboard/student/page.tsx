@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Bell,
   BookOpen,
+  ClipboardCheck,
   Users,
   Clock3,
   ArrowRight,
@@ -1092,6 +1093,19 @@ export default function StudentDashboard() {
             />
 
             <SidebarItem
+              href="/dashboard/student/attendance"
+              icon={
+                <ClipboardCheck
+                  size={18}
+                />
+              }
+              label="Attendance"
+              onNavigate={
+                closeMobileMenu
+              }
+            />
+
+            <SidebarItem
               href="/notifications"
               icon={
                 <Bell
@@ -1310,13 +1324,18 @@ export default function StudentDashboard() {
 
               </div>
 
-              <Link
-                href="/events"
-                className="inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-800 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+              <button
+                type="button"
+                onClick={() => void loadDashboard(true)}
+                disabled={refreshing}
+                className="inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-800 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Explore Events
-                <ArrowRight size={17} />
-              </Link>
+                <RefreshCw
+                  size={17}
+                  className={refreshing ? "animate-spin" : ""}
+                />
+                {refreshing ? "Refreshing..." : "Refresh"}
+              </button>
 
             </div>
 
@@ -1478,6 +1497,17 @@ export default function StudentDashboard() {
                 }
                 title="Activities"
                 description="Track your participation and campus activities."
+              />
+
+              <FeatureCard
+                href="/dashboard/student/attendance"
+                icon={
+                  <ClipboardCheck
+                    size={22}
+                  />
+                }
+                title="Attendance"
+                description="Check your subject-wise academic attendance and attendance history."
               />
 
               <FeatureCard
@@ -1801,42 +1831,6 @@ export default function StudentDashboard() {
               )}
 
             </div>
-
-          </div>
-
-          {/* =================================================
-              REFRESH
-          ================================================== */}
-
-          <div className="mt-6 flex justify-end">
-
-            <button
-              type="button"
-              onClick={() =>
-                void loadDashboard(
-                  true
-                )
-              }
-              disabled={
-                refreshing
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-
-              <RefreshCw
-                size={14}
-                className={
-                  refreshing
-                    ? "animate-spin"
-                    : ""
-                }
-              />
-
-              {refreshing
-                ? "Refreshing..."
-                : "Refresh Dashboard"}
-
-            </button>
 
           </div>
 

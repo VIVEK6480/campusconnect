@@ -11,6 +11,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronRight,
+  ClipboardCheck,
   GraduationCap,
   LogOut,
   Menu,
@@ -593,6 +594,21 @@ export default function ClubsPage() {
                 <BookOpenIcon />
               }
               label="Activities"
+              onNavigate={() =>
+                setMobileMenu(false)
+              }
+            />
+
+            {/* =================================================
+                ATTENDANCE
+            ================================================== */}
+
+            <SidebarItem
+              href="/dashboard/student/attendance"
+              icon={
+                <ClipboardCheck size={18} />
+              }
+              label="Attendance"
               onNavigate={() =>
                 setMobileMenu(false)
               }

@@ -1,71 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
-import { sendFacultyApprovalEmail } from "@/lib/sendFacultyApprovalEmail";
 
-interface ApprovalRequestBody {
+/* ======================================================
+   TYPES
+====================================================== */
+
+type AdminTokenPayload = JwtPayload & {
+  id?: string;
+  userId?: string;
+  role?: string;
+};
+
+type ApprovalRequestBody = {
   userId?: string;
   action?: "APPROVE" | "REJECT";
   rejectionReason?: string;
-}
+};
 
-interface AdminTokenPayload {
-  id: string;
-  email: string;
-  role: string;
-}
+/* ======================================================
+   AUTHENTICATE ADMIN
+====================================================== */
 
-// ======================================================
-// ADMIN AUTHENTICATION
-// ======================================================
+function getToken(
+  request: NextRequest
+): string | null {
+  const authorization =
+    request.headers.get("authorization");
+
+  if (
+    authorization?.startsWith("Bearer ")
+  ) {
+    const token =
+      authorization
+        .slice(7)
+        .trim();
+
+    if (token) {
+      return token;
+    }
+  }
+
+  return (
+    request.cookies.get("token")?.value ??
+    null
+  );
+}
 
 async function authenticateAdmin(
   request: NextRequest
-):
-  Promise<
-    | {
-        success: true;
-        admin: AdminTokenPayload;
-      }
-    | {
-        success: false;
-        response: NextResponse;
-      }
-  > {
+) {
   try {
-    const authorization =
-      request.headers.get("authorization");
-
-    let token: string | undefined;
-
-    if (
-      authorization &&
-      authorization.startsWith("Bearer ")
-    ) {
-      token = authorization
-        .substring(7)
-        .trim();
-    }
-
-    if (!token) {
-      token =
-        request.cookies.get("token")?.value;
-    }
+    const token =
+      getToken(request);
 
     if (!token) {
       return {
-        success: false,
+        success: false as const,
         response: NextResponse.json(
           {
             success: false,
-            message: "Unauthorized",
+            message:
+              "Authentication token is required.",
           },
-          { status: 401 }
+          {
+            status: 401,
+          }
         ),
       };
     }
 
-    const secret = process.env.JWT_SECRET;
+    const secret =
+      process.env.JWT_SECRET;
 
     if (!secret) {
       console.error(
@@ -73,14 +79,16 @@ async function authenticateAdmin(
       );
 
       return {
-        success: false,
+        success: false as const,
         response: NextResponse.json(
           {
             success: false,
             message:
               "Authentication system is not configured.",
           },
-          { status: 500 }
+          {
+            status: 500,
+          }
         ),
       };
     }
@@ -91,25 +99,32 @@ async function authenticateAdmin(
         secret
       ) as AdminTokenPayload;
 
+    const role =
+      String(
+        decoded.role ?? ""
+      ).toUpperCase();
+
     if (
-      decoded.role !== "ADMIN" &&
-      decoded.role !== "SUPER_ADMIN"
+      role !== "ADMIN" &&
+      role !== "SUPER_ADMIN"
     ) {
       return {
-        success: false,
+        success: false as const,
         response: NextResponse.json(
           {
             success: false,
             message:
               "Administrator access required.",
           },
-          { status: 403 }
+          {
+            status: 403,
+          }
         ),
       };
     }
 
     return {
-      success: true,
+      success: true as const,
       admin: decoded,
     };
   } catch (error) {
@@ -119,21 +134,23 @@ async function authenticateAdmin(
     );
 
     return {
-      success: false,
+      success: false as const,
       response: NextResponse.json(
         {
           success: false,
           message: "Unauthorized",
         },
-        { status: 401 }
+        {
+          status: 401,
+        }
       ),
     };
   }
 }
 
-// ======================================================
-// GET - LOAD ALL FACULTY APPROVAL REQUESTS
-// ======================================================
+/* ======================================================
+   GET - LOAD ALL FACULTY APPROVAL REQUESTS
+====================================================== */
 
 export async function GET(
   request: NextRequest
@@ -161,6 +178,13 @@ export async function GET(
           campusUserId: true,
           name: true,
           email: true,
+
+          /*
+            phone and department are intentionally
+            NOT selected because they do not exist
+            in the current Prisma User model.
+          */
+
           profileImage: true,
           role: true,
           createdAt: true,
@@ -173,19 +197,22 @@ export async function GET(
     const pending =
       faculty.filter(
         (user) =>
-          user.approvalStatus === "PENDING"
+          user.approvalStatus ===
+          "PENDING"
       );
 
     const approved =
       faculty.filter(
         (user) =>
-          user.approvalStatus === "APPROVED"
+          user.approvalStatus ===
+          "APPROVED"
       );
 
     const rejected =
       faculty.filter(
         (user) =>
-          user.approvalStatus === "REJECTED"
+          user.approvalStatus ===
+          "REJECTED"
       );
 
     return NextResponse.json(
@@ -194,13 +221,19 @@ export async function GET(
         faculty,
 
         stats: {
-          pending: pending.length,
-          approved: approved.length,
-          rejected: rejected.length,
-          total: faculty.length,
+          pending:
+            pending.length,
+          approved:
+            approved.length,
+          rejected:
+            rejected.length,
+          total:
+            faculty.length,
         },
       },
-      { status: 200 }
+      {
+        status: 200,
+      }
     );
   } catch (error) {
     console.error(
@@ -214,14 +247,16 @@ export async function GET(
         message:
           "Unable to load faculty approval requests.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
 
-// ======================================================
-// POST - APPROVE / REJECT FACULTY
-// ======================================================
+/* ======================================================
+   POST - APPROVE / REJECT FACULTY
+====================================================== */
 
 export async function POST(
   request: NextRequest
@@ -237,25 +272,40 @@ export async function POST(
     const body =
       (await request.json()) as ApprovalRequestBody;
 
-    const userId = body.userId;
-    const action = body.action;
+    const userId =
+      typeof body.userId === "string"
+        ? body.userId.trim()
+        : "";
+
+    const action =
+      body.action;
 
     const rejectionReason =
-      body.rejectionReason?.trim();
+      typeof body.rejectionReason ===
+      "string"
+        ? body.rejectionReason.trim()
+        : "";
 
-    // ==================================================
-    // VALIDATION
-    // ==================================================
+    /* ==================================================
+       VALIDATE USER ID
+    ================================================== */
 
     if (!userId) {
       return NextResponse.json(
         {
           success: false,
-          message: "User ID is required.",
+          message:
+            "User ID is required.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
+
+    /* ==================================================
+       VALIDATE ACTION
+    ================================================== */
 
     if (
       action !== "APPROVE" &&
@@ -264,11 +314,18 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid approval action.",
+          message:
+            "Invalid approval action.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
+
+    /* ==================================================
+       REJECTION REASON REQUIRED
+    ================================================== */
 
     if (
       action === "REJECT" &&
@@ -280,13 +337,15 @@ export async function POST(
           message:
             "Rejection reason is required.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
-    // ==================================================
-    // FIND FACULTY
-    // ==================================================
+    /* ==================================================
+       FIND FACULTY
+    ================================================== */
 
     const existingFaculty =
       await prisma.user.findUnique({
@@ -299,8 +358,19 @@ export async function POST(
           campusUserId: true,
           name: true,
           email: true,
+
+          /*
+            Do not add phone or department here.
+            Those fields are not present in the
+            current Prisma User model.
+          */
+
+          profileImage: true,
           role: true,
           approvalStatus: true,
+          approvedAt: true,
+          rejectionReason: true,
+          createdAt: true,
         },
       });
 
@@ -311,16 +381,21 @@ export async function POST(
           message:
             "Faculty member not found.",
         },
-        { status: 404 }
+        {
+          status: 404,
+        }
       );
     }
 
-    // ==================================================
-    // FACULTY CHECK
-    // ==================================================
+    /* ==================================================
+       MAKE SURE USER IS FACULTY
+    ================================================== */
 
     if (
-      existingFaculty.role !== "FACULTY"
+      String(
+        existingFaculty.role
+      ).toUpperCase() !==
+      "FACULTY"
     ) {
       return NextResponse.json(
         {
@@ -328,66 +403,15 @@ export async function POST(
           message:
             "Selected user is not a faculty member.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
-    // ==================================================
-    // GENERATE FACULTY USER ID ON APPROVAL
-    // ==================================================
-
-    let facultyUserId =
-      existingFaculty.campusUserId;
-
-    if (
-      action === "APPROVE" &&
-      !facultyUserId
-    ) {
-      let uniqueId = "";
-
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const randomNumber =
-          Math.floor(
-            1000 +
-              Math.random() * 9000
-          );
-
-        const candidate =
-          `RNT-${randomNumber}`;
-
-        const existing =
-          await prisma.user.findUnique({
-            where: {
-              campusUserId: candidate,
-            },
-            select: {
-              id: true,
-            },
-          });
-
-        if (!existing) {
-          uniqueId = candidate;
-          break;
-        }
-      }
-
-      if (!uniqueId) {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "Unable to generate a unique faculty User ID. Please try again.",
-          },
-          { status: 500 }
-        );
-      }
-
-      facultyUserId = uniqueId;
-    }
-
-    // ==================================================
-    // UPDATE FACULTY APPROVAL
-    // ==================================================
+    /* ==================================================
+       UPDATE APPROVAL STATUS
+    ================================================== */
 
     const updatedFaculty =
       await prisma.user.update({
@@ -400,11 +424,6 @@ export async function POST(
             action === "APPROVE"
               ? "APPROVED"
               : "REJECTED",
-
-          campusUserId:
-            action === "APPROVE"
-              ? facultyUserId
-              : existingFaculty.campusUserId,
 
           approvedAt:
             action === "APPROVE"
@@ -424,47 +443,13 @@ export async function POST(
           email: true,
           profileImage: true,
           role: true,
-          createdAt: true,
           approvalStatus: true,
           approvedAt: true,
           rejectionReason: true,
+          createdAt: true,
+          updatedAt: true,
         },
       });
-
-    // ==================================================
-    // SEND FACULTY APPROVAL EMAIL
-    // ==================================================
-
-    try {
-      await sendFacultyApprovalEmail({
-        name: updatedFaculty.name,
-        email: updatedFaculty.email,
-        userId:
-          updatedFaculty.campusUserId ||
-          updatedFaculty.id,
-        approved:
-          action === "APPROVE",
-        rejectionReason:
-          updatedFaculty.rejectionReason,
-      });
-
-      console.log(
-        `FACULTY ${action} EMAIL SENT:`,
-        updatedFaculty.email
-      );
-    } catch (emailError) {
-      console.error(
-        "FACULTY APPROVAL EMAIL ERROR:",
-        emailError
-      );
-
-      // Approval/rejection is already saved.
-      // Email failure should not undo the database update.
-    }
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
 
     return NextResponse.json(
       {
@@ -475,11 +460,12 @@ export async function POST(
             ? "Faculty approved successfully."
             : "Faculty rejected successfully.",
 
-        faculty: updatedFaculty,
-
-        emailSent: true,
+        faculty:
+          updatedFaculty,
       },
-      { status: 200 }
+      {
+        status: 200,
+      }
     );
   } catch (error) {
     console.error(
@@ -491,9 +477,11 @@ export async function POST(
       {
         success: false,
         message:
-          "Unable to update faculty approval.",
+          "Unable to update faculty approval status.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

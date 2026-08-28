@@ -119,7 +119,7 @@ const quickAccess = [
   },
 ];
 
-export default function FacultyDashboardPage() {
+function FacultyDashboardPage() {
   const router = useRouter();
 
   const [user, setUser] = useState<FacultyUser>(defaultFaculty);
@@ -1127,3 +1127,5 @@ function QuickAccessCard({
     </Link>
   );
 }
+
+export default FacultyDashboardPage;
