@@ -38,6 +38,7 @@ function normalize(value: unknown): string {
 
 function semesterNumber(value: unknown): number {
   const match = String(value ?? "").match(/\d+/);
+
   return match ? Number(match[0]) : 0;
 }
 
@@ -45,14 +46,59 @@ function sectionKey(value: unknown): string {
   return normalize(value).replace(/^SECTION\s+/, "");
 }
 
-function normalizeStatus(value: unknown): AttendanceStatus {
+function normalizeStatus(
+  value: unknown
+): AttendanceStatus {
   const status = normalize(value);
 
-  if (status === "ABSENT") return "Absent";
-  if (status === "LATE") return "Late";
-  if (status === "EXCUSED") return "Excused";
+  if (status === "ABSENT") {
+    return "Absent";
+  }
+
+  if (status === "LATE") {
+    return "Late";
+  }
+
+  if (status === "EXCUSED") {
+    return "Excused";
+  }
 
   return "Present";
+}
+
+/* =========================================================
+   DATE HELPERS
+
+   Attendance system is used as a DATE-BASED system.
+
+   IST is used so that old records created locally and
+   records created after deployment do not disappear because
+   of timezone conversion.
+========================================================= */
+
+const APP_TIME_ZONE = "Asia/Kolkata";
+
+function formatDateKey(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const year =
+    parts.find((part) => part.type === "year")
+      ?.value ?? "";
+
+  const month =
+    parts.find((part) => part.type === "month")
+      ?.value ?? "";
+
+  const day =
+    parts.find((part) => part.type === "day")
+      ?.value ?? "";
+
+  return `${year}-${month}-${day}`;
 }
 
 /*
@@ -60,7 +106,9 @@ function normalizeStatus(value: unknown): AttendanceStatus {
   YYYY-MM-DD
   MM/DD/YYYY
 */
-function parseDate(value: string | null): Date | null {
+function normalizeDateParam(
+  value: string | null
+): string | null {
   if (!value) {
     return null;
   }
@@ -71,67 +119,89 @@ function parseDate(value: string | null): Date | null {
     return null;
   }
 
+  /*
+    HTML date input:
+    YYYY-MM-DD
+  */
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    const [year, month, day] = trimmed
-      .split("-")
-      .map(Number);
-
-    return new Date(year, month - 1, day);
+    return trimmed;
   }
 
+  /*
+    MM/DD/YYYY
+  */
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
-    const [month, day, year] = trimmed
-      .split("/")
-      .map(Number);
+    const [month, day, year] =
+      trimmed.split("/");
 
-    return new Date(year, month - 1, day);
+    return `${year}-${month}-${day}`;
   }
 
-  const date = new Date(trimmed);
+  const parsed = new Date(trimmed);
 
-  if (Number.isNaN(date.getTime())) {
+  if (Number.isNaN(parsed.getTime())) {
     return null;
   }
 
+  return formatDateKey(parsed);
+}
+
+/*
+  Create a stable date-only value.
+
+  This is only used when creating a new ClassSession.
+*/
+function getTodayDateOnly(): Date {
+  const now = new Date();
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const year = Number(
+    parts.find((part) => part.type === "year")
+      ?.value
+  );
+
+  const month = Number(
+    parts.find((part) => part.type === "month")
+      ?.value
+  );
+
+  const day = Number(
+    parts.find((part) => part.type === "day")
+      ?.value
+  );
+
   return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+      0,
+      0,
+      0,
+      0
+    )
   );
 }
 
-function getDateRange(date: Date) {
-  const start = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    0,
-    0,
-    0,
-    0
-  );
+/* =========================================================
+   AUTH HELPERS
+========================================================= */
 
-  const end = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate() + 1,
-    0,
-    0,
-    0,
-    0
-  );
-
-  return {
-    start,
-    end,
-  };
-}
-
-function getToken(request: NextRequest): string | null {
+function getToken(
+  request: NextRequest
+): string | null {
   const authorization =
     request.headers.get("authorization");
 
-  if (authorization?.startsWith("Bearer ")) {
+  if (
+    authorization?.startsWith("Bearer ")
+  ) {
     const token = authorization
       .slice(7)
       .trim();
@@ -141,14 +211,19 @@ function getToken(request: NextRequest): string | null {
     }
   }
 
-  return request.cookies.get("token")?.value ?? null;
+  return (
+    request.cookies.get("token")
+      ?.value ?? null
+  );
 }
 
 function getUserId(
   request: NextRequest
 ): string | null {
   const token = getToken(request);
-  const secret = process.env.JWT_SECRET;
+
+  const secret =
+    process.env.JWT_SECRET;
 
   if (!token || !secret) {
     return null;
@@ -211,6 +286,7 @@ async function requireFaculty(
       where: {
         id: userId,
       },
+
       select: {
         id: true,
         name: true,
@@ -273,9 +349,11 @@ async function getRegisteredStudents(
         semester,
         subjectId,
       },
+
       select: {
         studentId: true,
         section: true,
+
         student: {
           select: {
             id: true,
@@ -288,6 +366,7 @@ async function getRegisteredStudents(
           },
         },
       },
+
       orderBy: {
         student: {
           name: "asc",
@@ -295,19 +374,24 @@ async function getRegisteredStudents(
       },
     });
 
-  const wantedSection = sectionKey(section);
+  const wantedSection =
+    sectionKey(section);
 
   return registrations
     .filter((registration) => {
       return (
-        sectionKey(registration.section) ===
-          wantedSection &&
+        sectionKey(
+          registration.section
+        ) === wantedSection &&
         String(
           registration.student.role
         ).toUpperCase() === "STUDENT"
       );
     })
-    .map((registration) => registration.student);
+    .map(
+      (registration) =>
+        registration.student
+    );
 }
 
 /* =========================================================
@@ -338,12 +422,25 @@ async function getSubjects(
 
 /* =========================================================
    GET
+
+   Used for:
+
+   1. Loading registered students
+   2. Loading Attendance History
+
+   IMPORTANT:
+   History uses:
+   Semester + Section + Subject + Date
+
+   Date filtering is done safely after loading the session
+   records so timezone differences do not hide attendance.
 ========================================================= */
 
 export async function GET(
   request: NextRequest
 ) {
-  const auth = await requireFaculty(request);
+  const auth =
+    await requireFaculty(request);
 
   if (!auth.ok) {
     return auth.response;
@@ -369,7 +466,8 @@ export async function GET(
       searchParams.get("status") ?? "";
 
     const search =
-      searchParams.get("search")?.trim() ?? "";
+      searchParams.get("search")
+        ?.trim() ?? "";
 
     const semester =
       semesterNumber(semesterParam);
@@ -378,18 +476,21 @@ export async function GET(
       sectionKey(sectionParam);
 
     const selectedDate =
-      parseDate(dateParam);
+      normalizeDateParam(dateParam);
+
+    /* ================================================
+       SUBJECTS
+    ================================================= */
 
     const subjects =
       await getSubjects(
         semester || undefined
       );
 
-    /*
-      Students remain empty until:
-      Semester + Section + Subject
-      are selected.
-    */
+    /* ================================================
+       REGISTERED STUDENTS
+    ================================================= */
+
     let students: Awaited<
       ReturnType<typeof getRegisteredStudents>
     > = [];
@@ -404,6 +505,7 @@ export async function GET(
           where: {
             id: subjectId,
           },
+
           select: {
             id: true,
             name: true,
@@ -443,9 +545,16 @@ export async function GET(
         );
     }
 
-    /*
-      Build exact attendance filter.
-    */
+    /* ================================================
+       HISTORY SESSION FILTER
+
+       Semester + Section + Subject come from
+       the upper attendance selection.
+
+       We DO NOT use a direct DateTime database range here,
+       because old records can have timezone differences.
+    ================================================= */
+
     const sessionWhere: Record<
       string,
       unknown
@@ -454,88 +563,25 @@ export async function GET(
     };
 
     if (semester) {
-      sessionWhere.semester = semester;
+      sessionWhere.semester =
+        semester;
     }
 
     if (section) {
-      sessionWhere.section = section;
+      sessionWhere.section =
+        section;
     }
 
     if (subjectId) {
-      sessionWhere.subjectId = subjectId;
+      sessionWhere.subjectId =
+        subjectId;
     }
 
-    if (selectedDate) {
-      const { start, end } =
-        getDateRange(selectedDate);
-
-      sessionWhere.sessionDate = {
-        gte: start,
-        lt: end,
-      };
-    }
-
-    const attendanceWhere: Record<
-      string,
-      unknown
-    > = {
-      session: sessionWhere,
-    };
-
-    /*
-      Optional status filter.
-    */
-    if (
-      statusParam &&
-      statusParam.toUpperCase() !== "ALL"
-    ) {
-      attendanceWhere.status =
-        normalizeStatus(statusParam);
-    }
-
-    /*
-      Optional student search.
-    */
-    if (search) {
-      attendanceWhere.OR = [
-        {
-          student: {
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        },
-        {
-          student: {
-            email: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        },
-        {
-          student: {
-            campusUserId: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        },
-        {
-          subject: {
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        },
-      ];
-    }
-
-    const attendance =
+    const rawAttendance =
       await prisma.classAttendance.findMany({
-        where: attendanceWhere,
+        where: {
+          session: sessionWhere,
+        },
 
         select: {
           id: true,
@@ -592,13 +638,129 @@ export async function GET(
         ],
       });
 
+    /* ================================================
+       DATE FILTER
+
+       Match selected date against:
+
+       1. sessionDate
+       2. markedAt
+
+       This makes old and new attendance records work.
+    ================================================= */
+
+    let attendance =
+      rawAttendance;
+
+    if (selectedDate) {
+      attendance =
+        attendance.filter((record) => {
+          const sessionDateKey =
+            formatDateKey(
+              record.session.sessionDate
+            );
+
+          const markedDateKey =
+            formatDateKey(
+              record.markedAt
+            );
+
+          return (
+            sessionDateKey ===
+              selectedDate ||
+            markedDateKey ===
+              selectedDate
+          );
+        });
+    }
+
+    /* ================================================
+       STATUS FILTER
+    ================================================= */
+
+    if (
+      statusParam &&
+      statusParam.toUpperCase() !==
+        "ALL"
+    ) {
+      const wantedStatus =
+        normalizeStatus(statusParam);
+
+      attendance =
+        attendance.filter(
+          (record) =>
+            record.status ===
+            wantedStatus
+        );
+    }
+
+    /* ================================================
+       SEARCH FILTER
+    ================================================= */
+
+    if (search) {
+      const searchValue =
+        search.toLowerCase();
+
+      attendance =
+        attendance.filter((record) => {
+          return (
+            record.student.name
+              .toLowerCase()
+              .includes(
+                searchValue
+              ) ||
+            record.student.email
+              .toLowerCase()
+              .includes(
+                searchValue
+              ) ||
+            (record.student.campusUserId ??
+              "")
+              .toLowerCase()
+              .includes(
+                searchValue
+              ) ||
+            record.subject.name
+              .toLowerCase()
+              .includes(
+                searchValue
+              )
+          );
+        });
+    }
+
     return NextResponse.json(
       {
         success: true,
+
         attendance,
+
         students,
+
         subjects,
-        count: attendance.length,
+
+        count:
+          attendance.length,
+
+        filters: {
+          semester:
+            semester || null,
+
+          section:
+            section || null,
+
+          subjectId:
+            subjectId || null,
+
+          date:
+            selectedDate,
+
+          status:
+            statusParam || "ALL",
+
+          search,
+        },
       },
       { status: 200 }
     );
@@ -621,12 +783,18 @@ export async function GET(
 
 /* =========================================================
    POST
+
+   Mark attendance.
+
+   Unchecked students = Absent
+   Checked students = selected status
 ========================================================= */
 
 export async function POST(
   request: NextRequest
 ) {
-  const auth = await requireFaculty(request);
+  const auth =
+    await requireFaculty(request);
 
   if (!auth.ok) {
     return auth.response;
@@ -643,7 +811,9 @@ export async function POST(
       sectionKey(body.section);
 
     const subjectId =
-      String(body.subjectId ?? "").trim();
+      String(
+        body.subjectId ?? ""
+      ).trim();
 
     const presentStudentIds =
       Array.isArray(
@@ -653,7 +823,8 @@ export async function POST(
             (
               id
             ): id is string =>
-              typeof id === "string" &&
+              typeof id ===
+                "string" &&
               id.trim().length > 0
           )
         : [];
@@ -694,11 +865,16 @@ export async function POST(
       );
     }
 
+    /* ================================================
+       VALIDATE SUBJECT
+    ================================================= */
+
     const subject =
       await prisma.subject.findUnique({
         where: {
           id: subjectId,
         },
+
         select: {
           id: true,
           name: true,
@@ -730,6 +906,10 @@ export async function POST(
       );
     }
 
+    /* ================================================
+       REGISTERED STUDENTS
+    ================================================= */
+
     const registeredStudents =
       await getRegisteredStudents(
         semester,
@@ -753,19 +933,24 @@ export async function POST(
     const registeredIds =
       new Set(
         registeredStudents.map(
-          (student) => student.id
+          (student) =>
+            student.id
         )
       );
 
     const uniquePresentIds =
       Array.from(
-        new Set(presentStudentIds)
+        new Set(
+          presentStudentIds
+        )
       );
 
     const invalidStudentIds =
       uniquePresentIds.filter(
         (studentId) =>
-          !registeredIds.has(studentId)
+          !registeredIds.has(
+            studentId
+          )
       );
 
     if (
@@ -781,42 +966,104 @@ export async function POST(
       );
     }
 
-    const now = new Date();
+    const now =
+      new Date();
 
-    const sessionDate =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      );
+    const todayKey =
+      formatDateKey(now);
 
-    const classSession =
-      await prisma.classSession.upsert({
+    /* ================================================
+       FIND TODAY'S EXISTING SESSION
+
+       We search by date key instead of depending only on
+       exact DateTime equality.
+
+       This prevents duplicate sessions caused by timezone
+       differences.
+    ================================================= */
+
+    const possibleSessions =
+      await prisma.classSession.findMany({
         where: {
-          facultyId_subjectId_semester_section_sessionDate:
-            {
-              facultyId:
-                auth.faculty.id,
-              subjectId,
-              semester,
-              section,
-              sessionDate,
-            },
-        },
-
-        update: {
-          updatedAt: now,
-        },
-
-        create: {
           facultyId:
             auth.faculty.id,
+
           subjectId,
+
           semester,
+
           section,
-          sessionDate,
+        },
+
+        select: {
+          id: true,
+          facultyId: true,
+          subjectId: true,
+          semester: true,
+          section: true,
+          sessionDate: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+
+        orderBy: {
+          createdAt: "desc",
         },
       });
+
+    let classSession =
+      possibleSessions.find(
+        (session) =>
+          formatDateKey(
+            session.sessionDate
+          ) === todayKey
+      );
+
+    /* ================================================
+       CREATE SESSION IF NOT FOUND
+    ================================================= */
+
+    if (!classSession) {
+      classSession =
+        await prisma.classSession.create({
+          data: {
+            facultyId:
+              auth.faculty.id,
+
+            subjectId,
+
+            semester,
+
+            section,
+
+            sessionDate:
+              getTodayDateOnly(),
+          },
+        });
+    } else {
+      classSession =
+        await prisma.classSession.update({
+          where: {
+            id:
+              classSession.id,
+          },
+
+          data: {
+            updatedAt:
+              now,
+          },
+        });
+    }
+
+    /* ================================================
+       SAVE ATTENDANCE
+
+       Selected students:
+       Present / selected status
+
+       Unselected students:
+       Absent
+    ================================================= */
 
     await prisma.$transaction(
       registeredStudents.map(
@@ -833,33 +1080,45 @@ export async function POST(
 
           return prisma.classAttendance.upsert({
             where: {
-              sessionId_studentId: {
-                sessionId:
-                  classSession.id,
-                studentId:
-                  student.id,
-              },
+              sessionId_studentId:
+                {
+                  sessionId:
+                    classSession.id,
+
+                  studentId:
+                    student.id,
+                },
             },
 
             update: {
               subjectId,
               status,
-              markedAt: now,
+              markedAt:
+                now,
             },
 
             create: {
               sessionId:
                 classSession.id,
+
               studentId:
                 student.id,
+
               subjectId,
+
               status,
-              markedAt: now,
+
+              markedAt:
+                now,
             },
           });
         }
       )
     );
+
+    /* ================================================
+       FETCH SAVED RECORDS
+    ================================================= */
 
     const savedAttendance =
       await prisma.classAttendance.findMany({
@@ -919,11 +1178,16 @@ export async function POST(
     return NextResponse.json(
       {
         success: true,
+
         message:
           "Class attendance marked successfully.",
-        session: classSession,
+
+        session:
+          classSession,
+
         attendance:
           savedAttendance,
+
         count:
           savedAttendance.length,
       },

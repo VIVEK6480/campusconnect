@@ -26,12 +26,11 @@ export default function proxy(req: NextRequest) {
     "/api/admin/login",
   ];
 
-  const isPublicApiRoute =
-    publicApiRoutes.some(
-      (route) =>
-        pathname === route ||
-        pathname.startsWith(`${route}/`)
-    );
+  const isPublicApiRoute = publicApiRoutes.some(
+    (route) =>
+      pathname === route ||
+      pathname.startsWith(`${route}/`)
+  );
 
   // =========================================================
   // PUBLIC API
@@ -46,8 +45,7 @@ export default function proxy(req: NextRequest) {
   // =========================================================
 
   const isFacultyApprovalApi =
-    pathname ===
-      "/api/admin/approvals/Faculty" ||
+    pathname === "/api/admin/approvals/Faculty" ||
     pathname.startsWith(
       "/api/admin/approvals/Faculty/"
     );
@@ -61,8 +59,7 @@ export default function proxy(req: NextRequest) {
   // =========================================================
 
   const isStudentApprovalApi =
-    pathname ===
-      "/api/admin/approvals/students" ||
+    pathname === "/api/admin/approvals/students" ||
     pathname.startsWith(
       "/api/admin/approvals/students/"
     );
@@ -91,7 +88,8 @@ export default function proxy(req: NextRequest) {
   // =========================================================
 
   if (!token) {
-    token = req.cookies.get("token")?.value;
+    token =
+      req.cookies.get("token")?.value;
   }
 
   // =========================================================

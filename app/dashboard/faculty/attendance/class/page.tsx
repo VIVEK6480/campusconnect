@@ -177,12 +177,14 @@ function formatTime(value: string) {
 function getLocalDateKey(value: string) {
   if (!value) return "";
 
-  const directDate = value.slice(0, 10);
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(directDate)) {
-    return directDate;
+  // A date input already has the exact YYYY-MM-DD value we need.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
   }
 
+  // For ISO timestamps, convert to the browser's local calendar date.
+  // Do not use value.slice(0, 10), because UTC serialization can move a
+  // midnight class session to the previous calendar day.
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -290,13 +292,15 @@ export default function FacultyAttendancePage() {
   async function fetchData(
     semester = selectedSemester,
     section = selectedSection,
-    subjectId = selectedSubject
+    subjectId = selectedSubject,
+    date = ""
   ): Promise<ApiResponse> {
     const params = new URLSearchParams();
 
     if (semester) params.set("semester", semester);
     if (section) params.set("section", section);
     if (subjectId) params.set("subjectId", subjectId);
+    if (date) params.set("date", date);
 
     const query = params.toString();
     const url = query
@@ -481,7 +485,12 @@ export default function FacultyAttendancePage() {
     setError("");
 
     try {
-      const data = await fetchData();
+      const data = await fetchData(
+        selectedSemester,
+        selectedSection,
+        selectedSubject,
+        showingHistory ? dateFilter : ""
+      );
       applyLoadedData(data);
     } catch (refreshError) {
       console.error("FACULTY CLASS ATTENDANCE REFRESH ERROR:", refreshError);
@@ -520,7 +529,8 @@ export default function FacultyAttendancePage() {
       const data = await fetchData(
         selectedSemester,
         selectedSection,
-        selectedSubject
+        selectedSubject,
+        dateFilter
       );
 
       applyLoadedData(data);
