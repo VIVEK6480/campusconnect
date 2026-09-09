@@ -20,19 +20,47 @@ import {
   KeyRound,
 } from "lucide-react";
 
+type LoginUser = {
+  id?: string;
+  campusUserId?: string | null;
+  name?: string;
+  email?: string;
+  role?: string;
+  profileImage?: string | null;
+  approvalStatus?: string;
+  rejectionReason?: string | null;
+};
+
+type LoginResponse = {
+  success?: boolean;
+  message?: string;
+  token?: string;
+  approvalStatus?: string;
+  rejectionReason?: string | null;
+  user?: LoginUser;
+};
+
 export default function FacultyLoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] =
-    useState(false);
-  const [loading, setLoading] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   // =========================================================
   // CLEAR OLD AUTHENTICATION
+  // =========================================================
+  //
+  // CampusConnect uses custom JWT authentication.
+  //
+  // We clear:
+  // 1. Old token cookie through logout API
+  // 2. Old localStorage token
+  // 3. Old localStorage user
+  //
+  // We DO NOT use next-auth session here.
   // =========================================================
 
   async function clearAuthentication() {
@@ -43,10 +71,7 @@ export default function FacultyLoginPage() {
         cache: "no-store",
       });
     } catch (error) {
-      console.warn(
-        "AUTH CLEANUP ERROR:",
-        error
-      );
+      console.warn("AUTH CLEANUP ERROR:", error);
     }
 
     try {
@@ -77,11 +102,19 @@ export default function FacultyLoginPage() {
     setError("");
 
     try {
+      // -------------------------------------------------------
+      // REMOVE PREVIOUS SESSION
+      // -------------------------------------------------------
+
       await clearAuthentication();
 
-      const cleanEmail = email.trim();
+      // -------------------------------------------------------
+      // CLEAN LOGIN VALUE
+      // -------------------------------------------------------
 
-      if (!cleanEmail || !password) {
+      const cleanLogin = email.trim();
+
+      if (!cleanLogin || !password) {
         setError(
           "Email / Faculty User ID and password are required."
         );
@@ -90,45 +123,36 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      const res = await fetch(
-        "/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          credentials: "include",
-          cache: "no-store",
-          body: JSON.stringify({
-            email:
-              cleanEmail.toLowerCase(),
-            campusUserId:
-              cleanEmail.toUpperCase(),
-            password,
-            portal: "faculty",
-          }),
-        }
-      );
+      // -------------------------------------------------------
+      // LOGIN API
+      // -------------------------------------------------------
 
-      let data: {
-        success?: boolean;
-        message?: string;
-        token?: string;
-        approvalStatus?: string;
-        rejectionReason?: string | null;
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
 
-        user?: {
-          id?: string;
-          campusUserId?: string | null;
-          name?: string;
-          email?: string;
-          role?: string;
-          profileImage?: string | null;
-          approvalStatus?: string;
-          rejectionReason?: string | null;
-        };
-      };
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        // IMPORTANT:
+        // This allows the browser to receive/send
+        // the HTTP-only JWT cookie.
+        credentials: "include",
+
+        cache: "no-store",
+
+        body: JSON.stringify({
+          email: cleanLogin,
+          password,
+          portal: "faculty",
+        }),
+      });
+
+      // -------------------------------------------------------
+      // READ RESPONSE
+      // -------------------------------------------------------
+
+      let data: LoginResponse;
 
       try {
         data = await res.json();
@@ -136,6 +160,8 @@ export default function FacultyLoginPage() {
         setError(
           "Invalid response from the server."
         );
+
+        await clearAuthentication();
         return;
       }
 
@@ -144,14 +170,11 @@ export default function FacultyLoginPage() {
         data
       );
 
-      // =====================================================
+      // =======================================================
       // API ERROR
-      // =====================================================
+      // =======================================================
 
-      if (
-        !res.ok ||
-        !data.success
-      ) {
+      if (!res.ok || !data.success) {
         setError(
           data.message ||
             "Invalid email / Faculty User ID or password."
@@ -161,9 +184,9 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      // =====================================================
+      // =======================================================
       // USER CHECK
-      // =====================================================
+      // =======================================================
 
       if (!data.user) {
         setError(
@@ -174,9 +197,9 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      // =====================================================
-      // FACULTY ROLE CHECK
-      // =====================================================
+      // =======================================================
+      // ROLE CHECK
+      // =======================================================
 
       const role = String(
         data.user.role || ""
@@ -199,15 +222,11 @@ export default function FacultyLoginPage() {
           setError(
             "This is an administrator account. Please use the Admin Portal."
           );
-        } else if (
-          role === "STUDENT"
-        ) {
+        } else if (role === "STUDENT") {
           setError(
             "This is a student account. Please use the Student Portal."
           );
-        } else if (
-          role === "COORDINATOR"
-        ) {
+        } else if (role === "COORDINATOR") {
           setError(
             "This is a coordinator account. Please use the Coordinator Portal."
           );
@@ -220,77 +239,166 @@ export default function FacultyLoginPage() {
         return;
       }
 
-      // =====================================================
+      // =======================================================
       // APPROVAL CHECK
-      // =====================================================
+      // =======================================================
 
-      if (
-        data.user.approvalStatus &&
-        data.user.approvalStatus !==
-          "APPROVED"
-      ) {
+      const approvalStatus =
+        data.user.approvalStatus ||
+        data.approvalStatus ||
+        "";
+
+      // -------------------------------------------------------
+      // PENDING
+      // -------------------------------------------------------
+
+      if (approvalStatus === "PENDING") {
         await clearAuthentication();
 
-        if (
-          data.user.approvalStatus ===
-          "PENDING"
-        ) {
+        setError(
+          "Your faculty account is still waiting for approval."
+        );
+
+        return;
+      }
+
+      // -------------------------------------------------------
+      // REJECTED
+      // -------------------------------------------------------
+
+      if (approvalStatus === "REJECTED") {
+        await clearAuthentication();
+
+        if (data.user.rejectionReason) {
           setError(
-            "Your faculty account is still waiting for approval."
+            `Your faculty registration was rejected. Reason: ${data.user.rejectionReason}`
           );
-        } else if (
-          data.user.approvalStatus ===
-          "REJECTED"
-        ) {
-          if (
-            data.user.rejectionReason
-          ) {
-            setError(
-              `Your faculty registration was rejected. Reason: ${data.user.rejectionReason}`
-            );
-          } else {
-            setError(
-              "Your faculty registration was rejected."
-            );
-          }
+        } else if (data.rejectionReason) {
+          setError(
+            `Your faculty registration was rejected. Reason: ${data.rejectionReason}`
+          );
         } else {
           setError(
-            "Your faculty account is not approved for access."
+            "Your faculty registration was rejected."
           );
         }
 
         return;
       }
 
-      // =====================================================
-      // STORE USER INFORMATION
-      // =====================================================
+      // -------------------------------------------------------
+      // NOT APPROVED
+      // -------------------------------------------------------
 
-      if (data.token) {
+      if (approvalStatus !== "APPROVED") {
+        await clearAuthentication();
+
+        setError(
+          "Your faculty account is not approved for access."
+        );
+
+        return;
+      }
+
+      // =======================================================
+      // JWT CHECK
+      // =======================================================
+
+      //
+      // The API should return the JWT AND set the HTTP-only
+      // cookie.
+      //
+      // Cookie:
+      // token
+      //
+      // Frontend:
+      // localStorage token
+      //
+      // Both are intentionally maintained because existing
+      // CampusConnect APIs/frontend may use either mechanism.
+      //
+
+      if (!data.token) {
+        console.warn(
+          "FACULTY LOGIN: JWT token was not returned in response."
+        );
+
+        // Do NOT immediately destroy the cookie here.
+        //
+        // The server may have successfully created the
+        // HTTP-only cookie even if the response token is absent.
+        //
+        // The dashboard/server authentication primarily uses
+        // the cookie.
+      } else {
+        try {
+          localStorage.setItem(
+            "token",
+            data.token
+          );
+        } catch (error) {
+          console.warn(
+            "TOKEN STORAGE ERROR:",
+            error
+          );
+        }
+      }
+
+      // =======================================================
+      // STORE USER
+      // =======================================================
+
+      try {
         localStorage.setItem(
-          "token",
-          data.token
+          "user",
+          JSON.stringify(data.user)
+        );
+      } catch (error) {
+        console.warn(
+          "USER STORAGE ERROR:",
+          error
         );
       }
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(data.user)
-      );
-
-      // =====================================================
+      // =======================================================
       // LOGIN SUCCESS
-      // =====================================================
+      // =======================================================
 
       console.log(
         "FACULTY LOGIN SUCCESS:",
         data.user.email
       );
 
+      // -------------------------------------------------------
+      // IMPORTANT SESSION FIX
+      // -------------------------------------------------------
+      //
+      // Do not use:
+      //
+      // useSession()
+      // getSession()
+      // SessionProvider
+      //
+      // CampusConnect authentication is handled by our custom
+      // JWT cookie.
+      //
+      // The server has already set:
+      //
+      // token=<JWT>
+      //
+      // with:
+      //
+      // httpOnly: true
+      // path: "/"
+      //
+      // -------------------------------------------------------
+
       router.replace(
         "/dashboard/faculty"
       );
 
+      // Refresh server components so the new JWT cookie
+      // is available immediately after navigation.
       router.refresh();
     } catch (err) {
       console.error(
@@ -563,6 +671,10 @@ export default function FacultyLoginPage() {
 
               </div>
 
+              {/* =================================================
+                  ERROR
+              ================================================== */}
+
               {error && (
                 <div
                   role="alert"
@@ -572,10 +684,16 @@ export default function FacultyLoginPage() {
                 </div>
               )}
 
+              {/* =================================================
+                  LOGIN FORM
+              ================================================== */}
+
               <form
                 onSubmit={handleLogin}
                 className="mt-8 space-y-5"
               >
+
+                {/* EMAIL / USER ID */}
 
                 <div>
 
@@ -600,9 +718,7 @@ export default function FacultyLoginPage() {
                       placeholder="faculty@campusconnect.com"
                       value={email}
                       onChange={(e) => {
-                        setEmail(
-                          e.target.value
-                        );
+                        setEmail(e.target.value);
 
                         if (error) {
                           setError("");
@@ -617,6 +733,8 @@ export default function FacultyLoginPage() {
                   </div>
 
                 </div>
+
+                {/* PASSWORD */}
 
                 <div>
 
@@ -653,9 +771,7 @@ export default function FacultyLoginPage() {
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => {
-                        setPassword(
-                          e.target.value
-                        );
+                        setPassword(e.target.value);
 
                         if (error) {
                           setError("");
@@ -671,8 +787,7 @@ export default function FacultyLoginPage() {
                       type="button"
                       onClick={() => {
                         setShowPassword(
-                          (value) =>
-                            !value
+                          (value) => !value
                         );
                       }}
                       disabled={loading}
@@ -683,18 +798,18 @@ export default function FacultyLoginPage() {
                           : "Show password"
                       }
                     >
-
                       {showPassword ? (
                         <EyeOff size={19} />
                       ) : (
                         <Eye size={19} />
                       )}
-
                     </button>
 
                   </div>
 
                 </div>
+
+                {/* FORGOT PASSWORD */}
 
                 <div className="-mt-1 flex justify-end">
 
@@ -707,6 +822,8 @@ export default function FacultyLoginPage() {
                   </Link>
 
                 </div>
+
+                {/* LOGIN BUTTON */}
 
                 <button
                   type="submit"
@@ -736,6 +853,10 @@ export default function FacultyLoginPage() {
                 </button>
 
               </form>
+
+              {/* =================================================
+                  REGISTER
+              ================================================== */}
 
               <div className="mt-6">
 
@@ -768,6 +889,10 @@ export default function FacultyLoginPage() {
 
               </div>
 
+              {/* =================================================
+                  BACK
+              ================================================== */}
+
               <div className="mt-6 text-center">
 
                 <Link
@@ -779,6 +904,10 @@ export default function FacultyLoginPage() {
 
               </div>
 
+              {/* =================================================
+                  SECURITY
+              ================================================== */}
+
               <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-600">
 
                 <ShieldCheck size={14} />
@@ -786,6 +915,10 @@ export default function FacultyLoginPage() {
                 Your connection is protected
 
               </div>
+
+              {/* =================================================
+                  FOOTER
+              ================================================== */}
 
               <div className="mt-8 border-t border-white/5 pt-6 text-center">
 

@@ -21,7 +21,6 @@ import {
   Settings,
   ShieldCheck,
   User,
-  UserCheck,
   UserCircle,
   Users,
   UserX,
@@ -107,21 +106,13 @@ const navigation = [
   },
   {
     title: "Events",
-    href: "/events",
+    href: "/dashboard/faculty/events",
     icon: CalendarDays,
   },
   {
     title: "Faculty Profile",
     href: "/faculty/profile",
     icon: UserCircle,
-  },
-];
-
-const accountNavigation = [
-  {
-    title: "Account Security",
-    href: "/faculty/security",
-    icon: ShieldCheck,
   },
 ];
 
@@ -932,33 +923,6 @@ export default function FacultyStudentApprovalPage() {
           </p>
 
           <nav className="space-y-1.5">
-            {accountNavigation.map(
-              (item) => {
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    onClick={
-                      closeMobileSidebar
-                    }
-                    className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-                  >
-                    <Icon
-                      size={18}
-                      strokeWidth={1.8}
-                      className="text-[#8195ad] group-hover:text-[#63c9ef]"
-                    />
-
-                    <span>
-                      {item.title}
-                    </span>
-                  </Link>
-                );
-              }
-            )}
-
             <button
               type="button"
               onClick={handleSignOut}

@@ -70,6 +70,8 @@ function getFacultyUserSnapshot(): FacultyUser | null {
   }
 }
 
+const emptySubscribe = () => () => {};
+
 type Student = {
   id: string;
   campusUserId?: string | null;
@@ -177,14 +179,10 @@ function formatTime(value: string) {
 function getLocalDateKey(value: string) {
   if (!value) return "";
 
-  // A date input already has the exact YYYY-MM-DD value we need.
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value;
   }
 
-  // For ISO timestamps, convert to the browser's local calendar date.
-  // Do not use value.slice(0, 10), because UTC serialization can move a
-  // midnight class session to the previous calendar day.
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -220,6 +218,13 @@ export default function FacultyAttendancePage() {
     getFacultyUserSnapshot,
     () => null
   );
+
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [attendanceMenuOpen, setAttendanceMenuOpen] = useState(true);
 
@@ -236,7 +241,6 @@ export default function FacultyAttendancePage() {
   const [dateFilter, setDateFilter] = useState("");
   const [showingHistory, setShowingHistory] = useState(false);
 
-
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -252,7 +256,10 @@ export default function FacultyAttendancePage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) return;
+    if (!isMounted) return;
+
+    const snapshot = getFacultyUserSnapshot();
+    if (user || snapshot) return;
 
     try {
       localStorage.removeItem("user");
@@ -266,7 +273,7 @@ export default function FacultyAttendancePage() {
     }
 
     router.replace("/faculty/login");
-  }, [router, user]);
+  }, [router, user, isMounted]);
 
   const token = () => {
     try {
@@ -367,7 +374,6 @@ export default function FacultyAttendancePage() {
     return () => {
       cancelled = true;
     };
-    // The fetch must run when the selected class changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSemester, selectedSection, selectedSubject]);
 
@@ -378,7 +384,6 @@ export default function FacultyAttendancePage() {
       .filter((subject) => Number(subject.semester) === sem)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [subjects, selectedSemester]);
-
 
   const filteredAttendance = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -407,8 +412,6 @@ export default function FacultyAttendancePage() {
       const matchesDate =
         recordSessionDate === dateFilter;
 
-      // The selected Semester, Section and Subject above are reused for history.
-      // This avoids selecting the same class details a second time.
       const matchesSelectedSemester =
         !selectedSemester ||
         record.session?.semester === semesterNumber(selectedSemester);
@@ -441,16 +444,6 @@ export default function FacultyAttendancePage() {
     selectedSubject,
     showingHistory,
   ]);
-
-  const presentCount = useMemo(
-    () => filteredAttendance.filter((record) => record.status.toLowerCase() === "present").length,
-    [filteredAttendance]
-  );
-
-  const absentCount = useMemo(
-    () => filteredAttendance.filter((record) => record.status.toLowerCase() === "absent").length,
-    [filteredAttendance]
-  );
 
   const allSelected =
     students.length > 0 &&
@@ -710,13 +703,14 @@ export default function FacultyAttendancePage() {
 
   const facultyName = user?.name || "Faculty Member";
   const facultyId = user?.campusUserId || "Faculty";
-  const initials = facultyName
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part.charAt(0))
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() || "FM";
+  const initials =
+    facultyName
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part.charAt(0))
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "FM";
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fa] text-[#0d1728]">
@@ -930,29 +924,6 @@ export default function FacultyAttendancePage() {
               <p className="text-sm font-bold">{saveMessage}</p>
             </div>
           )}
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-[#d8e3ed] bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7d92a7]">Students</p>
-              <p className="mt-2 text-3xl font-bold text-[#17283b]">{students.length}</p>
-              <p className="mt-1 text-[10px] text-[#8ca0b2]">Registered students for selected class</p>
-            </div>
-            <div className="rounded-2xl border border-[#d8e3ed] bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7d92a7]">Attendance Records</p>
-              <p className="mt-2 text-3xl font-bold text-[#17283b]">{filteredAttendance.length}</p>
-              <p className="mt-1 text-[10px] text-[#8ca0b2]">Class attendance records</p>
-            </div>
-            <div className="rounded-2xl border border-[#d8e3ed] bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7d92a7]">Present</p>
-              <p className="mt-2 text-3xl font-bold text-emerald-600">{presentCount}</p>
-              <p className="mt-1 text-[10px] text-[#8ca0b2]">Students marked present</p>
-            </div>
-            <div className="rounded-2xl border border-[#d8e3ed] bg-white p-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7d92a7]">Absent</p>
-              <p className="mt-2 text-3xl font-bold text-red-500">{absentCount}</p>
-              <p className="mt-1 text-[10px] text-[#8ca0b2]">Students marked absent</p>
-            </div>
-          </div>
 
           <section className="mt-5 rounded-[22px] border border-[#d8e3ed] bg-white p-5 shadow-sm lg:p-6">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">

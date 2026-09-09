@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// ==============================
-// GET ALL EVENTS
-// ==============================
+/* =========================================================
+   GET ALL EVENTS
+========================================================= */
+
 export async function GET() {
   try {
     const events = await prisma.event.findMany({
@@ -20,9 +21,7 @@ export async function GET() {
         success: true,
         events,
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   } catch (error) {
     console.error("GET EVENTS ERROR:", error);
@@ -30,32 +29,56 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch events",
+        message: "Failed to fetch events.",
+        events: [],
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
 
-// ==============================
-// CREATE EVENT
-// ==============================
-export async function POST(req: NextRequest) {
+/* =========================================================
+   CREATE EVENT
+========================================================= */
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await request.json();
 
-    console.log("REQUEST BODY:", body);
+    const title =
+      typeof body.title === "string"
+        ? body.title.trim()
+        : "";
 
-    const {
-      title,
-      description,
-      venue,
-      eventDate,
-      image,
-      clubId,
-    } = body;
+    const description =
+      typeof body.description === "string"
+        ? body.description.trim()
+        : "";
+
+    const venue =
+      typeof body.venue === "string"
+        ? body.venue.trim()
+        : "";
+
+    const eventDate =
+      typeof body.eventDate === "string"
+        ? body.eventDate.trim()
+        : "";
+
+    const image =
+      typeof body.image === "string" &&
+      body.image.trim()
+        ? body.image.trim()
+        : null;
+
+    const clubId =
+      typeof body.clubId === "string"
+        ? body.clubId.trim()
+        : "";
+
+    /* -------------------------------------------------------
+       VALIDATION
+    ------------------------------------------------------- */
 
     if (
       !title ||
@@ -67,68 +90,74 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "All required fields are required",
+          message:
+            "Title, description, venue, event date and club are required.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    // ==========================
-    // DEBUG
-    // ==========================
+    /* -------------------------------------------------------
+       DATE VALIDATION
+    ------------------------------------------------------- */
 
-    const clubs = await prisma.club.findMany();
+    const parsedDate = new Date(eventDate);
 
-    console.log("ALL CLUBS:", clubs);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid event date.",
+        },
+        { status: 400 }
+      );
+    }
 
-    const club = clubs.find(
-      (c) => c.id === String(clubId).trim()
-    );
+    /* -------------------------------------------------------
+       CHECK CLUB
+    ------------------------------------------------------- */
 
-    console.log("MATCHED CLUB:", club);
+    const club = await prisma.club.findUnique({
+      where: {
+        id: clubId,
+      },
+    });
 
     if (!club) {
       return NextResponse.json(
         {
           success: false,
-          message: "Club not found",
+          message: "Club not found.",
         },
-        {
-          status: 404,
-        }
+        { status: 404 }
       );
     }
 
-    // ==========================
-    // CREATE EVENT
-    // ==========================
+    /* -------------------------------------------------------
+       CREATE EVENT
+    ------------------------------------------------------- */
 
     const event = await prisma.event.create({
       data: {
         title,
         description,
         venue,
-        eventDate: new Date(eventDate),
-        image: image || null,
-        club: {
-          connect: {
-            id: club.id,
-          },
-        },
+        eventDate: parsedDate,
+        image,
+        clubId,
+      },
+      include: {
+        club: true,
       },
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Event created successfully",
+        message: "Event created successfully.",
         event,
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error) {
     console.error("CREATE EVENT ERROR:", error);
@@ -136,15 +165,103 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Internal Server Error",
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unknown Error",
+        message: "Failed to create event.",
       },
-      {
-        status: 500,
+      { status: 500 }
+    );
+  }
+}
+
+/* =========================================================
+   DELETE EVENT
+========================================================= */
+
+export async function DELETE(
+  request: NextRequest
+) {
+  try {
+    const { searchParams } =
+      new URL(request.url);
+
+    const id =
+      searchParams.get("id")?.trim() || "";
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Event ID is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    /* -------------------------------------------------------
+       CHECK EVENT
+    ------------------------------------------------------- */
+
+    const event =
+      await prisma.event.findUnique({
+        where: {
+          id,
+        },
+        select: {
+          id: true,
+          title: true,
+        },
+      });
+
+    if (!event) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Event not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    /* -------------------------------------------------------
+       DELETE ATTENDANCE + EVENT
+    ------------------------------------------------------- */
+
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.attendance.deleteMany({
+          where: {
+            eventId: id,
+          },
+        });
+
+        await tx.event.delete({
+          where: {
+            id,
+          },
+        });
       }
+    );
+
+    return NextResponse.json(
+      {
+        success: true,
+        message:
+          "Event deleted successfully from database.",
+        eventId: id,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(
+      "DELETE EVENT ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to delete event.",
+      },
+      { status: 500 }
     );
   }
 }

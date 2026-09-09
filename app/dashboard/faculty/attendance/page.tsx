@@ -53,7 +53,7 @@ const navigation = [
   },
   {
     title: "Faculty Profile",
-    href: "/dashboard/faculty/profile",
+    href: "/faculty/profile",
     icon: Users,
   },
 ];
@@ -83,6 +83,7 @@ export default function FacultyAttendanceLandingPage() {
   }, []);
 
   const facultyName = user.name || "Faculty Member";
+
   const facultyId =
     user.facultyId || user.campusUserId || "RNT-9457";
 
@@ -112,6 +113,7 @@ export default function FacultyAttendanceLandingPage() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fa] text-[#0d1728]">
+
       {/* MOBILE SIDEBAR OVERLAY */}
       {mobileSidebarOpen && (
         <button
@@ -128,11 +130,16 @@ export default function FacultyAttendanceLandingPage() {
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
+
         {/* LOGO */}
         <div className="flex h-[92px] shrink-0 items-center border-b border-[#223149] px-6">
           <div className="flex items-center gap-3">
+
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#54bce5]">
-              <GraduationCap size={25} className="text-white" />
+              <GraduationCap
+                size={25}
+                className="text-white"
+              />
             </div>
 
             <div>
@@ -157,17 +164,23 @@ export default function FacultyAttendanceLandingPage() {
 
         {/* NAVIGATION */}
         <div className="flex-1 overflow-y-auto px-4 py-7">
+
           <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
             Main Menu
           </p>
 
           <nav className="space-y-1.5">
+
             {navigation.map((item) => {
               const Icon = item.icon;
 
               if (item.title === "Attendance") {
                 return (
-                  <div key={item.title} className="space-y-1">
+                  <div
+                    key={item.title}
+                    className="space-y-1"
+                  >
+
                     <button
                       type="button"
                       onClick={() =>
@@ -175,6 +188,7 @@ export default function FacultyAttendanceLandingPage() {
                       }
                       className="flex h-11 w-full items-center gap-3 rounded-xl bg-[#17263a] px-3.5 text-left text-[13px] font-medium text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
                     >
+
                       <Icon size={18} />
 
                       <span className="flex-1">
@@ -184,13 +198,17 @@ export default function FacultyAttendanceLandingPage() {
                       <ChevronRight
                         size={16}
                         className={`transition-transform ${
-                          attendanceMenuOpen ? "rotate-90" : ""
+                          attendanceMenuOpen
+                            ? "rotate-90"
+                            : ""
                         }`}
                       />
+
                     </button>
 
                     {attendanceMenuOpen && (
                       <div className="ml-3 border-l border-[#2b3d55] pl-2">
+
                         <Link
                           href="/dashboard/faculty/attendance/class"
                           onClick={() =>
@@ -210,8 +228,10 @@ export default function FacultyAttendanceLandingPage() {
                         >
                           Mark Event Attendance
                         </Link>
+
                       </div>
                     )}
+
                   </div>
                 );
               }
@@ -230,6 +250,7 @@ export default function FacultyAttendanceLandingPage() {
                 </Link>
               );
             })}
+
           </nav>
 
           <div className="my-7 h-px bg-[#24344a]" />
@@ -237,14 +258,6 @@ export default function FacultyAttendanceLandingPage() {
           <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
             Account
           </p>
-
-          <Link
-            href="/dashboard/faculty/security"
-            className="flex h-11 items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
-          >
-            <Settings size={18} />
-            Account Security
-          </Link>
 
           <button
             type="button"
@@ -254,16 +267,20 @@ export default function FacultyAttendanceLandingPage() {
             <LogOut size={18} />
             Sign Out
           </button>
+
         </div>
 
         {/* FACULTY PROFILE */}
         <div className="border-t border-[#223149] p-4">
+
           <div className="flex items-center gap-3 rounded-xl bg-[#111e31] px-3 py-3">
+
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-xs font-bold text-white">
               {initials}
             </div>
 
             <div className="min-w-0">
+
               <p className="truncate text-[12px] font-semibold text-white">
                 {facultyName}
               </p>
@@ -271,17 +288,25 @@ export default function FacultyAttendanceLandingPage() {
               <p className="text-[10px] text-[#8296ae]">
                 Faculty
               </p>
+
             </div>
+
           </div>
+
         </div>
+
       </aside>
 
       {/* MAIN AREA */}
       <div className="min-h-screen lg:pl-[270px]">
+
         {/* HEADER */}
         <header className="sticky top-0 z-30 h-[86px] border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
+
           <div className="flex h-full items-center justify-between px-5 sm:px-6">
+
             <div className="flex items-center gap-4">
+
               <button
                 type="button"
                 onClick={() =>
@@ -293,6 +318,7 @@ export default function FacultyAttendanceLandingPage() {
               </button>
 
               <div>
+
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
                   Faculty Portal
                 </p>
@@ -300,10 +326,13 @@ export default function FacultyAttendanceLandingPage() {
                 <p className="mt-1 text-[11px] text-[#71839a]">
                   Attendance management workspace
                 </p>
+
               </div>
+
             </div>
 
             <div className="flex items-center gap-2">
+
               <button
                 type="button"
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white"
@@ -319,11 +348,13 @@ export default function FacultyAttendanceLandingPage() {
               </button>
 
               <div className="hidden items-center gap-2 sm:flex">
+
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-xs font-bold text-white">
                   {initials}
                 </div>
 
                 <div>
+
                   <p className="text-[12px] font-semibold">
                     {facultyName}
                   </p>
@@ -331,28 +362,37 @@ export default function FacultyAttendanceLandingPage() {
                   <p className="text-[10px] text-[#72849a]">
                     Faculty
                   </p>
+
                 </div>
+
               </div>
+
             </div>
+
           </div>
+
         </header>
 
         {/* PAGE CONTENT */}
         <main className="min-h-[calc(100vh-86px)] bg-[#edf4fa] px-5 py-7 sm:px-6">
-          {/* FIX:
-              Removed max-width + mx-auto.
-              Page now uses the complete available width.
-          */}
+
           <div className="w-full">
+
             {/* BANNER */}
             <section className="relative overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9">
+
               <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
 
               <div className="relative z-10 flex items-center justify-between gap-6">
+
                 <div>
+
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
+
                     <ClipboardCheck size={14} />
+
                     Faculty Attendance
+
                   </div>
 
                   <h1 className="font-serif text-[34px] font-bold text-white sm:text-[43px]">
@@ -365,26 +405,49 @@ export default function FacultyAttendanceLandingPage() {
                   </p>
 
                   <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3.5 py-2 text-[11px] text-[#b3c0d0]">
+
                     Faculty ID:
+
                     <span className="font-bold text-white">
                       {facultyId}
                     </span>
+
                   </div>
+
                 </div>
 
                 <div
                   onMouseMove={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-                    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                    const rect =
+                      e.currentTarget.getBoundingClientRect();
+
+                    const x =
+                      e.clientX - rect.left;
+
+                    const y =
+                      e.clientY - rect.top;
+
+                    e.currentTarget.style.setProperty(
+                      "--mouse-x",
+                      `${x}px`
+                    );
+
+                    e.currentTarget.style.setProperty(
+                      "--mouse-y",
+                      `${y}px`
+                    );
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.setProperty("--glow-opacity", "1");
+                    e.currentTarget.style.setProperty(
+                      "--glow-opacity",
+                      "1"
+                    );
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.setProperty("--glow-opacity", "0");
+                    e.currentTarget.style.setProperty(
+                      "--glow-opacity",
+                      "0"
+                    );
                   }}
                   className="
                     group relative hidden h-[92px] w-[92px] cursor-pointer
@@ -407,6 +470,7 @@ export default function FacultyAttendanceLandingPage() {
                     } as React.CSSProperties
                   }
                 >
+
                   {/* Cursor-following glow */}
                   <span
                     aria-hidden="true"
@@ -440,12 +504,16 @@ export default function FacultyAttendanceLandingPage() {
                       group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.55)]
                     "
                   />
+
                 </div>
+
               </div>
+
             </section>
 
             {/* ATTENDANCE OPTIONS */}
             <section className="mt-5 grid gap-5 md:grid-cols-2">
+
               {/* CLASS */}
               <Link
                 href="/dashboard/faculty/attendance/class"
@@ -459,8 +527,11 @@ export default function FacultyAttendanceLandingPage() {
                   hover:shadow-[0_14px_34px_rgba(30,60,90,0.12),0_0_0_1px_rgba(105,185,223,0.22)]
                 "
               >
+
                 <div className="flex items-center justify-between">
-                  <div className="
+
+                  <div
+                    className="
                       flex h-12 w-12 items-center justify-center rounded-2xl
                       bg-[#eef8fc] text-[#3989b7]
                       transition-all duration-300 ease-out
@@ -468,7 +539,8 @@ export default function FacultyAttendanceLandingPage() {
                       group-hover:text-white
                       group-hover:shadow-[0_6px_18px_rgba(105,185,223,0.30)]
                       group-hover:scale-105
-                    ">
+                    "
+                  >
                     <Users size={22} />
                   </div>
 
@@ -485,6 +557,7 @@ export default function FacultyAttendanceLandingPage() {
                   >
                     <ChevronRight size={20} />
                   </span>
+
                 </div>
 
                 <h2 className="mt-6 font-serif text-[24px] font-bold text-[#142238]">
@@ -495,6 +568,7 @@ export default function FacultyAttendanceLandingPage() {
                   Select semester, section and subject,
                   then mark multiple students at once.
                 </p>
+
               </Link>
 
               {/* EVENT */}
@@ -510,8 +584,11 @@ export default function FacultyAttendanceLandingPage() {
                   hover:shadow-[0_14px_34px_rgba(30,60,90,0.12),0_0_0_1px_rgba(105,185,223,0.22)]
                 "
               >
+
                 <div className="flex items-center justify-between">
-                  <div className="
+
+                  <div
+                    className="
                       flex h-12 w-12 items-center justify-center rounded-2xl
                       bg-[#eef8fc] text-[#3989b7]
                       transition-all duration-300 ease-out
@@ -519,7 +596,8 @@ export default function FacultyAttendanceLandingPage() {
                       group-hover:text-white
                       group-hover:shadow-[0_6px_18px_rgba(105,185,223,0.30)]
                       group-hover:scale-105
-                    ">
+                    "
+                  >
                     <CalendarDays size={22} />
                   </div>
 
@@ -536,6 +614,7 @@ export default function FacultyAttendanceLandingPage() {
                   >
                     <ChevronRight size={20} />
                   </span>
+
                 </div>
 
                 <h2 className="mt-6 font-serif text-[24px] font-bold text-[#142238]">
@@ -546,17 +625,22 @@ export default function FacultyAttendanceLandingPage() {
                   Select an event and mark multiple
                   students present or absent in one action.
                 </p>
+
               </Link>
+
             </section>
 
             {/* INFORMATION PANEL */}
             <section className="mt-5 rounded-[20px] border border-[#d9e4ee] bg-white p-5 shadow-[0_8px_25px_rgba(30,60,90,0.05)]">
+
               <div className="flex items-start gap-3">
+
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eef8fc] text-[#3989b7]">
                   <ClipboardCheck size={18} />
                 </div>
 
                 <div>
+
                   <h3 className="text-sm font-bold text-[#263a51]">
                     Attendance options
                   </h3>
@@ -565,12 +649,19 @@ export default function FacultyAttendanceLandingPage() {
                     Use Class Attendance for regular classes
                     and Event Attendance for campus events.
                   </p>
+
                 </div>
+
               </div>
+
             </section>
+
           </div>
+
         </main>
+
       </div>
+
     </div>
   );
 }

@@ -126,7 +126,7 @@ const navigation = [
   },
   {
     title: "Events",
-    href: "/events",
+    href: "/dashboard/faculty/events",
     icon: CalendarDays,
   },
   {
@@ -485,7 +485,7 @@ export default function FacultyEventAttendancePage() {
           : [];
 
       /* ===================================================
-         UPDATE STATE AFTER ASYNC WORK
+          UPDATE STATE AFTER ASYNC WORK
       =================================================== */
 
       setAttendance(loadedAttendance);
@@ -1633,50 +1633,6 @@ export default function FacultyEventAttendancePage() {
 
               </div>
             )}
-
-            {/* =================================================
-                STATS
-            ================================================== */}
-
-            <section className="mt-5 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-              <StatCard
-                title="Students"
-                value={String(
-                  uniqueStudentCount
-                )}
-                description="Registered students for selected group"
-                icon={Users}
-              />
-
-              <StatCard
-                title="Attendance Records"
-                value={String(
-                  totalRecords
-                )}
-                description="Total attendance records"
-                icon={ClipboardCheck}
-              />
-
-              <StatCard
-                title="Present"
-                value={String(
-                  presentCount
-                )}
-                description="Students marked present"
-                icon={CheckCircle2}
-              />
-
-              <StatCard
-                title="Today"
-                value={
-                  todayText || "Loading..."
-                }
-                description="Current date"
-                icon={CalendarDays}
-              />
-
-            </section>
 
             {/* =================================================
                 MARK ATTENDANCE

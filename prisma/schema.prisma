@@ -22,25 +22,66 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // ====================================================
+  // FACULTY PROFILE INFORMATION
+  // ====================================================
+
+  department     String?
+  designation    String?
+  phone          String?
+  qualification  String?
+  specialization String?
+  joiningDate    DateTime?
+  address        String?
+  city           String?
+  state          String?
+  officeRoom     String?
+  officeHours    String?
+
+  // ====================================================
   // EVENT ATTENDANCE
+  // ====================================================
+
   attendances Attendance[]
 
+  // ====================================================
   // CLASS / SUBJECT ATTENDANCE
+  // ====================================================
+
   classAttendances ClassAttendance[]
 
+  // ====================================================
   // STUDENT SUBJECT REGISTRATION
+  // ====================================================
+
   studentRegistrations StudentRegistration[]
 
-  certificates Certificate[]
-  memberships  Membership[]
+  // ====================================================
+  // CERTIFICATES
+  // ====================================================
 
+  certificates Certificate[]
+
+  // ====================================================
+  // CLUB MEMBERSHIPS
+  // ====================================================
+
+  memberships Membership[]
+
+  // ====================================================
   // APPROVAL SYSTEM
+  // ====================================================
+
   approvalStatus  ApprovalStatus @default(PENDING)
   approvedAt      DateTime?
   rejectionReason String?
-  approvals       UserApproval[]
 
+  approvals UserApproval[]
+
+  // ====================================================
   // FACULTY CLASS SESSIONS
+  // ====================================================
+
   facultyClassSessions ClassSession[] @relation("FacultyClassSessions")
 
   @@map("User")

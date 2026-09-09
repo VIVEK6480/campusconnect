@@ -30,6 +30,13 @@ type FacultyUser = {
   approvalStatus?: string;
 };
 
+type FacultyStats = {
+  students: number;
+  pendingApprovals: number;
+  attendance: number;
+  upcomingEvents: number;
+};
+
 const defaultFaculty: FacultyUser = {
   id: "",
   name: "Vivek Kumar",
@@ -37,6 +44,13 @@ const defaultFaculty: FacultyUser = {
   facultyId: "RNT-9457",
   role: "Faculty Member",
   approvalStatus: "APPROVED",
+};
+
+const defaultStats: FacultyStats = {
+  students: 0,
+  pendingApprovals: 0,
+  attendance: 0,
+  upcomingEvents: 0,
 };
 
 /* =========================================================
@@ -66,21 +80,13 @@ const navigation = [
   },
   {
     title: "Events",
-    href: "/events",
+    href: "/dashboard/faculty/events",
     icon: CalendarDays,
   },
   {
     title: "Faculty Profile",
     href: "/faculty/profile",
     icon: UserCircle,
-  },
-];
-
-const accountNavigation = [
-  {
-    title: "Account Security",
-    href: "/faculty/security",
-    icon: ShieldCheck,
   },
 ];
 
@@ -112,19 +118,27 @@ const quickAccess = [
   {
     title: "Events & Activities",
     description:
-      "View campus events, academic activities and upcoming schedules.",
-    href: "/events",
+      "Create and manage campus events that will be visible to students.",
+    href: "/dashboard/faculty/events",
     icon: CalendarDays,
-    action: "Open Events & Activities",
+    action: "Manage Events",
   },
 ];
 
 function FacultyDashboardPage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<FacultyUser>(defaultFaculty);
+  const [user, setUser] =
+    useState<FacultyUser>(defaultFaculty);
+
+  const [stats, setStats] =
+    useState<FacultyStats>(defaultStats);
+
   const [mobileSidebarOpen, setMobileSidebarOpen] =
     useState(false);
+
+  const [statsLoading, setStatsLoading] =
+    useState(true);
 
   /* =========================================================
      LOAD FACULTY USER
@@ -172,20 +186,27 @@ function FacultyDashboardPage() {
         }
 
         setUser({
-          id: parsed.id || defaultFaculty.id,
+          id:
+            parsed.id ||
+            defaultFaculty.id,
+
           name:
             parsed.name ||
             defaultFaculty.name,
+
           email:
             parsed.email ||
             defaultFaculty.email,
+
           facultyId:
             parsed.facultyId ||
             parsed.campusUserId ||
             defaultFaculty.facultyId,
+
           role:
             parsed.role ||
             defaultFaculty.role,
+
           approvalStatus:
             parsed.approvalStatus ||
             defaultFaculty.approvalStatus,
@@ -197,6 +218,147 @@ function FacultyDashboardPage() {
 
     return () => {
       window.clearTimeout(timer);
+    };
+  }, []);
+
+  /* =========================================================
+     LOAD FACULTY DASHBOARD STATS
+  ========================================================== */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadFacultyStats() {
+      try {
+        setStatsLoading(true);
+
+        const response = await fetch(
+          "/api/faculty/dashboard/stats",
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        /*
+         * IMPORTANT:
+         * Always read response as text first.
+         * This prevents:
+         *
+         * Unexpected token '<'
+         *
+         * when Next.js returns an HTML error page.
+         */
+
+        const contentType =
+          response.headers.get("content-type") || "";
+
+        const responseText =
+          await response.text();
+
+        if (
+          !contentType.includes(
+            "application/json"
+          )
+        ) {
+          console.error(
+            "Faculty dashboard stats returned non-JSON response:",
+            response.status,
+            responseText.slice(0, 500)
+          );
+
+          throw new Error(
+            `Stats API returned ${response.status} with non-JSON response.`
+          );
+        }
+
+        let data: {
+          success?: boolean;
+          stats?: Partial<FacultyStats>;
+          message?: string;
+        };
+
+        try {
+          data = JSON.parse(responseText);
+        } catch (error) {
+          console.error(
+            "Faculty dashboard stats JSON parse error:",
+            error
+          );
+
+          throw new Error(
+            "Invalid JSON response from faculty stats API."
+          );
+        }
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message ||
+              `Faculty stats request failed with status ${response.status}.`
+          );
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setStats({
+          students:
+            typeof data.stats?.students ===
+            "number"
+              ? data.stats.students
+              : 0,
+
+          pendingApprovals:
+            typeof data.stats
+              ?.pendingApprovals ===
+            "number"
+              ? data.stats.pendingApprovals
+              : 0,
+
+          attendance:
+            typeof data.stats?.attendance ===
+            "number"
+              ? data.stats.attendance
+              : 0,
+
+          upcomingEvents:
+            typeof data.stats
+              ?.upcomingEvents ===
+            "number"
+              ? data.stats.upcomingEvents
+              : 0,
+        });
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error(
+          "Faculty dashboard stats fetch error:",
+          error
+        );
+
+        /*
+         * Keep cards at zero if API fails.
+         * The page itself will continue working.
+         */
+        setStats(defaultStats);
+      } finally {
+        if (!cancelled) {
+          setStatsLoading(false);
+        }
+      }
+    }
+
+    loadFacultyStats();
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -245,14 +407,19 @@ function FacultyDashboardPage() {
       localStorage.removeItem(
         "facultyUser"
       );
+
       localStorage.removeItem(
         "faculty"
       );
+
       localStorage.removeItem(
         "currentFaculty"
       );
+
       localStorage.removeItem("user");
+
       localStorage.removeItem("token");
+
       localStorage.removeItem(
         "facultyToken"
       );
@@ -307,9 +474,7 @@ function FacultyDashboardPage() {
         `}
       >
 
-        {/* =================================================
-            BRAND
-        ================================================== */}
+        {/* BRAND */}
 
         <div className="flex h-[92px] shrink-0 items-center justify-between border-b border-[#223149] px-6">
 
@@ -352,9 +517,7 @@ function FacultyDashboardPage() {
 
         </div>
 
-        {/* =================================================
-            NAVIGATION
-        ================================================== */}
+        {/* NAVIGATION */}
 
         <div className="flex-1 overflow-y-auto px-4 py-7">
 
@@ -419,44 +582,7 @@ function FacultyDashboardPage() {
 
           </nav>
 
-          <div className="my-7 h-px bg-[#223149]" />
-
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Account
-          </p>
-
-          <nav className="space-y-1.5">
-
-            {accountNavigation.map(
-              (item) => {
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    onClick={() =>
-                      setMobileSidebarOpen(
-                        false
-                      )
-                    }
-                    className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-                  >
-
-                    <Icon
-                      size={18}
-                      strokeWidth={1.8}
-                      className="text-[#8195ad] group-hover:text-[#63c9ef]"
-                    />
-
-                    <span>
-                      {item.title}
-                    </span>
-
-                  </Link>
-                );
-              }
-            )}
+          <nav className="mt-7 space-y-1.5">
 
             <button
               type="button"
@@ -480,9 +606,7 @@ function FacultyDashboardPage() {
 
         </div>
 
-        {/* =================================================
-            SIDEBAR USER
-        ================================================== */}
+        {/* SIDEBAR USER */}
 
         <div className="shrink-0 border-t border-[#223149] p-4">
 
@@ -516,9 +640,7 @@ function FacultyDashboardPage() {
 
       <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
 
-        {/* ===================================================
-            TOP HEADER
-        =================================================== */}
+        {/* TOP HEADER */}
 
         <header className="sticky top-0 z-30 h-[86px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
 
@@ -611,15 +733,11 @@ function FacultyDashboardPage() {
 
         </header>
 
-        {/* ===================================================
-            CONTENT
-        =================================================== */}
+        {/* CONTENT */}
 
         <main className="relative min-h-[calc(100vh-86px)] w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6">
 
-          {/* =================================================
-              BACKGROUND
-          ================================================== */}
+          {/* BACKGROUND */}
 
           <div className="pointer-events-none absolute inset-0 opacity-60">
 
@@ -641,9 +759,7 @@ function FacultyDashboardPage() {
 
           <div className="relative mx-auto w-full min-w-0 max-w-none">
 
-            {/* =================================================
-                WELCOME
-            ================================================== */}
+            {/* WELCOME */}
 
             <section className="relative w-full overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-6 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 sm:py-7 lg:px-10 lg:py-7">
 
@@ -738,37 +854,55 @@ function FacultyDashboardPage() {
 
               <StatCard
                 title="Students"
-                value="0"
+                value={
+                  statsLoading
+                    ? "..."
+                    : String(stats.students)
+                }
                 description="Students assigned to you"
                 icon={Users}
               />
 
               <StatCard
                 title="Student Approvals"
-                value="0"
+                value={
+                  statsLoading
+                    ? "..."
+                    : String(
+                        stats.pendingApprovals
+                      )
+                }
                 description="Pending student approval requests"
                 icon={CheckCircle2}
               />
 
               <StatCard
                 title="Attendance"
-                value="0"
+                value={
+                  statsLoading
+                    ? "..."
+                    : String(stats.attendance)
+                }
                 description="Attendance records"
                 icon={ClipboardCheck}
               />
 
               <StatCard
                 title="Events"
-                value="0"
+                value={
+                  statsLoading
+                    ? "..."
+                    : String(
+                        stats.upcomingEvents
+                      )
+                }
                 description="Upcoming campus events"
                 icon={CalendarDays}
               />
 
             </section>
 
-            {/* =================================================
-                QUICK ACCESS
-            ================================================== */}
+            {/* QUICK ACCESS */}
 
             <section className="mt-8 w-full">
 
@@ -810,15 +944,11 @@ function FacultyDashboardPage() {
 
             </section>
 
-            {/* =================================================
-                LOWER INFORMATION
-            ================================================== */}
+            {/* LOWER INFORMATION */}
 
             <section className="mt-5 grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
 
-              {/* =================================================
-                  FACULTY INFORMATION
-              ================================================== */}
+              {/* FACULTY INFORMATION */}
 
               <div className="rounded-[20px] border border-[#d9e4ee] bg-white p-6 shadow-[0_8px_25px_rgba(30,60,90,0.06)]">
 
@@ -886,9 +1016,7 @@ function FacultyDashboardPage() {
 
               </div>
 
-              {/* =================================================
-                  ACCOUNT SECURITY
-              ================================================== */}
+              {/* ACCOUNT SECURITY */}
 
               <div className="rounded-[20px] border border-[#d9e4ee] bg-white p-6 shadow-[0_8px_25px_rgba(30,60,90,0.06)]">
 
