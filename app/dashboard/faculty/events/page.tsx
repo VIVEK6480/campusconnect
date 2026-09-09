@@ -77,7 +77,7 @@ const emptyForm: EventForm = {
 
 const navigation = [
   { title: "Dashboard", href: "/dashboard/faculty", icon: GraduationCap },
-  { title: "Students", href: "/students", icon: Users },
+  { title: "Students", href: "/dashboard/faculty/students", icon: Users },
   {
     title: "Student Approval",
     href: "/dashboard/faculty/approvals/students",

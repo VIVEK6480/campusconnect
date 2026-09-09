@@ -39,9 +39,9 @@ type FacultyStats = {
 
 const defaultFaculty: FacultyUser = {
   id: "",
-  name: "Vivek Kumar",
+  name: "Faculty",
   email: "faculty@campusconnect.com",
-  facultyId: "RNT-9457",
+  facultyId: "FACULTY",
   role: "Faculty Member",
   approvalStatus: "APPROVED",
 };
@@ -65,7 +65,7 @@ const navigation = [
   },
   {
     title: "Students",
-    href: "/students",
+    href: "/dashboard/faculty/students",
     icon: Users,
   },
   {
@@ -94,15 +94,15 @@ const quickAccess = [
   {
     title: "Student Management",
     description:
-      "View and manage student information, academic records and assigned students.",
-    href: "/students",
+      "View and manage approved student information and academic records.",
+    href: "/dashboard/faculty/students",
     icon: Users,
     action: "Open Student Management",
   },
   {
     title: "Student Approval",
     description:
-      "Review student registration requests and approve eligible student accounts.",
+      "Review student registration requests and approve eligible accounts.",
     href: "/dashboard/faculty/approvals/students",
     icon: CheckCircle2,
     action: "Open Student Approval",
@@ -110,7 +110,7 @@ const quickAccess = [
   {
     title: "Attendance",
     description:
-      "Record attendance and monitor student attendance information.",
+      "Record attendance and monitor class attendance information.",
     href: "/dashboard/faculty/attendance",
     icon: ClipboardCheck,
     action: "Open Attendance",
@@ -118,12 +118,16 @@ const quickAccess = [
   {
     title: "Events & Activities",
     description:
-      "Create and manage campus events that will be visible to students.",
+      "Create and manage campus events visible to students.",
     href: "/dashboard/faculty/events",
     icon: CalendarDays,
     action: "Manage Events",
   },
 ];
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 function FacultyDashboardPage() {
   const router = useRouter();
@@ -141,7 +145,7 @@ function FacultyDashboardPage() {
     useState(true);
 
   /* =========================================================
-     LOAD FACULTY USER
+     LOAD FACULTY
   ========================================================== */
 
   useEffect(() => {
@@ -157,16 +161,14 @@ function FacultyDashboardPage() {
         let parsed: FacultyUser | null = null;
 
         for (const key of possibleKeys) {
-          const storedFaculty =
+          const stored =
             localStorage.getItem(key);
 
-          if (!storedFaculty) {
-            continue;
-          }
+          if (!stored) continue;
 
           try {
             const candidate =
-              JSON.parse(storedFaculty);
+              JSON.parse(stored);
 
             if (
               candidate &&
@@ -181,38 +183,29 @@ function FacultyDashboardPage() {
           }
         }
 
-        if (!parsed) {
-          return;
-        }
+        if (!parsed) return;
 
         setUser({
-          id:
-            parsed.id ||
-            defaultFaculty.id,
-
+          id: parsed.id ?? defaultFaculty.id,
           name:
-            parsed.name ||
-            defaultFaculty.name,
-
+            parsed.name ?? defaultFaculty.name,
           email:
-            parsed.email ||
-            defaultFaculty.email,
-
+            parsed.email ?? defaultFaculty.email,
           facultyId:
-            parsed.facultyId ||
-            parsed.campusUserId ||
+            parsed.facultyId ??
+            parsed.campusUserId ??
             defaultFaculty.facultyId,
-
           role:
-            parsed.role ||
-            defaultFaculty.role,
-
+            parsed.role ?? defaultFaculty.role,
           approvalStatus:
-            parsed.approvalStatus ||
+            parsed.approvalStatus ??
             defaultFaculty.approvalStatus,
         });
-      } catch {
-        // Keep default faculty information.
+      } catch (error) {
+        console.error(
+          "Faculty information loading error:",
+          error
+        );
       }
     }, 0);
 
@@ -222,14 +215,20 @@ function FacultyDashboardPage() {
   }, []);
 
   /* =========================================================
-     LOAD FACULTY DASHBOARD STATS
+     LOAD DASHBOARD STATS
   ========================================================== */
 
   useEffect(() => {
     let cancelled = false;
 
+    const timer = window.setTimeout(() => {
+      void loadFacultyStats();
+    }, 0);
+
     async function loadFacultyStats() {
       try {
+        if (cancelled) return;
+
         setStatsLoading(true);
 
         const response = await fetch(
@@ -244,20 +243,12 @@ function FacultyDashboardPage() {
           }
         );
 
-        /*
-         * IMPORTANT:
-         * Always read response as text first.
-         * This prevents:
-         *
-         * Unexpected token '<'
-         *
-         * when Next.js returns an HTML error page.
-         */
-
         const contentType =
-          response.headers.get("content-type") || "";
+          response.headers.get(
+            "content-type"
+          ) || "";
 
-        const responseText =
+        const text =
           await response.text();
 
         if (
@@ -265,14 +256,8 @@ function FacultyDashboardPage() {
             "application/json"
           )
         ) {
-          console.error(
-            "Faculty dashboard stats returned non-JSON response:",
-            response.status,
-            responseText.slice(0, 500)
-          );
-
           throw new Error(
-            `Stats API returned ${response.status} with non-JSON response.`
+            `Stats API returned ${response.status}.`
           );
         }
 
@@ -283,28 +268,21 @@ function FacultyDashboardPage() {
         };
 
         try {
-          data = JSON.parse(responseText);
-        } catch (error) {
-          console.error(
-            "Faculty dashboard stats JSON parse error:",
-            error
-          );
-
+          data = JSON.parse(text);
+        } catch {
           throw new Error(
-            "Invalid JSON response from faculty stats API."
+            "Invalid JSON response from stats API."
           );
         }
 
         if (!response.ok || !data.success) {
           throw new Error(
             data.message ||
-              `Faculty stats request failed with status ${response.status}.`
+              `Stats request failed with status ${response.status}.`
           );
         }
 
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
         setStats({
           students:
@@ -334,19 +312,13 @@ function FacultyDashboardPage() {
               : 0,
         });
       } catch (error) {
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
         console.error(
-          "Faculty dashboard stats fetch error:",
+          "Faculty dashboard stats error:",
           error
         );
 
-        /*
-         * Keep cards at zero if API fails.
-         * The page itself will continue working.
-         */
         setStats(defaultStats);
       } finally {
         if (!cancelled) {
@@ -355,35 +327,39 @@ function FacultyDashboardPage() {
       }
     }
 
-    loadFacultyStats();
-
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, []);
 
+  /* =========================================================
+     USER VALUES
+  ========================================================== */
+
   const facultyName =
-    user.name || "Vivek Kumar";
+    user.name || "Faculty";
 
   const facultyEmail =
     user.email ||
     "faculty@campusconnect.com";
 
   const facultyId =
-    user.facultyId || "RNT-9457";
+    user.facultyId || "FACULTY";
 
   const facultyRole =
     user.role || "Faculty Member";
 
-  const initials = facultyName
-    .split(" ")
-    .filter(Boolean)
-    .map((part) =>
-      part.charAt(0)
-    )
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials =
+    facultyName
+      .split(" ")
+      .filter(Boolean)
+      .map((part) =>
+        part.charAt(0)
+      )
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "FC";
 
   /* =========================================================
      SIGN OUT
@@ -404,28 +380,19 @@ function FacultyDashboardPage() {
     }
 
     try {
-      localStorage.removeItem(
-        "facultyUser"
-      );
-
-      localStorage.removeItem(
-        "faculty"
-      );
-
-      localStorage.removeItem(
-        "currentFaculty"
-      );
-
-      localStorage.removeItem("user");
-
-      localStorage.removeItem("token");
-
-      localStorage.removeItem(
-        "facultyToken"
-      );
+      [
+        "facultyUser",
+        "faculty",
+        "currentFaculty",
+        "user",
+        "token",
+        "facultyToken",
+      ].forEach((key) => {
+        localStorage.removeItem(key);
+      });
     } catch (error) {
       console.error(
-        "Local storage cleanup error:",
+        "Storage cleanup error:",
         error
       );
     }
@@ -433,12 +400,14 @@ function FacultyDashboardPage() {
     router.replace("/faculty/login");
   }
 
-  return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fa] text-[#0d1728]">
+  /* =========================================================
+     UI
+  ========================================================== */
 
-      {/* =====================================================
-          MOBILE OVERLAY
-      ====================================================== */}
+  return (
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#edf4fa] text-[#0d1728]">
+
+      {/* MOBILE OVERLAY */}
 
       {mobileSidebarOpen && (
         <button
@@ -458,7 +427,7 @@ function FacultyDashboardPage() {
       <aside
         className={`
           fixed left-0 top-0 z-50
-          flex h-screen w-[270px] shrink-0
+          flex h-screen w-[270px]
           flex-col
           border-r border-[#23344d]
           bg-[#0b1423]
@@ -481,25 +450,20 @@ function FacultyDashboardPage() {
           <div className="flex min-w-0 items-center gap-3">
 
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_8px_25px_rgba(84,188,229,0.25)]">
-
               <GraduationCap
                 size={25}
                 strokeWidth={2}
-                className="text-white"
               />
-
             </div>
 
             <div className="min-w-0">
-
-              <h1 className="font-serif text-[19px] font-bold tracking-tight text-white">
+              <h1 className="font-serif text-[19px] font-bold text-white">
                 CampusConnect
               </h1>
 
-              <p className="mt-0.5 text-[11px] font-medium text-[#91a4bb]">
+              <p className="mt-0.5 text-[11px] text-[#91a4bb]">
                 Faculty Portal
               </p>
-
             </div>
 
           </div>
@@ -509,8 +473,8 @@ function FacultyDashboardPage() {
             onClick={() =>
               setMobileSidebarOpen(false)
             }
+            className="rounded-lg p-2 text-[#8fa3bb] hover:bg-white/10 hover:text-white lg:hidden"
             aria-label="Close sidebar"
-            className="rounded-lg p-2 text-[#8fa3bb] transition hover:bg-white/10 hover:text-white lg:hidden"
           >
             <X size={19} />
           </button>
@@ -528,9 +492,12 @@ function FacultyDashboardPage() {
           <nav className="space-y-1.5">
 
             {navigation.map(
-              (item, index) => {
+              (item) => {
                 const Icon = item.icon;
-                const active = index === 0;
+
+                const active =
+                  item.href ===
+                  "/dashboard/faculty";
 
                 return (
                   <Link
@@ -553,7 +520,6 @@ function FacultyDashboardPage() {
                       }
                     `}
                   >
-
                     <Icon
                       size={18}
                       strokeWidth={1.8}
@@ -574,7 +540,6 @@ function FacultyDashboardPage() {
                         className="ml-auto text-[#63c9ef]"
                       />
                     )}
-
                   </Link>
                 );
               }
@@ -582,42 +547,37 @@ function FacultyDashboardPage() {
 
           </nav>
 
-          <nav className="mt-7 space-y-1.5">
+          <nav className="mt-7 border-t border-[#223149] pt-5">
 
             <button
               type="button"
               onClick={handleSignOut}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
+              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] hover:bg-[#142135] hover:text-white"
             >
-
               <LogOut
                 size={18}
                 strokeWidth={1.8}
                 className="text-[#8195ad] group-hover:text-[#63c9ef]"
               />
 
-              <span>
-                Sign Out
-              </span>
-
+              <span>Sign Out</span>
             </button>
 
           </nav>
 
         </div>
 
-        {/* SIDEBAR USER */}
+        {/* USER */}
 
         <div className="shrink-0 border-t border-[#223149] p-4">
 
           <div className="flex items-center gap-3 rounded-2xl bg-[#111e2f] px-3.5 py-3">
 
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold text-white">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold">
               {initials}
             </div>
 
             <div className="min-w-0">
-
               <p className="truncate text-[13px] font-semibold text-white">
                 {facultyName}
               </p>
@@ -625,7 +585,6 @@ function FacultyDashboardPage() {
               <p className="truncate text-[11px] text-[#8296ae]">
                 {facultyRole}
               </p>
-
             </div>
 
           </div>
@@ -635,34 +594,31 @@ function FacultyDashboardPage() {
       </aside>
 
       {/* =====================================================
-          MAIN AREA
+          MAIN
       ====================================================== */}
 
       <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
 
-        {/* TOP HEADER */}
+        {/* HEADER */}
 
-        <header className="sticky top-0 z-30 h-[86px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 h-[82px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
 
-          <div className="flex h-full w-full items-center justify-between px-5 sm:px-6">
+          <div className="flex h-full w-full items-center justify-between px-5 sm:px-7">
 
             <div className="flex items-center gap-4">
 
               <button
                 type="button"
                 onClick={() =>
-                  setMobileSidebarOpen(
-                    true
-                  )
+                  setMobileSidebarOpen(true)
                 }
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white lg:hidden"
                 aria-label="Open sidebar"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-sm lg:hidden"
               >
                 <Menu size={20} />
               </button>
 
               <div>
-
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
                   Faculty Portal
                 </p>
@@ -670,42 +626,31 @@ function FacultyDashboardPage() {
                 <p className="mt-1 hidden text-[11px] text-[#71839a] sm:block">
                   Academic management workspace
                 </p>
-
               </div>
 
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3">
 
               <button
                 type="button"
                 aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe]"
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm hover:border-[#9bcbe4]"
               >
-
-                <Bell
-                  size={18}
-                  strokeWidth={1.8}
-                />
+                <Bell size={18} />
 
                 <span className="absolute right-[9px] top-[8px] h-1.5 w-1.5 rounded-full bg-[#54bce5]" />
-
               </button>
 
               <button
                 type="button"
                 aria-label="Settings"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe] sm:flex"
+                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm hover:border-[#9bcbe4] sm:flex"
               >
-
-                <Settings
-                  size={18}
-                  strokeWidth={1.8}
-                />
-
+                <Settings size={18} />
               </button>
 
-              <div className="mx-1 hidden h-8 w-px bg-[#dce6f0] sm:block" />
+              <div className="hidden h-8 w-px bg-[#dce6f0] sm:block" />
 
               <div className="hidden items-center gap-2.5 sm:flex">
 
@@ -714,7 +659,6 @@ function FacultyDashboardPage() {
                 </div>
 
                 <div>
-
                   <p className="text-[12px] font-semibold text-[#18283d]">
                     {facultyName}
                   </p>
@@ -722,7 +666,6 @@ function FacultyDashboardPage() {
                   <p className="text-[10px] text-[#72849a]">
                     {facultyRole}
                   </p>
-
                 </div>
 
               </div>
@@ -735,7 +678,7 @@ function FacultyDashboardPage() {
 
         {/* CONTENT */}
 
-        <main className="relative min-h-[calc(100vh-86px)] w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6">
+        <main className="relative min-h-[calc(100vh-82px)] w-full overflow-hidden bg-[#edf4fa] px-4 py-5 sm:px-6 lg:px-7">
 
           {/* BACKGROUND */}
 
@@ -745,9 +688,8 @@ function FacultyDashboardPage() {
               className="absolute inset-0"
               style={{
                 backgroundImage:
-                  "linear-gradient(rgba(88,157,197,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(88,157,197,0.08) 1px, transparent 1px)",
-                backgroundSize:
-                  "42px 42px",
+                  "linear-gradient(rgba(88,157,197,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(88,157,197,0.07) 1px, transparent 1px)",
+                backgroundSize: "42px 42px",
               }}
             />
 
@@ -757,98 +699,68 @@ function FacultyDashboardPage() {
 
           </div>
 
-          <div className="relative mx-auto w-full min-w-0 max-w-none">
+          <div className="relative w-full">
 
-            {/* WELCOME */}
+            {/* HERO */}
 
-            <section className="relative w-full overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-6 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 sm:py-7 lg:px-10 lg:py-7">
+            <section className="relative w-full overflow-hidden rounded-[24px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-6 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9">
 
               <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
 
-              <div className="pointer-events-none absolute -right-3 top-12 h-40 w-40 rounded-full border border-[#54bce5]/10" />
+              <div className="pointer-events-none absolute right-[-20px] top-16 h-40 w-40 rounded-full border border-[#54bce5]/10" />
 
-              <div className="pointer-events-none absolute bottom-[-100px] left-[42%] h-64 w-64 rounded-full bg-[#54bce5]/5 blur-3xl" />
-
-              <div className="relative z-10 max-w-[1100px]">
+              <div className="relative z-10">
 
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
-
-                  <GraduationCap
-                    size={14}
-                  />
-
+                  <GraduationCap size={14} />
                   Faculty Dashboard
-
                 </div>
 
-                <h1 className="font-serif text-[38px] font-bold leading-[0.98] tracking-[-0.03em] text-white sm:text-[45px] lg:text-[51px]">
-
+                <h1 className="font-serif text-[38px] font-bold leading-[1] tracking-[-0.03em] text-white sm:text-[48px] lg:text-[54px]">
                   Welcome back.
-
                   <br />
-
                   <span className="text-[#69c9ed]">
                     {facultyName}
                   </span>
-
                 </h1>
 
-                <p className="mt-4 max-w-[900px] text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
-
-                  Manage your academic
-                  responsibilities,
-                  students, attendance,
-                  schedules and campus
-                  activities from your
+                <p className="mt-4 max-w-[850px] text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
+                  Manage students, approvals,
+                  attendance, schedules and
+                  campus activities from your
                   Faculty Dashboard.
-
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-3">
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#49c997]/30 bg-[#49c997]/10 px-3.5 py-2 text-[11px] font-semibold text-[#72dcb4]">
-
-                    <CheckCircle2
-                      size={14}
-                    />
-
+                    <CheckCircle2 size={14} />
                     Account Approved
-
                   </div>
 
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3.5 py-2 text-[11px] font-medium text-[#b3c0d0]">
-
-                    <UserCircle
-                      size={14}
-                    />
-
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3.5 py-2 text-[11px] text-[#b3c0d0]">
+                    <UserCircle size={14} />
                     Faculty ID:
-
                     <span className="font-bold text-white">
                       {facultyId}
                     </span>
-
                   </div>
 
                 </div>
 
               </div>
 
-              <div className="absolute bottom-6 right-7 hidden h-[92px] w-[92px] items-center justify-center rounded-[21px] border border-[#54bce5]/25 bg-[#15273b]/90 shadow-[0_20px_45px_rgba(0,0,0,0.2)] lg:flex">
-
+              <div className="absolute bottom-7 right-8 hidden h-24 w-24 items-center justify-center rounded-[22px] border border-[#54bce5]/25 bg-[#15273b]/90 lg:flex">
                 <GraduationCap
-                  size={46}
+                  size={48}
                   strokeWidth={1.5}
                   className="text-[#67bfe6]"
                 />
-
               </div>
 
             </section>
 
-            {/* =================================================
-                STATS
-            ================================================== */}
+            {/* STATS */}
 
             <section className="mt-5 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -859,7 +771,7 @@ function FacultyDashboardPage() {
                     ? "..."
                     : String(stats.students)
                 }
-                description="Students assigned to you"
+                description="Approved students"
                 icon={Users}
               />
 
@@ -872,7 +784,7 @@ function FacultyDashboardPage() {
                         stats.pendingApprovals
                       )
                 }
-                description="Pending student approval requests"
+                description="Pending requests"
                 icon={CheckCircle2}
               />
 
@@ -896,7 +808,7 @@ function FacultyDashboardPage() {
                         stats.upcomingEvents
                       )
                 }
-                description="Upcoming campus events"
+                description="Upcoming events"
                 icon={CalendarDays}
               />
 
@@ -907,72 +819,50 @@ function FacultyDashboardPage() {
             <section className="mt-8 w-full">
 
               <div className="mb-4">
-
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#438bb8]">
                   Quick Access
                 </p>
 
-                <h2 className="mt-1 font-serif text-[25px] font-bold tracking-tight text-[#0d1728]">
+                <h2 className="mt-1 font-serif text-[25px] font-bold text-[#0d1728]">
                   Explore Faculty Portal
                 </h2>
-
               </div>
 
               <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
                 {quickAccess.map(
-                  (item) => {
-                    const Icon =
-                      item.icon;
-
-                    return (
-                      <QuickAccessCard
-                        key={item.title}
-                        title={item.title}
-                        description={
-                          item.description
-                        }
-                        href={item.href}
-                        action={item.action}
-                        Icon={Icon}
-                      />
-                    );
-                  }
+                  (item) => (
+                    <QuickAccessCard
+                      key={item.title}
+                      {...item}
+                    />
+                  )
                 )}
 
               </div>
 
             </section>
 
-            {/* LOWER INFORMATION */}
+            {/* INFORMATION */}
 
             <section className="mt-5 grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
-
-              {/* FACULTY INFORMATION */}
 
               <div className="rounded-[20px] border border-[#d9e4ee] bg-white p-6 shadow-[0_8px_25px_rgba(30,60,90,0.06)]">
 
                 <div className="flex items-start gap-4">
 
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eef7fc] text-[#4d9ac4]">
-
-                    <UserCircle
-                      size={21}
-                      strokeWidth={1.7}
-                    />
-
+                    <UserCircle size={21} />
                   </div>
 
-                  <div className="min-w-0">
-
+                  <div>
                     <h3 className="font-serif text-[18px] font-bold text-[#142238]">
                       Faculty Information
                     </h3>
 
                     <p className="mt-1 text-[12px] text-[#72849a]">
-                      Your CampusConnect faculty account details.
+                      Your CampusConnect account details.
                     </p>
-
                   </div>
 
                 </div>
@@ -1003,44 +893,30 @@ function FacultyDashboardPage() {
 
                 <Link
                   href="/faculty/profile"
-                  className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3989b7] transition hover:text-[#1d658d]"
+                  className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3989b7] hover:text-[#1d658d]"
                 >
-
                   Open Faculty Profile
-
-                  <ChevronRight
-                    size={14}
-                  />
-
+                  <ChevronRight size={14} />
                 </Link>
 
               </div>
-
-              {/* ACCOUNT SECURITY */}
 
               <div className="rounded-[20px] border border-[#d9e4ee] bg-white p-6 shadow-[0_8px_25px_rgba(30,60,90,0.06)]">
 
                 <div className="flex items-start gap-4">
 
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eef8f4] text-[#3ba77c]">
-
-                    <ShieldCheck
-                      size={21}
-                      strokeWidth={1.7}
-                    />
-
+                    <ShieldCheck size={21} />
                   </div>
 
                   <div>
-
                     <h3 className="font-serif text-[18px] font-bold text-[#142238]">
                       Account Security
                     </h3>
 
                     <p className="mt-1 text-[12px] leading-6 text-[#72849a]">
-                      Review your account security and password settings.
+                      Your faculty account is active and approved.
                     </p>
-
                   </div>
 
                 </div>
@@ -1050,23 +926,17 @@ function FacultyDashboardPage() {
                   <div className="flex items-center gap-2.5">
 
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#dff5e9] text-[#39a477]">
-
-                      <CheckCircle2
-                        size={17}
-                      />
-
+                      <CheckCircle2 size={17} />
                     </div>
 
                     <div>
-
                       <p className="text-[11px] font-semibold text-[#315b48]">
                         Account Status
                       </p>
 
                       <p className="text-[10px] text-[#6d8c7d]">
-                        Your faculty account is active
+                        Faculty account is active
                       </p>
-
                     </div>
 
                   </div>
@@ -1079,15 +949,10 @@ function FacultyDashboardPage() {
 
                 <Link
                   href="/faculty/security"
-                  className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3989b7] transition hover:text-[#1d658d]"
+                  className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3989b7]"
                 >
-
                   Open Security
-
-                  <ChevronRight
-                    size={14}
-                  />
-
+                  <ChevronRight size={14} />
                 </Link>
 
               </div>
@@ -1107,7 +972,7 @@ function FacultyDashboardPage() {
 }
 
 /* =========================================================
-   FACULTY INFORMATION ROW
+   FACULTY INFO
 ========================================================= */
 
 type FacultyInfoRowProps = {
@@ -1121,7 +986,6 @@ function FacultyInfoRow({
 }: FacultyInfoRowProps) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-[#edf1f5] bg-[#fafcfe] px-4 py-2.5">
-
       <span className="text-[11px] font-medium text-[#75889d]">
         {label}
       </span>
@@ -1129,7 +993,6 @@ function FacultyInfoRow({
       <span className="max-w-[65%] truncate text-right text-[11px] font-semibold text-[#1b2b40]">
         {value}
       </span>
-
     </div>
   );
 }
@@ -1152,7 +1015,7 @@ function StatCard({
   icon: Icon,
 }: StatCardProps) {
   return (
-    <div className="group min-w-0 rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#b9d8e9] hover:shadow-[0_12px_28px_rgba(30,70,100,0.09)]">
+    <div className="group min-w-0 rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-200 hover:-translate-y-1 hover:border-[#b9d8e9] hover:shadow-[0_14px_30px_rgba(30,70,100,0.10)]">
 
       <div className="flex items-start justify-between gap-4">
 
@@ -1168,13 +1031,8 @@ function StatCard({
 
         </div>
 
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#53a7d4] transition-colors duration-200 group-hover:bg-[#54bce5] group-hover:text-white">
-
-          <Icon
-            size={18}
-            strokeWidth={1.8}
-          />
-
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#53a7d4] transition group-hover:bg-[#54bce5] group-hover:text-white">
+          <Icon size={18} />
         </div>
 
       </div>
@@ -1196,7 +1054,7 @@ type QuickAccessCardProps = {
   description: string;
   href: string;
   action: string;
-  Icon: ElementType;
+  icon: ElementType;
 };
 
 function QuickAccessCard({
@@ -1204,32 +1062,22 @@ function QuickAccessCard({
   description,
   href,
   action,
-  Icon,
+  icon: Icon,
 }: QuickAccessCardProps) {
   return (
     <Link
       href={href}
-      className="group relative flex min-h-[205px] min-w-0 flex-col overflow-hidden rounded-[20px] border border-[#d8e3ed] bg-white p-5 shadow-[0_7px_22px_rgba(30,60,90,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-[#54bce5] hover:shadow-[0_18px_35px_rgba(8,27,48,0.2)] sm:p-5"
+      className="group relative flex min-h-[205px] min-w-0 flex-col overflow-hidden rounded-[20px] border border-[#d8e3ed] bg-white p-5 shadow-[0_7px_22px_rgba(30,60,90,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-[#54bce5] hover:shadow-[0_18px_35px_rgba(8,27,48,0.15)]"
     >
 
       <div className="flex items-start justify-between">
 
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#4ba4d2] transition-all duration-200 group-hover:bg-[#54bce5] group-hover:text-white">
-
-          <Icon
-            size={20}
-            strokeWidth={1.7}
-          />
-
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf7fc] text-[#4ba4d2] group-hover:bg-[#54bce5] group-hover:text-white">
+          <Icon size={20} />
         </div>
 
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#aec0d1] transition-all duration-200 group-hover:translate-x-0.5 group-hover:bg-[#54bce5] group-hover:text-white">
-
-          <ChevronRight
-            size={17}
-            strokeWidth={1.8}
-          />
-
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#edf7fc] text-[#aec0d1] group-hover:bg-[#54bce5] group-hover:text-white">
+          <ChevronRight size={17} />
         </div>
 
       </div>
@@ -1249,8 +1097,6 @@ function QuickAccessCard({
       <div className="mt-auto pt-5 text-[10px] font-semibold text-[#438eb9]">
         {action} →
       </div>
-
-      <div className="pointer-events-none absolute -bottom-14 -right-14 h-32 w-32 rounded-full bg-[#54bce5]/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
 
     </Link>
   );

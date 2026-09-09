@@ -91,7 +91,7 @@ const navigation = [
   },
   {
     title: "Students",
-    href: "/students",
+    href: "/dashboard/faculty/students",
     icon: Users,
   },
   {

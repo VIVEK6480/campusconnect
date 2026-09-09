@@ -2,40 +2,44 @@
 
 import {
   ArrowLeft,
+  Award,
   Bell,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   ClipboardCheck,
-  Eye,
+  Edit3,
   GraduationCap,
   Loader2,
   LogOut,
+  Mail,
+  MapPin,
   Menu,
   RefreshCw,
   Search,
   Settings,
-  ShieldCheck,
   Trash2,
   UserCircle,
   Users,
   X,
-  BookOpen,
-  Mail,
-  MapPin,
-  Award,
   Trophy,
-  Clock3,
-  type LucideIcon,
 } from "lucide-react";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
-// ============================================================
-// TYPES
-// ============================================================
+/* ============================================================
+   TYPES
+============================================================ */
 
 type Subject = {
   id: string;
@@ -51,15 +55,33 @@ type Registration = {
   subject: Subject;
 };
 
+type Certificate = {
+  id: string;
+  title: string;
+  fileUrl: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type Membership = {
+  id: string;
+  joinedAt: string;
+  club: {
+    id: string;
+    name: string;
+    description: string;
+    category: string | null;
+    logo: string | null;
+  };
+};
+
 type ClassAttendance = {
   id: string;
   status: string;
   markedAt: string;
   updatedAt: string;
   subjectId: string;
-
   subject: Subject;
-
   session: {
     id: string;
     semester: number;
@@ -78,7 +100,6 @@ type EventAttendance = {
   status: string;
   markedAt: string;
   updatedAt: string;
-
   event: {
     id: string;
     title: string;
@@ -86,7 +107,6 @@ type EventAttendance = {
     venue: string;
     eventDate: string;
     image: string | null;
-
     club: {
       id: string;
       name: string;
@@ -94,25 +114,16 @@ type EventAttendance = {
   };
 };
 
-type Certificate = {
-  id: string;
-  title: string;
-  fileUrl: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type Membership = {
-  id: string;
-  joinedAt: string;
-
-  club: {
-    id: string;
-    name: string;
-    description: string;
-    category: string | null;
-    logo: string | null;
-  };
+type StudentStatistics = {
+  subjectCount: number;
+  classAttendanceTotal: number;
+  classAttendancePresent: number;
+  classAttendanceAbsent: number;
+  classAttendancePercentage: number;
+  eventAttendanceTotal: number;
+  eventAttendancePresent: number;
+  certificateCount: number;
+  clubCount: number;
 };
 
 type Student = {
@@ -121,13 +132,10 @@ type Student = {
   name: string;
   email: string;
   profileImage: string | null;
-
   role: string;
   approvalStatus: string;
-
   approvedAt: string | null;
   rejectionReason: string | null;
-
   createdAt: string;
   updatedAt: string;
 
@@ -144,29 +152,12 @@ type Student = {
   officeHours: string | null;
 
   studentRegistrations: Registration[];
-
   classAttendances: ClassAttendance[];
-
   attendances: EventAttendance[];
-
   certificates: Certificate[];
-
   memberships: Membership[];
 
-  statistics: {
-    subjectCount: number;
-
-    classAttendanceTotal: number;
-    classAttendancePresent: number;
-    classAttendanceAbsent: number;
-    classAttendancePercentage: number;
-
-    eventAttendanceTotal: number;
-    eventAttendancePresent: number;
-
-    certificateCount: number;
-    clubCount: number;
-  };
+  statistics: StudentStatistics;
 };
 
 type Faculty = {
@@ -175,9 +166,53 @@ type Faculty = {
   email: string;
 };
 
-// ============================================================
-// NAVIGATION
-// ============================================================
+type ApiResponse = {
+  success?: boolean;
+  message?: string;
+  students?: Student[];
+};
+
+type DeleteResponse = {
+  success?: boolean;
+  message?: string;
+};
+
+type EditForm = {
+  name: string;
+  email: string;
+  campusUserId: string;
+  phone: string;
+  department: string;
+  qualification: string;
+  specialization: string;
+  address: string;
+  city: string;
+  state: string;
+};
+
+/* ============================================================
+   CONSTANTS
+============================================================ */
+
+const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
+
+const SECTIONS = ["A", "B", "C", "D"];
+
+const defaultStatistics: StudentStatistics = {
+  subjectCount: 0,
+  classAttendanceTotal: 0,
+  classAttendancePresent: 0,
+  classAttendanceAbsent: 0,
+  classAttendancePercentage: 0,
+  eventAttendanceTotal: 0,
+  eventAttendancePresent: 0,
+  certificateCount: 0,
+  clubCount: 0,
+};
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
 
 const navigation = [
   {
@@ -212,172 +247,42 @@ const navigation = [
   },
 ];
 
-const accountNavigation = [
-  {
-    title: "Account Security",
-    href: "/faculty/security",
-    icon: ShieldCheck,
-  },
-];
-
-// ============================================================
-// SAFE API TYPES
-// ============================================================
-
-type StudentsApiResponse = {
-  success?: boolean;
-  message?: string;
-  students?: Student[];
-};
-
-type DeleteApiResponse = {
-  success?: boolean;
-  message?: string;
-};
-
-const defaultStatistics: Student["statistics"] = {
-  subjectCount: 0,
-  classAttendanceTotal: 0,
-  classAttendancePresent: 0,
-  classAttendanceAbsent: 0,
-  classAttendancePercentage: 0,
-  eventAttendanceTotal: 0,
-  eventAttendancePresent: 0,
-  certificateCount: 0,
-  clubCount: 0,
-};
-
-function normalizeStudent(student: Student): Student {
-  const raw = student as Student & Record<string, unknown>;
-  const rawRegistrations = Array.isArray(raw.studentRegistrations)
-    ? raw.studentRegistrations
-    : [];
-  const rawClassAttendances = Array.isArray(raw.classAttendances)
-    ? raw.classAttendances
-    : [];
-  const rawEventAttendances = Array.isArray(raw.attendances)
-    ? raw.attendances
-    : [];
-  const rawCertificates = Array.isArray(raw.certificates)
-    ? raw.certificates
-    : [];
-  const rawMemberships = Array.isArray(raw.memberships)
-    ? raw.memberships
-    : [];
-
-  const registrations = rawRegistrations
-    .filter((item): item is Registration => Boolean(item && typeof item === "object"))
-    .map((item) => ({
-      ...item,
-      subject: item.subject ?? {
-        id: "unknown-subject",
-        name: "Unknown Subject",
-        semester: Number(item.semester) || 0,
-      },
-    }));
-
-  const classAttendances = rawClassAttendances
-    .filter((item): item is ClassAttendance => Boolean(item && typeof item === "object"))
-    .map((item) => ({
-      ...item,
-      subject: item.subject ?? {
-        id: item.subjectId || "unknown-subject",
-        name: "Unknown Subject",
-        semester: 0,
-      },
-      session: item.session ?? {
-        id: "unknown-session",
-        semester: 0,
-        section: "-",
-        sessionDate: item.markedAt || "",
-        faculty: { id: "", name: "Unknown Faculty", email: "" },
-      },
-    }));
-
-  const attendances = rawEventAttendances
-    .filter((item): item is EventAttendance => Boolean(item && typeof item === "object"))
-    .map((item) => ({
-      ...item,
-      event: item.event ?? {
-        id: "unknown-event",
-        title: "Unknown Event",
-        description: "",
-        venue: "Not available",
-        eventDate: item.markedAt || "",
-        image: null,
-        club: { id: "", name: "Unknown Club" },
-      },
-    }));
-
-  const memberships = rawMemberships
-    .filter((item): item is Membership => Boolean(item && typeof item === "object"))
-    .map((item) => ({
-      ...item,
-      club: item.club ?? {
-        id: "unknown-club",
-        name: "Unknown Club",
-        description: "",
-        category: null,
-        logo: null,
-      },
-    }));
-
-  return {
-    ...student,
-    studentRegistrations: registrations,
-    classAttendances,
-    attendances,
-    certificates: rawCertificates as Certificate[],
-    memberships,
-    statistics: {
-      ...defaultStatistics,
-      ...(student.statistics ?? {}),
-    },
-  };
-}
-
-// ============================================================
-// FACULTY STORAGE
-// ============================================================
+/* ============================================================
+   STORAGE
+============================================================ */
 
 function getStoredFaculty(): Faculty | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const possibleKeys = [
+  const keys = [
     "facultyUser",
     "faculty",
     "currentFaculty",
     "user",
   ];
 
-  for (const key of possibleKeys) {
-    const stored = localStorage.getItem(key);
+  for (const key of keys) {
+    const value = window.localStorage.getItem(key);
 
-    if (!stored) {
+    if (!value) {
       continue;
     }
 
     try {
-      const parsed = JSON.parse(stored);
+      const parsed = JSON.parse(value) as Record<string, unknown>;
 
-      if (
-        parsed &&
-        typeof parsed === "object" &&
-        parsed.id
-      ) {
-        const role = String(parsed.role || "")
-          .trim()
-          .toUpperCase();
+      const role = String(parsed.role ?? "")
+        .trim()
+        .toUpperCase();
 
-        if (role === "FACULTY") {
-          return {
-            id: String(parsed.id),
-            name: String(parsed.name || "Faculty"),
-            email: String(parsed.email || ""),
-          };
-        }
+      if (role === "FACULTY" && parsed.id) {
+        return {
+          id: String(parsed.id),
+          name: String(parsed.name ?? "Faculty"),
+          email: String(parsed.email ?? ""),
+        };
       }
     } catch {
       continue;
@@ -387,28 +292,184 @@ function getStoredFaculty(): Faculty | null {
   return null;
 }
 
-// ============================================================
-// PAGE
-// ============================================================
+/* ============================================================
+   NORMALIZATION
+============================================================ */
+
+function normalizeStudent(student: Student): Student {
+  return {
+    ...student,
+
+    studentRegistrations: Array.isArray(
+      student.studentRegistrations
+    )
+      ? student.studentRegistrations
+      : [],
+
+    classAttendances: Array.isArray(
+      student.classAttendances
+    )
+      ? student.classAttendances
+      : [],
+
+    attendances: Array.isArray(student.attendances)
+      ? student.attendances
+      : [],
+
+    certificates: Array.isArray(student.certificates)
+      ? student.certificates
+      : [],
+
+    memberships: Array.isArray(student.memberships)
+      ? student.memberships
+      : [],
+
+    statistics: {
+      ...defaultStatistics,
+      ...(student.statistics ?? {}),
+    },
+  };
+}
+
+/* ============================================================
+   HELPERS
+============================================================ */
+
+function formatDate(value: string | null | undefined) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getStudentSemester(
+  student: Student
+): number | null {
+  const registration = student.studentRegistrations.find(
+    (item) => Number(item.semester) > 0
+  );
+
+  return registration
+    ? Number(registration.semester)
+    : null;
+}
+
+function getStudentSections(student: Student): string[] {
+  return Array.from(
+    new Set(
+      student.studentRegistrations
+        .map((item) => item.section?.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function getStudentSection(
+  student: Student
+): string {
+  return getStudentSections(student).join(", ") || "-";
+}
+
+function getUniqueSubjects(student: Student): Subject[] {
+  const map = new Map<string, Subject>();
+
+  for (const registration of student.studentRegistrations) {
+    if (registration.subject?.id) {
+      map.set(
+        registration.subject.id,
+        registration.subject
+      );
+    }
+  }
+
+  return Array.from(map.values());
+}
+
+function createEditForm(student: Student): EditForm {
+  return {
+    name: student.name ?? "",
+    email: student.email ?? "",
+    campusUserId: student.campusUserId ?? "",
+    phone: student.phone ?? "",
+    department: student.department ?? "",
+    qualification: student.qualification ?? "",
+    specialization: student.specialization ?? "",
+    address: student.address ?? "",
+    city: student.city ?? "",
+    state: student.state ?? "",
+  };
+}
+
+/* ============================================================
+   PAGE
+============================================================ */
 
 export default function FacultyStudentsPage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [faculty, setFaculty] = useState<Faculty | null>(null);
+  const [faculty, setFaculty] =
+    useState<Faculty | null>(null);
 
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] =
+    useState<Student[]>([]);
 
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [refreshing, setRefreshing] =
+    useState(false);
 
-  const [search, setSearch] = useState("");
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
+
+  const [mobileSidebarOpen, setMobileSidebarOpen] =
+    useState(false);
+
+  /* ----------------------------------------------------------
+     CLASS SELECTION
+  ---------------------------------------------------------- */
+
+  const [semester, setSemester] =
+    useState("");
+
+  const [section, setSection] =
+    useState("");
+
+  const [hasLoadedClass, setHasLoadedClass] =
+    useState(false);
+
+  /* ----------------------------------------------------------
+     SEARCH
+  ---------------------------------------------------------- */
+
+  const [search, setSearch] =
+    useState("");
+
+  /* ----------------------------------------------------------
+     DETAILS
+  ---------------------------------------------------------- */
 
   const [selectedStudent, setSelectedStudent] =
     useState<Student | null>(null);
+
+  /* ----------------------------------------------------------
+     DELETE
+  ---------------------------------------------------------- */
 
   const [deleteStudent, setDeleteStudent] =
     useState<Student | null>(null);
@@ -416,12 +477,22 @@ export default function FacultyStudentsPage() {
   const [deleting, setDeleting] =
     useState(false);
 
-  const [mobileSidebarOpen, setMobileSidebarOpen] =
+  /* ----------------------------------------------------------
+     EDIT
+  ---------------------------------------------------------- */
+
+  const [editingStudent, setEditingStudent] =
+    useState<Student | null>(null);
+
+  const [editForm, setEditForm] =
+    useState<EditForm | null>(null);
+
+  const [savingEdit, setSavingEdit] =
     useState(false);
 
-  // ==========================================================
-  // ACTIVE NAV
-  // ==========================================================
+  /* ============================================================
+     ACTIVE NAV
+  ============================================================ */
 
   const isActive = useCallback(
     (href: string) => {
@@ -437,17 +508,75 @@ export default function FacultyStudentsPage() {
     [pathname]
   );
 
-  // ==========================================================
-  // LOAD STUDENTS
-  // ==========================================================
+  /* ============================================================
+     INITIAL CLIENT SETUP
+  ============================================================ */
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setFaculty(getStoredFaculty());
+      setSemester("");
+      setSection("");
+      setStudents([]);
+      setHasLoadedClass(false);
+      setSearch("");
+      setSelectedStudent(null);
+      setDeleteStudent(null);
+      setEditingStudent(null);
+      setEditForm(null);
+      setError("");
+      setSuccess("");
+    }, 0);
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+
+      setSemester("");
+      setSection("");
+      setStudents([]);
+      setHasLoadedClass(false);
+      setSearch("");
+      setSelectedStudent(null);
+      setDeleteStudent(null);
+      setEditingStudent(null);
+      setEditForm(null);
+      setError("");
+      setSuccess("");
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
+  /* ============================================================
+     LOAD STUDENTS
+  ============================================================ */
 
   const loadStudents = useCallback(
-    async (showRefresh = false) => {
+    async (
+      selectedSemester: string,
+      selectedSection: string,
+      isRefresh = false
+    ) => {
       if (!faculty?.id) {
+        setError(
+          "Faculty information was not found. Please login again."
+        );
         return;
       }
 
-      if (showRefresh) {
+      if (!selectedSemester || !selectedSection) {
+        setError(
+          "Please select both semester and section."
+        );
+        return;
+      }
+
+      if (isRefresh) {
         setRefreshing(true);
       } else {
         setLoading(true);
@@ -458,13 +587,11 @@ export default function FacultyStudentsPage() {
 
       try {
         const response = await fetch(
-          `/api/faculty/students${
-            search.trim()
-              ? `?search=${encodeURIComponent(
-                  search.trim()
-                )}`
-              : ""
-          }`,
+          `/api/faculty/students?semester=${encodeURIComponent(
+            selectedSemester
+          )}&section=${encodeURIComponent(
+            selectedSection
+          )}`,
           {
             method: "GET",
             credentials: "include",
@@ -476,10 +603,11 @@ export default function FacultyStudentsPage() {
           }
         );
 
-        let data: StudentsApiResponse = {};
+        let data: ApiResponse = {};
 
         try {
-          data = (await response.json()) as StudentsApiResponse;
+          data =
+            (await response.json()) as ApiResponse;
         } catch {
           data = {};
         }
@@ -491,16 +619,21 @@ export default function FacultyStudentsPage() {
           );
         }
 
-        const loadedStudents = Array.isArray(data.students)
+        const loaded = Array.isArray(data.students)
           ? data.students
           : [];
 
-        setStudents(
-          loadedStudents.map(normalizeStudent)
-        );
+        setStudents(loaded.map(normalizeStudent));
+        setHasLoadedClass(true);
+
+        if (isRefresh) {
+          setSuccess(
+            `Semester ${selectedSemester} - Section ${selectedSection} refreshed successfully.`
+          );
+        }
       } catch (err) {
         console.error(
-          "Faculty students load error:",
+          "Faculty student load error:",
           err
         );
 
@@ -511,67 +644,67 @@ export default function FacultyStudentsPage() {
         );
 
         setStudents([]);
+        setHasLoadedClass(false);
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [faculty, search]
+    [faculty]
   );
 
-  // ==========================================================
-  // INITIALIZE
-  // ==========================================================
+  /* ============================================================
+     SELECTION CHANGE
+  ============================================================ */
 
-  useEffect(() => {
-    let cancelled = false;
+  const handleSemesterChange = (
+    value: string
+  ) => {
+    setSemester(value);
+    setSection("");
+    setStudents([]);
+    setHasLoadedClass(false);
+    setSearch("");
+    setError("");
+    setSuccess("");
+  };
 
-    const initialize = async () => {
-      const storedFaculty = getStoredFaculty();
+  const handleSectionChange = (
+    value: string
+  ) => {
+    setSection(value);
+    setStudents([]);
+    setHasLoadedClass(false);
+    setSearch("");
+    setError("");
+    setSuccess("");
+  };
 
-      if (cancelled) {
-        return;
-      }
+  const handleLoadStudents = () => {
+    void loadStudents(
+      semester,
+      section,
+      false
+    );
+  };
 
-      if (!storedFaculty?.id) {
-        setError(
-          "Faculty information was not found. Please login again."
-        );
-        setLoading(false);
-        return;
-      }
+  const handleRefresh = () => {
+    setSemester("");
+    setSection("");
+    setStudents([]);
+    setHasLoadedClass(false);
+    setSearch("");
+    setSelectedStudent(null);
+    setDeleteStudent(null);
+    setEditingStudent(null);
+    setEditForm(null);
+    setError("");
+    setSuccess("");
+  };
 
-      setFaculty(storedFaculty);
-    };
-
-    void initialize();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // ==========================================================
-  // LOAD AFTER FACULTY IS READY
-  // ==========================================================
-
-  useEffect(() => {
-    if (!faculty?.id) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      void loadStudents();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [faculty, loadStudents]);
-
-  // ==========================================================
-  // DELETE
-  // ==========================================================
+  /* ============================================================
+     DELETE
+  ============================================================ */
 
   const confirmDelete = async () => {
     if (!faculty?.id || !deleteStudent) {
@@ -589,7 +722,8 @@ export default function FacultyStudentsPage() {
           method: "DELETE",
           credentials: "include",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
             "x-faculty-id": faculty.id,
           },
           body: JSON.stringify({
@@ -598,10 +732,11 @@ export default function FacultyStudentsPage() {
         }
       );
 
-      let data: DeleteApiResponse = {};
+      let data: DeleteResponse = {};
 
       try {
-        data = (await response.json()) as DeleteApiResponse;
+        data =
+          (await response.json()) as DeleteResponse;
       } catch {
         data = {};
       }
@@ -613,6 +748,9 @@ export default function FacultyStudentsPage() {
         );
       }
 
+      const deletedName =
+        deleteStudent.name;
+
       setStudents((current) =>
         current.filter(
           (student) =>
@@ -621,12 +759,11 @@ export default function FacultyStudentsPage() {
       );
 
       setSelectedStudent(null);
+      setDeleteStudent(null);
 
       setSuccess(
-        `${deleteStudent.name} has been deleted successfully.`
+        `${deletedName} deleted successfully.`
       );
-
-      setDeleteStudent(null);
     } catch (err) {
       console.error(
         "Faculty student delete error:",
@@ -643,50 +780,211 @@ export default function FacultyStudentsPage() {
     }
   };
 
-  // ==========================================================
-  // SIGN OUT
-  // ==========================================================
+  /* ============================================================
+     EDIT
+  ============================================================ */
+
+  const openEdit = (student: Student) => {
+    setEditingStudent(student);
+    setEditForm(createEditForm(student));
+    setSelectedStudent(null);
+    setError("");
+    setSuccess("");
+  };
+
+  const closeEdit = () => {
+    if (savingEdit) {
+      return;
+    }
+
+    setEditingStudent(null);
+    setEditForm(null);
+  };
+
+  const updateEditField = (
+    field: keyof EditForm,
+    value: string
+  ) => {
+    setEditForm((current) =>
+      current
+        ? {
+            ...current,
+            [field]: value,
+          }
+        : current
+    );
+  };
+
+  const saveStudent = async () => {
+    if (
+      !faculty?.id ||
+      !editingStudent ||
+      !editForm
+    ) {
+      return;
+    }
+
+    if (!editForm.name.trim()) {
+      setError("Student name is required.");
+      return;
+    }
+
+    if (!editForm.email.trim()) {
+      setError("Student email is required.");
+      return;
+    }
+
+    setSavingEdit(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        "/api/faculty/students",
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type":
+              "application/json",
+            "x-faculty-id": faculty.id,
+          },
+          body: JSON.stringify({
+            studentId: editingStudent.id,
+            ...editForm,
+          }),
+        }
+      );
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        student?: Student;
+      };
+
+      if (!response.ok || data.success !== true) {
+        throw new Error(
+          data.message ||
+            "Unable to update student."
+        );
+      }
+
+      if (data.student) {
+        const updated =
+          normalizeStudent(data.student);
+
+        setStudents((current) =>
+          current.map((student) =>
+            student.id === updated.id
+              ? updated
+              : student
+          )
+        );
+      } else {
+        setStudents((current) =>
+          current.map((student) =>
+            student.id === editingStudent.id
+              ? {
+                  ...student,
+                  name: editForm.name.trim(),
+                  email: editForm.email.trim(),
+                  campusUserId:
+                    editForm.campusUserId.trim() ||
+                    null,
+                  phone:
+                    editForm.phone.trim() ||
+                    null,
+                  department:
+                    editForm.department.trim() ||
+                    null,
+                  qualification:
+                    editForm.qualification.trim() ||
+                    null,
+                  specialization:
+                    editForm.specialization.trim() ||
+                    null,
+                  address:
+                    editForm.address.trim() ||
+                    null,
+                  city:
+                    editForm.city.trim() ||
+                    null,
+                  state:
+                    editForm.state.trim() ||
+                    null,
+                }
+              : student
+          )
+        );
+      }
+
+      setEditingStudent(null);
+      setEditForm(null);
+
+      setSuccess(
+        `${editForm.name.trim()} updated successfully.`
+      );
+    } catch (err) {
+      console.error(
+        "Faculty student update error:",
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to update student."
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  /* ============================================================
+     SIGN OUT
+  ============================================================ */
 
   const handleSignOut = () => {
+    const keys = [
+      "facultyUser",
+      "faculty",
+      "currentFaculty",
+      "user",
+      "token",
+      "facultyToken",
+    ];
+
     try {
-      localStorage.removeItem("facultyUser");
-      localStorage.removeItem("faculty");
-      localStorage.removeItem("currentFaculty");
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("facultyToken");
+      keys.forEach((key) =>
+        window.localStorage.removeItem(key)
+      );
     } catch {
-      // ignore
+      // ignore storage errors
     }
 
     router.push("/faculty/login");
   };
 
-  // ==========================================================
-  // FILTERED STUDENTS
-  // ==========================================================
+  /* ============================================================
+     FILTER
+  ============================================================ */
 
   const filteredStudents = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term =
+      search.trim().toLowerCase();
 
     if (!term) {
       return students;
     }
 
     return students.filter((student) => {
-      const registrations = Array.isArray(
+      const subjects =
         student.studentRegistrations
-      )
-        ? student.studentRegistrations
-        : [];
-
-      const subjects = registrations
-        .map((item) => item.subject?.name ?? "")
-        .join(" ");
-
-      const sections = registrations
-        .map((item) => item.section ?? "")
-        .join(" ");
+          .map(
+            (registration) =>
+              registration.subject?.name ?? ""
+          )
+          .join(" ");
 
       return (
         student.name
@@ -695,25 +993,19 @@ export default function FacultyStudentsPage() {
         student.email
           .toLowerCase()
           .includes(term) ||
-        (student.campusUserId || "")
+        (student.campusUserId ?? "")
           .toLowerCase()
           .includes(term) ||
         subjects
-          .toLowerCase()
-          .includes(term) ||
-        sections
-          .toLowerCase()
-          .includes(term) ||
-        (student.department || "")
           .toLowerCase()
           .includes(term)
       );
     });
   }, [students, search]);
 
-  // ==========================================================
-  // FACULTY DISPLAY
-  // ==========================================================
+  /* ============================================================
+     FACULTY DISPLAY
+  ============================================================ */
 
   const facultyName =
     faculty?.name || "Faculty Portal";
@@ -729,12 +1021,13 @@ export default function FacultyStudentsPage() {
       .slice(0, 2)
       .toUpperCase() || "FC";
 
-  // ==========================================================
-  // RETURN
-  // ==========================================================
+  /* ============================================================
+     RETURN
+  ============================================================ */
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#edf4fa] text-[#102033]">
+
       {/* ======================================================
           MOBILE OVERLAY
       ====================================================== */}
@@ -765,7 +1058,7 @@ export default function FacultyStudentsPage() {
 
         <div className="flex h-[86px] shrink-0 items-center justify-between border-b border-[#223149] px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#54bce5]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_0_25px_rgba(84,188,229,0.25)]">
               <GraduationCap size={24} />
             </div>
 
@@ -801,9 +1094,8 @@ export default function FacultyStudentsPage() {
           <nav className="space-y-1.5">
             {navigation.map((item) => {
               const Icon = item.icon;
-              const active = isActive(
-                item.href
-              );
+              const active =
+                isActive(item.href);
 
               return (
                 <Link
@@ -828,9 +1120,7 @@ export default function FacultyStudentsPage() {
                     }
                   />
 
-                  <span>
-                    {item.title}
-                  </span>
+                  <span>{item.title}</span>
 
                   {active && (
                     <ChevronRight
@@ -850,40 +1140,10 @@ export default function FacultyStudentsPage() {
           </p>
 
           <nav className="space-y-1.5">
-            {accountNavigation.map(
-              (item) => {
-                const Icon = item.icon;
-                const active = isActive(
-                  item.href
-                );
-
-                return (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className={`group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium transition ${
-                      active
-                        ? "bg-[#17263a] text-[#64c8ee]"
-                        : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
-                    }`}
-                  >
-                    <Icon
-                      size={18}
-                      strokeWidth={1.8}
-                    />
-
-                    <span>
-                      {item.title}
-                    </span>
-                  </Link>
-                );
-              }
-            )}
-
             <button
               type="button"
               onClick={handleSignOut}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] hover:bg-[#142135] hover:text-white"
+              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
             >
               <LogOut
                 size={18}
@@ -921,10 +1181,11 @@ export default function FacultyStudentsPage() {
       ====================================================== */}
 
       <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
+
         {/* HEADER */}
 
-        <header className="sticky top-0 z-30 h-[78px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
-          <div className="flex h-full w-full items-center justify-between px-5 sm:px-7">
+        <header className="sticky top-0 z-30 h-[74px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
+          <div className="flex h-full w-full items-center justify-between px-4 sm:px-7">
             <div className="flex items-center gap-4">
               <button
                 type="button"
@@ -938,7 +1199,7 @@ export default function FacultyStudentsPage() {
 
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
-                  Faculty Portal
+                  Faculty Workspace
                 </p>
 
                 <p className="mt-1 text-[11px] text-[#71839a]">
@@ -989,8 +1250,9 @@ export default function FacultyStudentsPage() {
             CONTENT
         ==================================================== */}
 
-        <main className="relative min-h-[calc(100vh-78px)] w-full overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6 lg:px-7 xl:px-8">
-          {/* GRID BACKGROUND */}
+        <main className="relative min-h-[calc(100vh-74px)] w-full overflow-hidden bg-[#edf4fa] px-3 py-5 sm:px-5 lg:px-7 xl:px-8">
+
+          {/* BACKGROUND GRID */}
 
           <div className="pointer-events-none absolute inset-0 opacity-50">
             <div
@@ -1004,60 +1266,305 @@ export default function FacultyStudentsPage() {
             />
           </div>
 
-          <div className="relative mx-auto w-full max-w-[1550px]">
+          <div className="relative w-full max-w-none">
+
             {/* =================================================
                 TOP
             ================================================= */}
 
             <section className="mb-5">
-              <div className="mb-4">
-                <Link
-                  href="/dashboard/faculty"
-                  className="inline-flex items-center gap-2 text-[11px] font-medium text-[#4d83aa] hover:text-[#1e648f]"
-                >
-                  <ArrowLeft size={14} />
-                  Back to Faculty Dashboard
-                </Link>
-              </div>
+              <Link
+                href="/dashboard/faculty"
+                className="mb-4 inline-flex items-center gap-2 text-[11px] font-medium text-[#4d83aa] transition hover:text-[#1e648f]"
+              >
+                <ArrowLeft size={14} />
+                Back to Faculty Dashboard
+              </Link>
 
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-                <div>
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#bcdff3] bg-[#f3faff] px-3 py-1.5 text-[10px] font-semibold text-[#3988b8]">
-                    <Users size={13} />
-                    Student Management
+              <div className="relative overflow-hidden rounded-[25px] bg-[#101c2e] px-5 py-7 text-white shadow-[0_20px_60px_rgba(20,45,70,0.14)] sm:px-8 sm:py-8">
+
+                <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full border border-[#6fc9ed]/20" />
+
+                <div className="pointer-events-none absolute right-[-30px] top-[55px] h-56 w-56 rounded-full border border-[#6fc9ed]/10" />
+
+                <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+
+                  <div>
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#63c9ef]/30 bg-[#17314a] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-[#73d0f3]">
+                      <Users size={13} />
+                      Faculty Student Management
+                    </div>
+
+                    <h1 className="font-serif text-[34px] font-bold tracking-[-0.03em] sm:text-[46px]">
+                      Student Directory
+                    </h1>
+
+                    <p className="mt-2 max-w-[780px] text-[11px] leading-5 text-[#a9b9ca] sm:text-[12px]">
+                      Select a semester and section first.
+                      Only students belonging to that
+                      class will be displayed. Complete
+                      student information stays inside the
+                      details panel.
+                    </p>
                   </div>
 
-                  <h1 className="font-serif text-[34px] font-bold tracking-[-0.025em] text-[#102033] sm:text-[40px]">
-                    Students
-                  </h1>
+                  <div className="relative flex shrink-0 items-center gap-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 backdrop-blur-sm">
+                      <p className="text-[8px] uppercase tracking-[0.18em] text-[#8ea4b9]">
+                        Students Found
+                      </p>
 
-                  <p className="mt-2 max-w-[720px] text-[12px] leading-5 text-[#6d8197] sm:text-[13px]">
-                    View and manage approved students
-                    registered in CampusConnect. Open a
-                    student profile to view complete
-                    academic, registration and attendance
-                    information.
-                  </p>
+                      <p className="mt-1 text-[26px] font-bold">
+                        {hasLoadedClass
+                          ? filteredStudents.length
+                          : 0}
+                      </p>
+                    </div>
+
+                    <div className="flex h-[67px] w-[67px] items-center justify-center rounded-2xl border border-[#61c8ee]/20 bg-[#17324b] text-[#68cbed]">
+                      <GraduationCap size={32} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* =================================================
+                ALERTS
+            ================================================= */}
+
+            {error && (
+              <div className="mb-4 flex items-start justify-between gap-4 rounded-xl border border-[#f2caca] bg-[#fff6f6] px-4 py-3 text-[11px] text-[#b13c3c] shadow-sm">
+                <span>{error}</span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setError("")
+                  }
+                  className="shrink-0 rounded-lg p-1 hover:bg-red-100"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-4 flex items-start justify-between gap-4 rounded-xl border border-[#ccebdc] bg-[#f3fbf7] px-4 py-3 text-[11px] text-[#287a58] shadow-sm">
+                <span>{success}</span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSuccess("")
+                  }
+                  className="shrink-0 rounded-lg p-1 hover:bg-green-100"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* =================================================
+                CLASS SELECTION
+            ================================================= */}
+
+            <section className="mb-5 overflow-hidden rounded-[22px] border border-[#d5e2ec] bg-white shadow-[0_12px_35px_rgba(30,60,90,0.055)]">
+
+              <div className="border-b border-[#e6edf2] px-5 py-5 sm:px-6">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#3988b8]">
+                      Class Selection
+                    </p>
+
+                    <h2 className="mt-1 font-serif text-[20px] font-bold text-[#17283c]">
+                      Select Semester {"&"} Section
+                    </h2>
+
+                    <p className="mt-1 text-[10px] text-[#8194a7]">
+                      Students will appear only after
+                      both values are selected.
+                    </p>
+                  </div>
+
+                  {hasLoadedClass && (
+                    <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#bfe6d3] bg-[#f1fbf6] px-3 py-1.5 text-[9px] font-bold text-[#31815f]">
+                      <CheckCircle2 size={12} />
+                      Semester {semester} • Section{" "}
+                      {section}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] sm:p-6">
+
+                {/* SEMESTER */}
+
+                <div>
+                  <label
+                    htmlFor="semester"
+                    className="mb-2 block text-[9px] font-bold uppercase tracking-[0.16em] text-[#71879b]"
+                  >
+                    Semester
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      id="semester"
+                      value={semester}
+                      onChange={(event) =>
+                        handleSemesterChange(
+                          event.target.value
+                        )
+                      }
+                      className="h-12 w-full appearance-none rounded-xl border border-[#d8e5ee] bg-[#fbfdff] px-4 pr-10 text-[11px] font-semibold text-[#273b50] outline-none transition focus:border-[#72c5e9] focus:ring-4 focus:ring-[#54bce5]/10"
+                    >
+                      <option value="">
+                        Select Semester
+                      </option>
+
+                      {SEMESTERS.map((item) => (
+                        <option
+                          key={item}
+                          value={String(item)}
+                        >
+                          Semester {item}
+                        </option>
+                      ))}
+                    </select>
+
+                    <ChevronDown
+                      size={16}
+                      className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7890a5]"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="rounded-xl border border-[#d7e3ed] bg-white px-4 py-2.5 shadow-sm">
-                    <p className="text-[9px] uppercase tracking-[0.12em] text-[#7b8fa3]">
-                      Approved Students
-                    </p>
+                {/* SECTION */}
 
-                    <p className="mt-0.5 text-[18px] font-bold text-[#142238]">
-                      {students.length}
-                    </p>
+                <div>
+                  <label
+                    htmlFor="section"
+                    className="mb-2 block text-[9px] font-bold uppercase tracking-[0.16em] text-[#71879b]"
+                  >
+                    Section
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      id="section"
+                      value={section}
+                      disabled={!semester}
+                      onChange={(event) =>
+                        handleSectionChange(
+                          event.target.value
+                        )
+                      }
+                      className="h-12 w-full appearance-none rounded-xl border border-[#d8e5ee] bg-[#fbfdff] px-4 pr-10 text-[11px] font-semibold text-[#273b50] outline-none transition focus:border-[#72c5e9] focus:ring-4 focus:ring-[#54bce5]/10 disabled:cursor-not-allowed disabled:bg-[#f2f5f7] disabled:text-[#9aa9b7]"
+                    >
+                      <option value="">
+                        Select Section
+                      </option>
+
+                      {SECTIONS.map((item) => (
+                        <option
+                          key={item}
+                          value={item}
+                        >
+                          Section {item}
+                        </option>
+                      ))}
+                    </select>
+
+                    <ChevronDown
+                      size={16}
+                      className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7890a5]"
+                    />
+                  </div>
+                </div>
+
+                {/* LOAD */}
+
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={
+                      handleLoadStudents
+                    }
+                    disabled={
+                      !semester ||
+                      !section ||
+                      loading
+                    }
+                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#111d2e] px-6 text-[11px] font-bold text-white shadow-[0_10px_25px_rgba(17,29,46,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1a2a40] disabled:cursor-not-allowed disabled:opacity-45 lg:w-auto"
+                  >
+                    {loading ? (
+                      <Loader2
+                        size={15}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <Users size={15} />
+                    )}
+
+                    {loading
+                      ? "Loading..."
+                      : "Load Students"}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* =================================================
+                SEARCH
+            ================================================= */}
+
+            {hasLoadedClass && (
+              <section className="mb-5 rounded-[18px] border border-[#d7e3ed] bg-white p-3 shadow-[0_7px_25px_rgba(30,60,90,0.045)]">
+                <div className="flex flex-col gap-3 md:flex-row">
+
+                  <div className="relative flex-1">
+                    <Search
+                      size={17}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8da1b4]"
+                    />
+
+                    <input
+                      value={search}
+                      onChange={(event) =>
+                        setSearch(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Search student by name, email, Campus ID or subject..."
+                      className="h-12 w-full rounded-xl border border-[#dce7ef] bg-[#fbfdff] pl-11 pr-10 text-[12px] text-[#25384d] outline-none transition placeholder:text-[#9badbe] focus:border-[#8fc8e6] focus:ring-4 focus:ring-[#54bce5]/10"
+                    />
+
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSearch("")
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[#8195a9] hover:bg-[#eef5fa]"
+                      >
+                        <X size={15} />
+                      </button>
+                    )}
                   </div>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      void loadStudents(true)
+                    onClick={handleRefresh}
+                    disabled={
+                      !semester ||
+                      !section ||
+                      loading ||
+                      refreshing
                     }
-                    disabled={loading || refreshing}
-                    className="inline-flex h-[47px] items-center gap-2 rounded-xl border border-[#d7e3ed] bg-white px-4 text-[11px] font-semibold text-[#46637e] shadow-sm transition hover:border-[#9ccbe6] hover:text-[#2479aa] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#d5e2eb] bg-white px-5 text-[11px] font-bold text-[#49657f] shadow-sm transition hover:border-[#9bcce6] hover:text-[#267ba8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <RefreshCw
                       size={15}
@@ -1071,180 +1578,149 @@ export default function FacultyStudentsPage() {
                     Refresh
                   </button>
                 </div>
-              </div>
-            </section>
-
-            {/* =================================================
-                ALERTS
-            ================================================= */}
-
-            {error && (
-              <div className="mb-4 flex items-center justify-between rounded-xl border border-[#f2caca] bg-[#fff6f6] px-4 py-3 text-[11px] text-[#b13c3c]">
-                <span>{error}</span>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setError("")
-                  }
-                  className="rounded-lg p-1 hover:bg-red-100"
-                >
-                  <X size={14} />
-                </button>
-              </div>
+              </section>
             )}
-
-            {success && (
-              <div className="mb-4 flex items-center justify-between rounded-xl border border-[#ccebdc] bg-[#f3fbf7] px-4 py-3 text-[11px] text-[#287a58]">
-                <span>{success}</span>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSuccess("")
-                  }
-                  className="rounded-lg p-1 hover:bg-green-100"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* =================================================
-                SEARCH
-            ================================================= */}
-
-            <section className="mb-5 rounded-[18px] border border-[#d7e3ed] bg-white p-3 shadow-[0_7px_25px_rgba(30,60,90,0.045)]">
-              <div className="relative">
-                <Search
-                  size={17}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8da1b4]"
-                />
-
-                <input
-                  value={search}
-                  onChange={(event) =>
-                    setSearch(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Search by name, email, Campus User ID, department, subject, section..."
-                  className="h-12 w-full rounded-xl border border-[#dce7ef] bg-[#fbfdff] pl-11 pr-4 text-[12px] text-[#25384d] outline-none transition placeholder:text-[#9badbe] focus:border-[#8fc8e6] focus:ring-4 focus:ring-[#54bce5]/10"
-                />
-
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[#8195a9] hover:bg-[#eef5fa]"
-                  >
-                    <X size={15} />
-                  </button>
-                )}
-              </div>
-            </section>
 
             {/* =================================================
                 DIRECTORY
             ================================================= */}
 
-            <section className="overflow-hidden rounded-[20px] border border-[#d5e1eb] bg-white shadow-[0_9px_30px_rgba(30,60,90,0.055)]">
-              {/* DIRECTORY HEADER */}
+            <section className="overflow-hidden rounded-[22px] border border-[#d5e1eb] bg-white shadow-[0_12px_35px_rgba(30,60,90,0.055)]">
 
-              <div className="flex flex-col gap-3 border-b border-[#e2e9ef] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-serif text-[18px] font-bold text-[#15263a]">
-                    Student Directory
-                  </h2>
+              <div className="flex flex-col gap-3 border-b border-[#e2e9ef] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef7fc] text-[#4a9bc8]">
+                    <Users size={19} />
+                  </div>
 
-                  <p className="mt-1 text-[10px] text-[#7b8fa2]">
-                    {filteredStudents.length} approved{" "}
-                    {filteredStudents.length === 1
-                      ? "student"
-                      : "students"}{" "}
-                    found
-                  </p>
+                  <div>
+                    <h2 className="font-serif text-[19px] font-bold text-[#15263a]">
+                      Students
+                    </h2>
+
+                    <p className="mt-0.5 text-[10px] text-[#7b8fa2]">
+                      {hasLoadedClass
+                        ? `${filteredStudents.length} student${
+                            filteredStudents.length ===
+                            1
+                              ? ""
+                              : "s"
+                          } displayed`
+                        : "Select a semester and section to begin"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#ccebdc] bg-[#f3fbf7] px-3 py-1.5 text-[10px] font-semibold text-[#31815f]">
-                  <CheckCircle2 size={13} />
-                  Approved Accounts Only
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#ccebdc] bg-[#f3fbf7] px-3 py-1.5 text-[9px] font-semibold text-[#31815f]">
+                  <CheckCircle2 size={12} />
+                  Approved Students
                 </div>
               </div>
 
+              {/* NOT SELECTED */}
+
+              {!hasLoadedClass &&
+                !loading && (
+                  <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-[#eef6fb] text-[#77a9c6] shadow-inner">
+                      <GraduationCap
+                        size={34}
+                      />
+                    </div>
+
+                    <h3 className="mt-5 font-serif text-[19px] font-bold text-[#26394d]">
+                      Select Your Class
+                    </h3>
+
+                    <p className="mt-2 max-w-[450px] text-[11px] leading-5 text-[#8194a7]">
+                      Choose semester and section
+                      above to view the approved
+                      students belonging to that
+                      class.
+                    </p>
+                  </div>
+                )}
+
               {/* LOADING */}
 
-              {loading ? (
-                <div className="flex min-h-[360px] flex-col items-center justify-center">
-                  <Loader2
-                    size={30}
-                    className="animate-spin text-[#54bce5]"
-                  />
+              {hasLoadedClass &&
+                loading && (
+                  <div className="flex min-h-[350px] flex-col items-center justify-center">
+                    <Loader2
+                      size={31}
+                      className="animate-spin text-[#54bce5]"
+                    />
 
-                  <p className="mt-4 text-[12px] font-semibold text-[#536b83]">
-                    Loading students...
-                  </p>
-
-                  <p className="mt-1 text-[10px] text-[#8da0b2]">
-                    Fetching complete student records
-                  </p>
-                </div>
-              ) : filteredStudents.length === 0 ? (
-                /* EMPTY */
-
-                <div className="flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#eef5fa] text-[#88a0b6]">
-                    <Users size={28} />
+                    <p className="mt-4 text-[12px] font-semibold text-[#536b83]">
+                      Loading students...
+                    </p>
                   </div>
+                )}
 
-                  <h3 className="mt-5 font-serif text-[17px] font-bold text-[#24374c]">
-                    No approved students
-                  </h3>
+              {/* EMPTY */}
 
-                  <p className="mt-2 max-w-[400px] text-[11px] leading-5 text-[#8194a7]">
-                    {search
-                      ? "No approved students match your search."
-                      : "There are currently no approved student accounts available."}
-                  </p>
-                </div>
-              ) : (
-                /* STUDENT LIST */
+              {hasLoadedClass &&
+                !loading &&
+                filteredStudents.length ===
+                  0 && (
+                  <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#eef5fa] text-[#88a0b6]">
+                      <Users size={28} />
+                    </div>
 
-                <div className="divide-y divide-[#e7edf2]">
-                  {filteredStudents.map(
-                    (student) => (
-                      <StudentRow
-                        key={student.id}
-                        student={student}
-                        onView={() =>
-                          setSelectedStudent(
-                            student
-                          )
-                        }
-                        onDelete={() =>
-                          setDeleteStudent(
-                            student
-                          )
-                        }
-                      />
-                    )
-                  )}
-                </div>
-              )}
+                    <h3 className="mt-5 font-serif text-[17px] font-bold text-[#24374c]">
+                      No students found
+                    </h3>
+
+                    <p className="mt-2 max-w-[450px] text-[11px] leading-5 text-[#8194a7]">
+                      {search
+                        ? "No student in this class matches your search."
+                        : `No approved students are registered in Semester ${semester}, Section ${section}.`}
+                    </p>
+                  </div>
+                )}
+
+              {/* STUDENT LIST */}
+
+              {hasLoadedClass &&
+                !loading &&
+                filteredStudents.length >
+                  0 && (
+                  <div className="divide-y divide-[#e7edf2]">
+                    {filteredStudents.map(
+                      (student) => (
+                        <StudentRow
+                          key={student.id}
+                          student={student}
+                          onView={() =>
+                            setSelectedStudent(
+                              student
+                            )
+                          }
+                          onDelete={() =>
+                            setDeleteStudent(
+                              student
+                            )
+                          }
+                        />
+                      )
+                    )}
+                  </div>
+                )}
             </section>
 
+            {/* FOOTER */}
+
             <footer className="py-8 text-center text-[10px] text-[#8194a7]">
-              © 2026 CampusConnect. Smart Campus
-              Management.
+              © 2026 CampusConnect • Faculty Student
+              Management
             </footer>
           </div>
         </main>
       </div>
 
       {/* ======================================================
-          DETAILS MODAL
+          DETAILS
       ====================================================== */}
 
       {selectedStudent && (
@@ -1252,6 +1728,9 @@ export default function FacultyStudentsPage() {
           student={selectedStudent}
           onClose={() =>
             setSelectedStudent(null)
+          }
+          onEdit={() =>
+            openEdit(selectedStudent)
           }
           onDelete={() => {
             setDeleteStudent(
@@ -1263,7 +1742,24 @@ export default function FacultyStudentsPage() {
       )}
 
       {/* ======================================================
-          DELETE MODAL
+          EDIT
+      ====================================================== */}
+
+      {editingStudent && editForm && (
+        <EditStudentModal
+          student={editingStudent}
+          form={editForm}
+          saving={savingEdit}
+          onChange={updateEditField}
+          onCancel={closeEdit}
+          onSave={() =>
+            void saveStudent()
+          }
+        />
+      )}
+
+      {/* ======================================================
+          DELETE
       ====================================================== */}
 
       {deleteStudent && (
@@ -1282,9 +1778,9 @@ export default function FacultyStudentsPage() {
   );
 }
 
-// ============================================================
-// STUDENT ROW
-// ============================================================
+/* ============================================================
+   STUDENT ROW
+============================================================ */
 
 function StudentRow({
   student,
@@ -1295,57 +1791,23 @@ function StudentRow({
   onView: () => void;
   onDelete: () => void;
 }) {
-  const registrations =
-    Array.isArray(student.studentRegistrations)
-      ? student.studentRegistrations
-      : [];
-
-  const statistics = {
-    ...defaultStatistics,
-    ...(student.statistics ?? {}),
-  };
-
-  const firstRegistration =
-    registrations[0];
-
-  const uniqueSubjects =
-    Array.from(
-      new Map(
-        registrations.map(
-          (registration) => [
-            registration.subject?.id ?? `registration-${registration.id}`,
-            registration.subject ?? { id: "unknown-subject", name: "Unknown Subject", semester: registration.semester },
-          ]
-        )
-      ).values()
-    );
-
-  const semester =
-    firstRegistration?.semester
-      ? `Semester ${firstRegistration.semester}`
-      : "Not assigned";
-
-  const sections = Array.from(
-    new Set(
-      registrations.map(
-        (registration) =>
-          registration.section
-      )
-    )
-  );
-
-  const section =
-    sections.length > 0
-      ? sections.join(", ")
-      : "Not assigned";
+  const semester = getStudentSemester(student);
+  const section = getStudentSection(student);
+  const attendance =
+    Number.isFinite(student.statistics.classAttendancePercentage)
+      ? student.statistics.classAttendancePercentage
+      : 0;
 
   return (
-    <div className="group px-4 py-4 transition hover:bg-[#fbfdff] sm:px-5">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
+    <div className="group px-4 py-5 transition duration-300 hover:bg-[#f7fcff] sm:px-6 lg:px-7">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-center">
         {/* STUDENT */}
-
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#dce9f2] bg-[#eff7fc] text-[#4699c7]">
+        <button
+          type="button"
+          onClick={onView}
+          className="group/student flex min-w-0 flex-1 items-center gap-4 rounded-2xl border border-transparent p-2 text-left transition duration-300 hover:border-[#54bce5]/40 hover:bg-[#eefaff] hover:shadow-[0_0_0_3px_rgba(84,188,229,0.08),0_0_28px_rgba(84,188,229,0.16)]"
+        >
+          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#cfe2ed] bg-[#eff8fd] text-[#4699c7] transition duration-300 group-hover/student:border-[#54bce5] group-hover/student:shadow-[0_0_20px_rgba(84,188,229,0.22)]">
             {student.profileImage ? (
               <img
                 src={student.profileImage}
@@ -1353,46 +1815,42 @@ function StudentRow({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <UserCircle size={21} />
+              <UserCircle size={25} />
             )}
+
+            <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#61bd8d]" />
           </div>
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate text-[13px] font-bold text-[#17283c]">
+              <h3 className="truncate text-[15px] font-bold text-[#17283c] transition-colors group-hover/student:text-[#167aa9]">
                 {student.name}
               </h3>
 
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#bfe6d3] bg-[#f1fbf6] px-2 py-0.5 text-[8px] font-bold text-[#30805d]">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#bfe6d3] bg-[#f1fbf6] px-2.5 py-1 text-[8px] font-bold text-[#30805d]">
                 <CheckCircle2 size={9} />
                 Approved
               </span>
             </div>
 
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-[#75899d]">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-[#75899d]">
               <span className="inline-flex items-center gap-1">
                 <Mail size={10} />
                 {student.email}
               </span>
 
               {student.campusUserId && (
-                <span className="inline-flex items-center gap-1">
-                  <span className="text-[#8ea1b3]">
-                    #
-                  </span>
-                  {student.campusUserId}
-                </span>
+                <span>ID: {student.campusUserId}</span>
               )}
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* INFO */}
-
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:w-[600px]">
+        {/* SEMESTER / SECTION / ATTENDANCE */}
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 xl:w-[540px] xl:shrink-0">
           <InfoBox
             label="Semester"
-            value={semester}
+            value={semester ? `Semester ${semester}` : "Not assigned"}
           />
 
           <InfoBox
@@ -1401,36 +1859,28 @@ function StudentRow({
           />
 
           <InfoBox
-            label="Subjects"
-            value={String(
-              uniqueSubjects.length
-            )}
-          />
-
-          <InfoBox
             label="Attendance"
-            value={`${statistics.classAttendancePercentage}%`}
+            value={`${attendance.toFixed(1)}%`}
           />
         </div>
 
-        {/* ACTIONS */}
-
-        <div className="flex shrink-0 items-center gap-2">
+        {/* VIEW + DELETE */}
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0 sm:items-center">
           <button
             type="button"
             onClick={onView}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#b9dcf1] bg-[#f7fcff] px-3 text-[10px] font-bold text-[#2d83b4] transition hover:border-[#54bce5] hover:bg-[#edf8fd]"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#bcdff3] bg-[#f7fcff] px-5 text-[10px] font-bold text-[#2d83b4] transition duration-300 hover:-translate-y-0.5 hover:border-[#54bce5] hover:bg-[#eefaff] hover:text-[#126f9b] hover:shadow-[0_0_0_3px_rgba(84,188,229,0.09),0_0_24px_rgba(84,188,229,0.18)] focus:outline-none focus:ring-4 focus:ring-[#54bce5]/10"
           >
-            <Eye size={14} />
+            <Users size={15} />
             View Details
           </button>
 
           <button
             type="button"
             onClick={onDelete}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#f2cccc] bg-[#fffafa] px-3 text-[10px] font-bold text-[#c34b4b] transition hover:border-[#e99b9b] hover:bg-[#fff2f2]"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#efcaca] bg-[#fffafa] px-5 text-[10px] font-bold text-[#c34c4c] transition duration-300 hover:-translate-y-0.5 hover:border-[#54bce5] hover:bg-[#eefaff] hover:text-[#167aa9] hover:shadow-[0_0_0_3px_rgba(84,188,229,0.09),0_0_24px_rgba(84,188,229,0.18)] focus:outline-none focus:ring-4 focus:ring-[#54bce5]/10"
           >
-            <Trash2 size={14} />
+            <Trash2 size={15} />
             Delete
           </button>
         </div>
@@ -1439,9 +1889,9 @@ function StudentRow({
   );
 }
 
-// ============================================================
-// INFO BOX
-// ============================================================
+/* ============================================================
+   INFO BOX
+============================================================ */
 
 function InfoBox({
   label,
@@ -1451,90 +1901,66 @@ function InfoBox({
   value: string;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-[#e0e9f0] bg-[#f8fafc] px-3 py-2">
-      <p className="text-[8px] text-[#8295a7]">
+    <div className="group/box flex min-h-[68px] min-w-0 flex-col justify-center rounded-2xl border border-[#d8e5ee] bg-[#f8fafc] px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-[#54bce5] hover:bg-[#eefaff] hover:shadow-[0_0_0_3px_rgba(84,188,229,0.08),0_0_24px_rgba(84,188,229,0.16)]">
+      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-[#8295a7] transition-colors group-hover/box:text-[#3b8db7]">
         {label}
       </p>
 
-      <p className="mt-1 truncate text-[9px] font-bold text-[#273a4f]">
+      <p className="mt-1.5 truncate text-[11px] font-bold text-[#273a4f] transition-colors group-hover/box:text-[#126f9b]">
         {value}
       </p>
     </div>
   );
 }
 
-// ============================================================
-// DETAILS MODAL
-// ============================================================
+/* ============================================================
+   DETAILS MODAL
+============================================================ */
 
 function StudentDetailsModal({
   student,
   onClose,
+  onEdit,
   onDelete,
 }: {
   student: Student;
   onClose: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const registrations =
-    Array.isArray(student.studentRegistrations)
-      ? student.studentRegistrations
-      : [];
-
-  const classAttendances =
-    Array.isArray(student.classAttendances)
-      ? student.classAttendances
-      : [];
-
-  const eventAttendances =
-    Array.isArray(student.attendances)
-      ? student.attendances
-      : [];
+    student.studentRegistrations ?? [];
 
   const memberships =
-    Array.isArray(student.memberships)
-      ? student.memberships
-      : [];
+    student.memberships ?? [];
 
   const certificates =
-    Array.isArray(student.certificates)
-      ? student.certificates
-      : [];
+    student.certificates ?? [];
 
   const statistics = {
     ...defaultStatistics,
     ...(student.statistics ?? {}),
   };
 
-  const uniqueSubjects =
-    Array.from(
-      new Map(
-        registrations.map(
-          (registration) => [
-            registration.subject?.id ?? `registration-${registration.id}`,
-            registration.subject ?? { id: "unknown-subject", name: "Unknown Subject", semester: registration.semester },
-          ]
-        )
-      ).values()
-    );
+  const subjects =
+    getUniqueSubjects(student);
 
-  const sections = Array.from(
-    new Set(
-      registrations.map(
-        (registration) =>
-          registration.section
-      )
-    )
-  );
+  const sections =
+    getStudentSections(student);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f]/70 p-3 backdrop-blur-sm sm:p-6">
-      <div className="flex max-h-[94vh] w-full max-w-[1120px] flex-col overflow-hidden rounded-[24px] border border-[#d6e2eb] bg-[#f5f9fc] shadow-[0_30px_100px_rgba(5,20,35,0.28)]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f]/75 p-2 backdrop-blur-md sm:p-4 lg:p-5">
+
+      <div className="flex max-h-[96vh] w-full max-w-[1380px] flex-col overflow-hidden rounded-[25px] border border-[#d6e2eb] bg-[#f4f8fb] shadow-[0_35px_110px_rgba(5,20,35,0.32)] animate-[modalIn_.25s_ease-out]">
+
         {/* HEADER */}
 
-        <div className="flex shrink-0 items-center justify-between border-b border-[#dce6ee] bg-white px-5 py-4 sm:px-7">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#edf7fc] text-[#479ac7]">
+        <div className="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-[#dce6ee] bg-[#101d2f] px-5 py-5 text-white sm:px-7">
+
+          <div className="pointer-events-none absolute -right-10 -top-24 h-64 w-64 rounded-full border border-[#69cbed]/15" />
+
+          <div className="relative flex min-w-0 items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#18344c] text-[#63c9ef]">
               {student.profileImage ? (
                 <img
                   src={student.profileImage}
@@ -1542,22 +1968,22 @@ function StudentDetailsModal({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <UserCircle size={22} />
+                <UserCircle size={23} />
               )}
             </div>
 
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="truncate font-serif text-[19px] font-bold text-[#14263b] sm:text-[22px]">
+                <h2 className="truncate font-serif text-[20px] font-bold sm:text-[24px]">
                   {student.name}
                 </h2>
 
-                <span className="rounded-full border border-[#bfe6d3] bg-[#f1fbf6] px-2 py-1 text-[8px] font-bold text-[#30805d]">
+                <span className="rounded-full border border-[#76d5a9]/25 bg-[#193b31] px-2.5 py-1 text-[8px] font-bold text-[#82dcb2]">
                   APPROVED
                 </span>
               </div>
 
-              <p className="mt-1 truncate text-[10px] text-[#7b8ea1]">
+              <p className="mt-1 truncate text-[10px] text-[#9eb1c3]">
                 {student.email}
                 {student.campusUserId
                   ? ` • ${student.campusUserId}`
@@ -1569,7 +1995,7 @@ function StudentDetailsModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#dce6ee] bg-white text-[#657a8e] hover:bg-[#f2f6f9]"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#b4c3d1] transition hover:bg-white/10 hover:text-white"
           >
             <X size={18} />
           </button>
@@ -1578,13 +2004,15 @@ function StudentDetailsModal({
         {/* BODY */}
 
         <div className="overflow-y-auto px-4 py-5 sm:px-7 sm:py-6">
-          {/* OVERVIEW STATS */}
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {/* STATS */}
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+
             <ModalStat
               label="Subjects"
               value={String(
-                uniqueSubjects.length
+                subjects.length
               )}
               icon={BookOpen}
             />
@@ -1592,12 +2020,9 @@ function StudentDetailsModal({
             <ModalStat
               label="Semester"
               value={
-                registrations[0]
-                  ? String(
-                      registrations[0]
-                        .semester
-                    )
-                  : "-"
+                getStudentSemester(
+                  student
+                )?.toString() ?? "-"
               }
               icon={GraduationCap}
             />
@@ -1605,158 +2030,114 @@ function StudentDetailsModal({
             <ModalStat
               label="Section"
               value={
-                sections.join(", ") ||
-                "-"
+                sections.join(", ") || "-"
               }
               icon={Users}
             />
 
             <ModalStat
-              label="Class Present"
+              label="Certificates"
               value={String(
-                student.statistics
-                  .classAttendancePresent
+                statistics.certificateCount
               )}
-              icon={CheckCircle2}
-            />
-
-            <ModalStat
-              label="Class Absent"
-              value={String(
-                student.statistics
-                  .classAttendanceAbsent
-              )}
-              icon={ClipboardCheck}
-            />
-
-            <ModalStat
-              label="Attendance"
-              value={`${statistics.classAttendancePercentage}%`}
-              icon={Clock3}
-            />
-
-            <ModalStat
-              label="Events"
-              value={String(
-                student.statistics
-                  .eventAttendancePresent
-              )}
-              icon={CalendarDays}
+              icon={Award}
             />
           </div>
 
-          {/* PERSONAL INFORMATION */}
+          {/* PERSONAL + ACADEMIC */}
 
-          <DetailSection
-            title="Personal Information"
-            icon={UserCircle}
-          >
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <DetailItem
-                label="Full Name"
-                value={student.name}
-              />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <DetailSection
+              title="Personal Information"
+              icon={UserCircle}
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <DetailItem
+                  label="Full Name"
+                  value={student.name}
+                />
+                <DetailItem
+                  label="Email"
+                  value={student.email}
+                />
+                <DetailItem
+                  label="Phone"
+                  value={student.phone || "Not provided"}
+                />
+                <DetailItem
+                  label="Campus User ID"
+                  value={student.campusUserId || "Not assigned"}
+                />
+                <DetailItem
+                  label="Address"
+                  value={student.address || "Not provided"}
+                  className="sm:col-span-2"
+                />
+                <DetailItem
+                  label="City"
+                  value={student.city || "Not provided"}
+                />
+                <DetailItem
+                  label="State"
+                  value={student.state || "Not provided"}
+                />
+              </div>
+            </DetailSection>
 
-              <DetailItem
-                label="Email"
-                value={student.email}
-              />
+            <DetailSection
+              title="Academic Information"
+              icon={GraduationCap}
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <DetailItem
+                  label="Semester"
+                  value={
+                    getStudentSemester(student)
+                      ? `Semester ${getStudentSemester(student)}`
+                      : "Not available"
+                  }
+                />
+                <DetailItem
+                  label="Section"
+                  value={getStudentSection(student)}
+                />
+                <DetailItem
+                  label="Qualification"
+                  value={student.qualification || "Not available"}
+                />
+                <DetailItem
+                  label="Department"
+                  value={student.department || "Not available"}
+                />
+                <DetailItem
+                  label="Specialization"
+                  value={student.specialization || "Not available"}
+                />
+                <DetailItem
+                  label="Designation"
+                  value={student.designation || "Not available"}
+                />
+                <DetailItem
+                  label="Account Status"
+                  value="Approved"
+                />
+                <DetailItem
+                  label="Joining Date"
+                  value={student.joiningDate ? formatDate(student.joiningDate) : "Not available"}
+                />
+              </div>
+            </DetailSection>
+          </div>
 
-              <DetailItem
-                label="Campus User ID"
-                value={
-                  student.campusUserId ||
-                  "Not assigned"
-                }
-              />
-
-              <DetailItem
-                label="Phone"
-                value={
-                  student.phone ||
-                  "Not provided"
-                }
-              />
-
-              <DetailItem
-                label="Department"
-                value={
-                  student.department ||
-                  "Not provided"
-                }
-              />
-
-              <DetailItem
-                label="Qualification"
-                value={
-                  student.qualification ||
-                  "Not provided"
-                }
-              />
-
-              <DetailItem
-                label="Specialization"
-                value={
-                  student.specialization ||
-                  "Not provided"
-                }
-              />
-
-              <DetailItem
-                label="Account Status"
-                value="Approved"
-              />
-
-              <DetailItem
-                label="Account Created"
-                value={formatDate(
-                  student.createdAt
-                )}
-              />
-            </div>
-          </DetailSection>
-
-          {/* ADDRESS */}
-
-          <DetailSection
-            title="Address"
-            icon={MapPin}
-          >
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <DetailItem
-                label="Address"
-                value={
-                  student.address ||
-                  "Not provided"
-                }
-              />
-
-              <DetailItem
-                label="City"
-                value={
-                  student.city ||
-                  "Not provided"
-                }
-              />
-
-              <DetailItem
-                label="State"
-                value={
-                  student.state ||
-                  "Not provided"
-                }
-              />
-            </div>
-          </DetailSection>
-
-          {/* SUBJECT REGISTRATION */}
+          {/* REGISTRATION */}
 
           <DetailSection
             title="Registered Subjects"
             icon={BookOpen}
             badge={`${registrations.length}`}
           >
-            {registrations.length === 0 ? (
+            {registrations.length ===
+            0 ? (
               <EmptyDetail text="No subject registration found." />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-[#dce6ee]">
@@ -1793,7 +2174,7 @@ function StudentDetailsModal({
                             {
                               registration
                                 .subject
-                                .name
+                                ?.name
                             }
                           </td>
 
@@ -1824,201 +2205,6 @@ function StudentDetailsModal({
             )}
           </DetailSection>
 
-          {/* CLASS ATTENDANCE */}
-
-          <DetailSection
-            title="Class / Subject Attendance"
-            icon={ClipboardCheck}
-            badge={`${statistics.classAttendanceTotal} records`}
-          >
-            {classAttendances.length === 0 ? (
-              <EmptyDetail text="No class attendance records found." />
-            ) : (
-              <div className="overflow-x-auto rounded-xl border border-[#dce6ee]">
-                <table className="w-full min-w-[760px] text-left">
-                  <thead className="bg-[#f6f9fb]">
-                    <tr>
-                      <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
-                        Subject
-                      </th>
-
-                      <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
-                        Semester
-                      </th>
-
-                      <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
-                        Section
-                      </th>
-
-                      <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
-                        Date
-                      </th>
-
-                      <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
-                        Faculty
-                      </th>
-
-                      <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-[#e8eef3] bg-white">
-                    {classAttendances.map(
-                      (attendance) => {
-                        const present =
-                          String(
-                            attendance.status
-                          )
-                            .trim()
-                            .toUpperCase() ===
-                          "PRESENT";
-
-                        return (
-                          <tr
-                            key={
-                              attendance.id
-                            }
-                          >
-                            <td className="px-4 py-3 text-[11px] font-semibold text-[#26394d]">
-                              {
-                                attendance.subject?.name ?? "Unknown Subject"
-                              }
-                            </td>
-
-                            <td className="px-4 py-3 text-[10px] text-[#62788d]">
-                              Semester{" "}
-                              {
-                                attendance.session?.semester ?? "-"
-                              }
-                            </td>
-
-                            <td className="px-4 py-3 text-[10px] text-[#62788d]">
-                              {
-                                attendance.session?.section ?? "-"
-                              }
-                            </td>
-
-                            <td className="px-4 py-3 text-[10px] text-[#62788d]">
-                              {formatDate(
-                                attendance.session?.sessionDate ?? attendance.markedAt
-                              )}
-                            </td>
-
-                            <td className="px-4 py-3 text-[10px] text-[#62788d]">
-                              {
-                                attendance.session?.faculty?.name ?? "Unknown Faculty"
-                              }
-                            </td>
-
-                            <td className="px-4 py-3">
-                              <span
-                                className={`inline-flex rounded-full border px-2.5 py-1 text-[8px] font-bold ${
-                                  present
-                                    ? "border-[#bfe6d3] bg-[#f1fbf6] text-[#30805d]"
-                                    : "border-[#f1cccc] bg-[#fff6f6] text-[#bd4949]"
-                                }`}
-                              >
-                                {present
-                                  ? "PRESENT"
-                                  : "ABSENT"}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      }
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </DetailSection>
-
-          {/* EVENT ATTENDANCE */}
-
-          <DetailSection
-            title="Event Attendance"
-            icon={CalendarDays}
-            badge={`${statistics.eventAttendanceTotal} records`}
-          >
-            {eventAttendances.length ===
-            0 ? (
-              <EmptyDetail text="No event attendance records found." />
-            ) : (
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {eventAttendances.map(
-                  (attendance) => {
-                    const present =
-                      String(
-                        attendance.status
-                      )
-                        .trim()
-                        .toUpperCase() ===
-                      "PRESENT";
-
-                    return (
-                      <div
-                        key={
-                          attendance.id
-                        }
-                        className="rounded-xl border border-[#dce6ee] bg-white p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <h4 className="truncate text-[12px] font-bold text-[#26394d]">
-                              {
-                                attendance.event?.title ?? "Unknown Event"
-                              }
-                            </h4>
-
-                            <p className="mt-1 text-[9px] text-[#8194a7]">
-                              {
-                                attendance.event?.club?.name ?? "Unknown Club"
-                              }
-                            </p>
-                          </div>
-
-                          <span
-                            className={`shrink-0 rounded-full border px-2 py-1 text-[8px] font-bold ${
-                              present
-                                ? "border-[#bfe6d3] bg-[#f1fbf6] text-[#30805d]"
-                                : "border-[#f1cccc] bg-[#fff6f6] text-[#bd4949]"
-                            }`}
-                          >
-                            {present
-                              ? "PRESENT"
-                              : "ABSENT"}
-                          </span>
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-2 gap-2">
-                          <DetailMini
-                            label="Venue"
-                            value={
-                              attendance
-                                .event
-                                .venue
-                            }
-                          />
-
-                          <DetailMini
-                            label="Date"
-                            value={formatDate(
-                              attendance
-                                .event
-                                .eventDate
-                            )}
-                          />
-                        </div>
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-            )}
-          </DetailSection>
-
           {/* CLUBS */}
 
           <DetailSection
@@ -2037,17 +2223,19 @@ function StudentDetailsModal({
                       key={
                         membership.id
                       }
-                      className="rounded-xl border border-[#dce6ee] bg-white p-4"
+                      className="rounded-xl border border-[#dce6ee] bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <h4 className="text-[12px] font-bold text-[#26394d]">
                         {
-                          membership.club?.name ?? "Unknown Club"
+                          membership.club
+                            ?.name
                         }
                       </h4>
 
                       <p className="mt-1 line-clamp-2 text-[9px] leading-4 text-[#8194a7]">
                         {
-                          membership.club?.description ?? ""
+                          membership.club
+                            ?.description
                         }
                       </p>
 
@@ -2082,7 +2270,7 @@ function StudentDetailsModal({
                       key={
                         certificate.id
                       }
-                      className="flex flex-col gap-2 rounded-xl border border-[#dce6ee] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-3 rounded-xl border border-[#dce6ee] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div>
                         <p className="text-[11px] font-bold text-[#26394d]">
@@ -2106,7 +2294,7 @@ function StudentDetailsModal({
                           }
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-[#c5e0f1] bg-[#f5fbff] px-3 py-1.5 text-[9px] font-bold text-[#3385b2]"
+                          className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-[#c5e0f1] bg-[#f5fbff] px-3 py-1.5 text-[9px] font-bold text-[#3385b2] transition hover:bg-[#eaf7ff]"
                         >
                           View Certificate
                         </a>
@@ -2121,38 +2309,63 @@ function StudentDetailsModal({
 
         {/* FOOTER */}
 
-        <div className="flex shrink-0 items-center justify-between border-t border-[#dce6ee] bg-white px-5 py-4 sm:px-7">
+        <div className="flex shrink-0 flex-col gap-3 border-t border-[#dce6ee] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+
           <p className="hidden text-[9px] text-[#8194a7] sm:block">
             Student ID: {student.id}
           </p>
 
           <div className="ml-auto flex items-center gap-2">
+
             <button
               type="button"
               onClick={onDelete}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#f0caca] bg-[#fffafa] px-3 text-[10px] font-bold text-[#c34c4c] hover:bg-[#fff1f1]"
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#f0caca] bg-[#fffafa] px-4 text-[10px] font-bold text-[#c34c4c] transition hover:bg-[#fff1f1]"
             >
               <Trash2 size={14} />
-              Delete Student
+              Delete
+            </button>
+
+            <button
+              type="button"
+              onClick={onEdit}
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#bcdff3] bg-[#f4fbff] px-4 text-[10px] font-bold text-[#2d83b4] transition hover:bg-[#eaf7ff]"
+            >
+              <Edit3 size={14} />
+              Edit Student
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#132238] px-4 text-[10px] font-bold text-white hover:bg-[#1c304a]"
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#132238] px-5 text-[10px] font-bold text-white transition hover:bg-[#1c304a]"
             >
               Close
             </button>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: translateY(18px) scale(0.98);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }
 
-// ============================================================
-// MODAL STAT
-// ============================================================
+/* ============================================================
+   MODAL STAT
+============================================================ */
 
 function ModalStat({
   label,
@@ -2161,31 +2374,34 @@ function ModalStat({
 }: {
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<{
+    size?: number;
+    className?: string;
+  }>;
 }) {
   return (
-    <div className="rounded-xl border border-[#dce6ee] bg-white p-3">
+    <div className="rounded-xl border border-[#dce6ee] bg-white p-3 transition hover:-translate-y-0.5 hover:shadow-sm">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[8px] text-[#8194a7]">
+        <p className="text-[8px] uppercase tracking-wider text-[#8194a7]">
           {label}
         </p>
 
         <Icon
-          size={13}
+          size={14}
           className="text-[#5ba8d1]"
         />
       </div>
 
-      <p className="mt-2 truncate text-[14px] font-bold text-[#24374c]">
+      <p className="mt-2 truncate text-[15px] font-bold text-[#24374c]">
         {value}
       </p>
     </div>
   );
 }
 
-// ============================================================
-// DETAIL SECTION
-// ============================================================
+/* ============================================================
+   DETAIL SECTION
+============================================================ */
 
 function DetailSection({
   title,
@@ -2194,9 +2410,11 @@ function DetailSection({
   children,
 }: {
   title: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<{
+    size?: number;
+  }>;
   badge?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section className="mt-5 overflow-hidden rounded-[16px] border border-[#dce6ee] bg-white">
@@ -2225,19 +2443,21 @@ function DetailSection({
   );
 }
 
-// ============================================================
-// DETAIL ITEM
-// ============================================================
+/* ============================================================
+   DETAIL ITEM
+============================================================ */
 
 function DetailItem({
   label,
   value,
+  className = "",
 }: {
   label: string;
   value: string;
+  className?: string;
 }) {
   return (
-    <div className="rounded-xl border border-[#e1e9ef] bg-[#fafcfe] px-3.5 py-3">
+    <div className={`rounded-xl border border-[#e1e9ef] bg-[#fafcfe] px-3.5 py-3 ${className}`}>
       <p className="text-[8px] font-medium uppercase tracking-wider text-[#8a9cad]">
         {label}
       </p>
@@ -2249,33 +2469,9 @@ function DetailItem({
   );
 }
 
-// ============================================================
-// MINI DETAIL
-// ============================================================
-
-function DetailMini({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-lg bg-[#f7fafc] px-3 py-2">
-      <p className="text-[7px] uppercase tracking-wider text-[#8a9cad]">
-        {label}
-      </p>
-
-      <p className="mt-1 truncate text-[9px] font-semibold text-[#52697e]">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-// ============================================================
-// EMPTY
-// ============================================================
+/* ============================================================
+   EMPTY DETAIL
+============================================================ */
 
 function EmptyDetail({
   text,
@@ -2291,9 +2487,229 @@ function EmptyDetail({
   );
 }
 
-// ============================================================
-// DELETE MODAL
-// ============================================================
+/* ============================================================
+   EDIT MODAL
+============================================================ */
+
+function EditStudentModal({
+  student,
+  form,
+  saving,
+  onChange,
+  onCancel,
+  onSave,
+}: {
+  student: Student;
+  form: EditForm;
+  saving: boolean;
+  onChange: (
+    field: keyof EditForm,
+    value: string
+  ) => void;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  const fields: {
+    key: keyof EditForm;
+    label: string;
+    placeholder: string;
+  }[] = [
+    {
+      key: "name",
+      label: "Full Name",
+      placeholder: "Student name",
+    },
+    {
+      key: "email",
+      label: "Email",
+      placeholder: "student@example.com",
+    },
+    {
+      key: "campusUserId",
+      label: "Campus User ID",
+      placeholder: "Campus ID",
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      placeholder: "Phone number",
+    },
+    {
+      key: "department",
+      label: "Department",
+      placeholder: "Department",
+    },
+    {
+      key: "qualification",
+      label: "Qualification",
+      placeholder: "Qualification",
+    },
+    {
+      key: "specialization",
+      label: "Specialization",
+      placeholder: "Specialization",
+    },
+    {
+      key: "city",
+      label: "City",
+      placeholder: "City",
+    },
+    {
+      key: "state",
+      label: "State",
+      placeholder: "State",
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[#07111f]/75 p-3 backdrop-blur-md sm:p-6">
+
+      <div className="flex max-h-[94vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[24px] border border-[#dce5ed] bg-[#f6f9fb] shadow-[0_30px_100px_rgba(5,20,35,0.3)]">
+
+        {/* HEADER */}
+
+        <div className="flex shrink-0 items-center justify-between border-b border-[#dce6ee] bg-white px-5 py-4 sm:px-7">
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#3988b8]">
+              Student Management
+            </p>
+
+            <h2 className="mt-1 font-serif text-[20px] font-bold text-[#17283c]">
+              Edit Student
+            </h2>
+
+            <p className="mt-1 text-[10px] text-[#8194a7]">
+              Update student profile information.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#dce6ee] bg-white text-[#657a8e] transition hover:bg-[#f2f6f9] disabled:opacity-50"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* BODY */}
+
+        <div className="overflow-y-auto px-5 py-5 sm:px-7">
+
+          <div className="mb-5 flex items-center gap-3 rounded-xl border border-[#dce7ef] bg-white p-4">
+            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-[#edf7fc] text-[#479ac7]">
+              {student.profileImage ? (
+                <img
+                  src={student.profileImage}
+                  alt={student.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <UserCircle size={22} />
+              )}
+            </div>
+
+            <div>
+              <p className="text-[12px] font-bold text-[#26394d]">
+                {student.name}
+              </p>
+
+              <p className="mt-1 text-[9px] text-[#8194a7]">
+                Student ID: {student.id}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {fields.map((field) => (
+              <label
+                key={field.key}
+                className="block"
+              >
+                <span className="mb-1.5 block text-[9px] font-bold uppercase tracking-wider text-[#71879b]">
+                  {field.label}
+                </span>
+
+                <input
+                  value={form[field.key]}
+                  onChange={(event) =>
+                    onChange(
+                      field.key,
+                      event.target.value
+                    )
+                  }
+                  placeholder={
+                    field.placeholder
+                  }
+                  className="h-11 w-full rounded-xl border border-[#dce7ef] bg-white px-3.5 text-[11px] text-[#293d51] outline-none transition placeholder:text-[#a2b0bd] focus:border-[#75c5e7] focus:ring-4 focus:ring-[#54bce5]/10"
+                />
+              </label>
+            ))}
+
+            {/* ADDRESS */}
+
+            <label className="block md:col-span-2">
+              <span className="mb-1.5 block text-[9px] font-bold uppercase tracking-wider text-[#71879b]">
+                Address
+              </span>
+
+              <textarea
+                value={form.address}
+                onChange={(event) =>
+                  onChange(
+                    "address",
+                    event.target.value
+                  )
+                }
+                placeholder="Full address"
+                rows={3}
+                className="w-full resize-none rounded-xl border border-[#dce7ef] bg-white px-3.5 py-3 text-[11px] text-[#293d51] outline-none transition placeholder:text-[#a2b0bd] focus:border-[#75c5e7] focus:ring-4 focus:ring-[#54bce5]/10"
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-[#dce6ee] bg-white px-5 py-4 sm:px-7">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="h-10 rounded-xl border border-[#d7e2ea] bg-white px-5 text-[10px] font-bold text-[#60768a] transition hover:bg-[#f5f8fa] disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#132238] px-6 text-[10px] font-bold text-white transition hover:bg-[#1c304a] disabled:opacity-60"
+          >
+            {saving ? (
+              <Loader2
+                size={14}
+                className="animate-spin"
+              />
+            ) : (
+              <CheckCircle2 size={14} />
+            )}
+
+            {saving
+              ? "Saving..."
+              : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   DELETE MODAL
+============================================================ */
 
 function DeleteModal({
   student,
@@ -2307,8 +2723,10 @@ function DeleteModal({
   onConfirm: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#07111f]/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-[440px] overflow-hidden rounded-[22px] border border-[#e2e8ed] bg-white shadow-[0_30px_90px_rgba(5,20,35,0.25)]">
+    <div className="fixed inset-0 z-[140] flex items-center justify-center bg-[#07111f]/75 p-4 backdrop-blur-md">
+
+      <div className="w-full max-w-[440px] overflow-hidden rounded-[22px] border border-[#e2e8ed] bg-white shadow-[0_30px_90px_rgba(5,20,35,0.28)]">
+
         <div className="p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff0f0] text-[#d14f4f]">
             <Trash2 size={22} />
@@ -2323,20 +2741,21 @@ function DeleteModal({
             <span className="font-bold text-[#2b3f53]">
               {student.name}
             </span>
-            . This will remove the student account
-            and its related registration, attendance,
-            membership and certificate records according
-            to the database cascade rules.
+            . This will permanently remove
+            the student account and related
+            records according to your database
+            cascade rules.
           </p>
 
           <div className="mt-4 rounded-xl border border-[#f0d0d0] bg-[#fff8f8] px-4 py-3">
-            <p className="text-[9px] text-[#a35b5b]">
+            <p className="text-[9px] font-semibold text-[#a35b5b]">
               This action cannot be undone.
             </p>
           </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-[#e5ebef] bg-[#fbfdff] px-5 py-4">
+
           <button
             type="button"
             onClick={onCancel}
@@ -2367,27 +2786,4 @@ function DeleteModal({
       </div>
     </div>
   );
-}
-
-// ============================================================
-// DATE
-// ============================================================
-
-function formatDate(value: string) {
-  if (!value) {
-    return "-";
-  }
-
-  try {
-    return new Date(value).toLocaleDateString(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }
-    );
-  } catch {
-    return value;
-  }
 }

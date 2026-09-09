@@ -565,56 +565,68 @@ export async function PATCH(request: NextRequest) {
         ? rejectionReason.trim()
         : "Student registration rejected by faculty.";
 
-    const updatedStudent =
-      await prisma.$transaction(
-        async (tx) => {
-          const updated =
-            await tx.user.update({
-              where: {
-                id: studentId,
-              },
+    /* =====================================================
+       REJECT STUDENT
 
-              data: {
-                approvalStatus:
-                  "REJECTED",
+       IMPORTANT:
+       Rejection is a HARD DELETE. The rejected student must
+       not remain in the User table with approvalStatus=REJECTED.
 
-                approvedAt: null,
+       We keep the student's values in memory so the existing
+       rejection email can still be sent after the database
+       records have been removed.
+    ====================================================== */
+    const deletedStudent = {
+      id: student.id,
+      campusUserId: student.campusUserId,
+      name: student.name,
+      email: student.email,
+      profileImage: student.profileImage,
+      role: student.role,
+      approvalStatus: "REJECTED",
+      createdAt: student.createdAt,
+      approvedAt: null,
+      rejectionReason: reason,
+    };
 
-                rejectionReason:
-                  reason,
-              },
+    await prisma.$transaction(async (tx) => {
+      /*
+       * Remove approval-history rows first.
+       * They reference the student's User record, so leaving them
+       * behind could prevent the User delete or preserve old data.
+       */
+      await tx.userApproval.deleteMany({
+        where: {
+          userId: studentId,
+        },
+      });
 
-              select: {
-                id: true,
-                campusUserId: true,
-                name: true,
-                email: true,
-                profileImage: true,
-                role: true,
-                approvalStatus: true,
-                createdAt: true,
-                approvedAt: true,
-                rejectionReason: true,
-              },
-            });
+      /*
+       * Remove subject/semester/section registrations explicitly.
+       * This guarantees the rejected student's academic registration
+       * is not left behind if the relation is not configured with
+       * Prisma/database cascade deletion.
+       */
+      await tx.studentRegistration.deleteMany({
+        where: {
+          studentId,
+        },
+      });
 
-          await tx.userApproval.create({
-            data: {
-              userId: studentId,
+      /*
+       * Finally remove the actual student account. Any other related
+       * records configured with onDelete: Cascade will be removed by
+       * the database/Prisma relation rules exactly as they are for the
+       * existing faculty DELETE student flow.
+       */
+      await tx.user.delete({
+        where: {
+          id: studentId,
+        },
+      });
+    });
 
-              actionById:
-                currentFacultyId,
-
-              status: "REJECTED",
-
-              rejectionReason:
-                reason,
-            },
-          });
-
-          return updated;
-        }
-      );
+    const updatedStudent = deletedStudent;
 
     /* =====================================================
        REJECTION EMAIL
@@ -701,6 +713,8 @@ export async function PATCH(request: NextRequest) {
 
       student:
         updatedStudent,
+
+      deleted: true,
 
       academic: {
         semester:
