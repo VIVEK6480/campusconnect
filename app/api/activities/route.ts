@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -13,34 +14,138 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
+type TokenPayload = JwtPayload & {
+  id?: string;
+  userId?: string;
+  role?: string;
+};
+
+function isAuthenticated(
+  request: NextRequest,
+  allowedRoles: string[]
+): boolean {
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    console.error(
+      "JWT_SECRET is missing from environment variables."
+    );
+    return false;
+  }
+
+  const tokens: string[] = [];
+
+  const authorization =
+    request.headers.get("authorization");
+
+  if (authorization?.startsWith("Bearer ")) {
+    const bearerToken =
+      authorization.slice(7).trim();
+
+    if (bearerToken) {
+      tokens.push(bearerToken);
+    }
+  }
+
+  const studentToken =
+    request.cookies.get(
+      "studentToken"
+    )?.value;
+
+  const facultyToken =
+    request.cookies.get(
+      "facultyToken"
+    )?.value;
+
+  const adminToken =
+    request.cookies.get("token")?.value;
+
+  if (studentToken) {
+    tokens.push(studentToken);
+  }
+
+  if (facultyToken) {
+    tokens.push(facultyToken);
+  }
+
+  if (adminToken) {
+    tokens.push(adminToken);
+  }
+
+  for (const token of tokens) {
+    try {
+      const decoded = jwt.verify(
+        token,
+        secret
+      ) as TokenPayload;
+
+      const role = String(
+        decoded.role ?? ""
+      ).toUpperCase();
+
+      if (allowedRoles.includes(role)) {
+        return true;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return false;
+}
+
 // ============================================================
 // GET ALL ACTIVITIES
 // ============================================================
 
-export async function GET() {
+export async function GET(
+  request: NextRequest
+) {
   try {
-    const activities = await prisma.$queryRaw<
-      Array<{
-        id: string;
-        title: string;
-        description: string;
-        venue: string;
-        activityDate: Date;
-        createdAt: Date;
-        updatedAt: Date;
-      }>
-    >`
-      SELECT
-        "id",
-        "title",
-        "description",
-        "venue",
-        "activityDate",
-        "createdAt",
-        "updatedAt"
-      FROM "Activity"
-      ORDER BY "activityDate" ASC
-    `;
+    const authenticated =
+      isAuthenticated(request, [
+        "ADMIN",
+        "SUPER_ADMIN",
+        "STUDENT",
+        "FACULTY",
+      ]);
+
+    if (!authenticated) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Authentication required.",
+          activities: [],
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const activities =
+      await prisma.$queryRaw<
+        Array<{
+          id: string;
+          title: string;
+          description: string;
+          venue: string;
+          activityDate: Date;
+          createdAt: Date;
+          updatedAt: Date;
+        }>
+      >`
+        SELECT 
+          "id",
+          "title",
+          "description",
+          "venue",
+          "activityDate",
+          "createdAt",
+          "updatedAt"
+        FROM "Activity"
+        ORDER BY "activityDate" ASC
+      `;
 
     return NextResponse.json(
       {
@@ -53,7 +158,10 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("GET ACTIVITIES ERROR:", error);
+    console.error(
+      "GET ACTIVITIES ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
@@ -69,12 +177,34 @@ export async function GET() {
 }
 
 // ============================================================
-// CREATE ACTIVITY
+// CREATE ACTIVITY - ADMIN ONLY
 // ============================================================
 
-export async function POST(request: Request) {
+export async function POST(
+  request: NextRequest
+) {
   try {
-    const body = await request.json();
+    const authenticated =
+      isAuthenticated(request, [
+        "ADMIN",
+        "SUPER_ADMIN",
+      ]);
+
+    if (!authenticated) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Admin authentication is required.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const body =
+      await request.json();
 
     const {
       title,
@@ -82,10 +212,6 @@ export async function POST(request: Request) {
       venue,
       activityDate,
     } = body;
-
-    // --------------------------------------------------------
-    // VALIDATION
-    // --------------------------------------------------------
 
     if (
       !title ||
@@ -105,13 +231,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const parsedDate = new Date(activityDate);
+    const parsedDate =
+      new Date(activityDate);
 
     if (Number.isNaN(parsedDate.getTime())) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid activity date.",
+          message:
+            "Invalid activity date.",
         },
         {
           status: 400,
@@ -119,11 +247,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // --------------------------------------------------------
-    // CREATE ACTIVITY
-    // --------------------------------------------------------
-
-    const id = crypto.randomUUID();
+    const id =
+      crypto.randomUUID();
 
     await prisma.$executeRaw`
       INSERT INTO "Activity"
@@ -148,51 +273,54 @@ export async function POST(request: Request) {
       )
     `;
 
-    // --------------------------------------------------------
-    // FETCH CREATED ACTIVITY
-    // --------------------------------------------------------
-
-    const activities = await prisma.$queryRaw<
-      Array<{
-        id: string;
-        title: string;
-        description: string;
-        venue: string;
-        activityDate: Date;
-        createdAt: Date;
-        updatedAt: Date;
-      }>
-    >`
-      SELECT
-        "id",
-        "title",
-        "description",
-        "venue",
-        "activityDate",
-        "createdAt",
-        "updatedAt"
-      FROM "Activity"
-      WHERE "id" = ${id}
-      LIMIT 1
-    `;
+    const activities =
+      await prisma.$queryRaw<
+        Array<{
+          id: string;
+          title: string;
+          description: string;
+          venue: string;
+          activityDate: Date;
+          createdAt: Date;
+          updatedAt: Date;
+        }>
+      >`
+        SELECT
+          "id",
+          "title",
+          "description",
+          "venue",
+          "activityDate",
+          "createdAt",
+          "updatedAt"
+        FROM "Activity"
+        WHERE "id" = ${id}
+        LIMIT 1
+      `;
 
     return NextResponse.json(
       {
         success: true,
-        message: "Activity created successfully.",
-        activity: activities[0] ?? null,
+        message:
+          "Activity created successfully.",
+        activity:
+          activities[0] ?? null,
       },
       {
         status: 201,
       }
     );
   } catch (error) {
-    console.error("CREATE ACTIVITY ERROR:", error);
+    console.error(
+      "CREATE ACTIVITY ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create activity.",
+        message:
+          "Failed to create activity.",
       },
       {
         status: 500,

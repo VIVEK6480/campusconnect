@@ -198,7 +198,54 @@ function formatDate(
     return "—";
   }
 
-  const date = new Date(value);
+  const rawValue = String(value).trim();
+
+  if (!rawValue) {
+    return "—";
+  }
+
+  /*
+   * Event/class dates are calendar dates.
+   * Do not let browser timezone conversion
+   * change the actual stored date.
+   *
+   * Example:
+   * 2026-09-12T00:00:00.000Z
+   * should always display as:
+   * 12 Sep 2026
+   */
+  const datePart =
+    rawValue.includes("T")
+      ? rawValue.split("T")[0]
+      : rawValue.slice(0, 10);
+
+  const parts = datePart.split("-");
+
+  if (parts.length !== 3) {
+    return "—";
+  }
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
+    return "—";
+  }
+
+  const date = new Date(
+    year,
+    month - 1,
+    day
+  );
 
   if (Number.isNaN(date.getTime())) {
     return "—";

@@ -8,8 +8,6 @@ import {
   Building2,
   CalendarDays,
   ClipboardCheck,
-  UserPlus,
-  Megaphone,
   Bell,
   Settings,
   LogOut,
@@ -19,6 +17,7 @@ import {
   UserCheck,
   UserCog,
   ChevronDown,
+  BookOpen,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -53,11 +52,6 @@ const menuItems = [
     icon: ClipboardCheck,
   },
   {
-    label: "Memberships",
-    href: "/admin/memberships",
-    icon: UserPlus,
-  },
-  {
     label: "Student Approval",
     href: "/admin/student-approval",
     icon: UserCheck,
@@ -68,9 +62,9 @@ const menuItems = [
     icon: UserCog,
   },
   {
-    label: "Announcements",
-    href: "/admin/announcements",
-    icon: Megaphone,
+    label: "Activities",
+    href: "/admin/activities",
+    icon: BookOpen,
   },
   {
     label: "Notifications",

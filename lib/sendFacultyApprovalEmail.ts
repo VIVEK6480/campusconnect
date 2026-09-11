@@ -4,15 +4,18 @@ import nodemailer from "nodemailer";
 // SMTP TRANSPORTER
 // ======================================================
 
-const transporter = nodemailer.createTransport({
-  host: process.env.STUDENT_SMTP_HOST,
-  port: Number(process.env.STUDENT_SMTP_PORT || 465),
-  secure: true,
-  auth: {
-    user: process.env.STUDENT_SMTP_USER,
-    pass: process.env.STUDENT_SMTP_PASSWORD,
-  },
-});
+const transporter =
+  nodemailer.createTransport({
+    host: process.env.STUDENT_SMTP_HOST,
+    port: Number(
+      process.env.STUDENT_SMTP_PORT || 465
+    ),
+    secure: true,
+    auth: {
+      user: process.env.STUDENT_SMTP_USER,
+      pass: process.env.STUDENT_SMTP_PASSWORD,
+    },
+  });
 
 // ======================================================
 // TYPE
@@ -24,92 +27,26 @@ type FacultyApprovalEmailProps = {
   phone?: string | null;
   department?: string | null;
 
-  // Faculty ID generated after approval
   userId: string;
 
   approved: boolean;
 
   rejectionReason?: string | null;
-
-  // Optional academic assignment details
-  semester?: number | string | null;
-  section?: string | null;
-  subjects?: string[] | null;
 };
 
 // ======================================================
 // HTML ESCAPE
 // ======================================================
 
-function escapeHtml(value: string): string {
+function escapeHtml(
+  value: string
+): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-}
-
-// ======================================================
-// SUBJECT HTML
-// ======================================================
-
-function createSubjectsHtml(
-  subjects?: string[] | null
-): string {
-  if (!subjects || subjects.length === 0) {
-    return `
-      <p
-        style="
-          margin:7px 0;
-          color:#64748b;
-          font-size:14px;
-        "
-      >
-        <strong>Subjects:</strong>
-        Not Assigned
-      </p>
-    `;
-  }
-
-  const subjectList = subjects
-    .map(
-      (subject) => `
-        <li
-          style="
-            margin:6px 0;
-            color:#475569;
-            font-size:14px;
-          "
-        >
-          ${escapeHtml(subject)}
-        </li>
-      `
-    )
-    .join("");
-
-  return `
-    <div style="margin-top:10px;">
-      <p
-        style="
-          margin:7px 0;
-          color:#475569;
-          font-size:14px;
-        "
-      >
-        <strong>Subjects:</strong>
-      </p>
-
-      <ul
-        style="
-          margin:8px 0 0;
-          padding-left:22px;
-        "
-      >
-        ${subjectList}
-      </ul>
-    </div>
-  `;
 }
 
 // ======================================================
@@ -124,9 +61,6 @@ export async function sendFacultyApprovalEmail({
   userId,
   approved,
   rejectionReason,
-  semester,
-  section,
-  subjects,
 }: FacultyApprovalEmailProps) {
   // ====================================================
   // SAFE VALUES
@@ -144,35 +78,21 @@ export async function sendFacultyApprovalEmail({
     phone || "Not provided"
   );
 
-  const safeDepartment = escapeHtml(
-    department || "Not provided"
-  );
+  const safeDepartment =
+    escapeHtml(
+      department || "Not provided"
+    );
 
-  const safeUserId = escapeHtml(
-    userId || "Not assigned"
-  );
-
-  const safeSemester =
-    semester !== null &&
-    semester !== undefined &&
-    String(semester).trim() !== ""
-      ? escapeHtml(String(semester))
-      : "Not Assigned";
-
-  const safeSection =
-    section &&
-    section.trim().length > 0
-      ? escapeHtml(section)
-      : "Not Assigned";
+  const safeUserId =
+    escapeHtml(
+      userId || "Not assigned"
+    );
 
   const safeReason =
     rejectionReason &&
     rejectionReason.trim().length > 0
       ? escapeHtml(rejectionReason)
       : "";
-
-  const subjectsHtml =
-    createSubjectsHtml(subjects);
 
   // ====================================================
   // APPROVED EMAIL
@@ -280,8 +200,6 @@ export async function sendFacultyApprovalEmail({
 
       <div style="padding:35px;">
 
-        <!-- APPROVED BADGE -->
-
         <div
           style="
             text-align:center;
@@ -349,9 +267,9 @@ export async function sendFacultyApprovalEmail({
             "
           >
             Congratulations! Your faculty account has
-            been successfully approved. Your Faculty User
-            ID is now active and you can use your registered
-            credentials to access the CampusConnect Faculty Portal.
+            been successfully approved. You can now
+            login to the CampusConnect Faculty Portal
+            using your registered email and password.
           </p>
 
         </div>
@@ -398,7 +316,7 @@ export async function sendFacultyApprovalEmail({
                   border-bottom:1px solid #e2e8f0;
                 "
               >
-                Faculty User ID
+                Faculty ID
               </td>
 
               <td
@@ -424,7 +342,7 @@ export async function sendFacultyApprovalEmail({
                   border-bottom:1px solid #e2e8f0;
                 "
               >
-                Full Name
+                Name
               </td>
 
               <td
@@ -567,78 +485,7 @@ export async function sendFacultyApprovalEmail({
 
         </div>
 
-        <!-- ACADEMIC ASSIGNMENT -->
-
-        <h3
-          style="
-            margin:0 0 14px;
-            color:#111827;
-            font-size:16px;
-          "
-        >
-          Academic Assignment
-        </h3>
-
-        <div
-          style="
-            background:#f8fafc;
-            border:1px solid #e2e8f0;
-            border-radius:15px;
-            padding:18px;
-            margin-bottom:25px;
-          "
-        >
-
-          <p
-            style="
-              margin:7px 0;
-              color:#475569;
-              font-size:14px;
-            "
-          >
-            <strong>Semester:</strong>
-            ${safeSemester}
-          </p>
-
-          <p
-            style="
-              margin:7px 0;
-              color:#475569;
-              font-size:14px;
-            "
-          >
-            <strong>Class / Section:</strong>
-            ${safeSection}
-          </p>
-
-          ${subjectsHtml}
-
-          ${
-            (!subjects ||
-              subjects.length === 0) &&
-            (!semester ||
-              semester === null ||
-              semester === undefined)
-              ? `
-                <p
-                  style="
-                    margin:14px 0 0;
-                    color:#64748b;
-                    font-size:12px;
-                    line-height:1.6;
-                  "
-                >
-                  Academic classes and subjects have not
-                  been assigned yet. They can be assigned
-                  separately by the administration.
-                </p>
-              `
-              : ""
-          }
-
-        </div>
-
-        <!-- PORTAL ACCESS -->
+        <!-- LOGIN MESSAGE -->
 
         <div
           style="
@@ -668,9 +515,10 @@ export async function sendFacultyApprovalEmail({
               line-height:1.7;
             "
           >
-            You can now log in to the CampusConnect
-            Faculty Portal using your registered email
-            address and password.
+            Your account has been approved successfully.
+            You can now login to the CampusConnect
+            Faculty Portal using your registered
+            email address and password.
           </p>
 
         </div>

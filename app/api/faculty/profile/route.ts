@@ -40,14 +40,30 @@ const facultySelect = {
    AUTH
    ========================================================= */
 
-function getFacultyId(request: NextRequest): string | null {
-  const authorization = request.headers.get("authorization") || "";
+function getFacultyId(
+  request: NextRequest
+): string | null {
+  const authorization =
+    request.headers.get("authorization") || "";
 
-  const bearer = authorization.toLowerCase().startsWith("bearer ")
-    ? authorization.slice(7).trim()
-    : "";
+  const bearer =
+    authorization
+      .toLowerCase()
+      .startsWith("bearer ")
+      ? authorization.slice(7).trim()
+      : "";
 
-  const token = request.cookies.get("token")?.value || bearer;
+  /*
+   * Faculty authentication:
+   *
+   * Authorization: Bearer <faculty-token>
+   * OR
+   * facultyToken HTTP-only cookie
+   */
+  const token =
+    bearer ||
+    request.cookies.get("facultyToken")?.value ||
+    "";
 
   if (!token || !process.env.JWT_SECRET) {
     return null;
@@ -59,29 +75,42 @@ function getFacultyId(request: NextRequest): string | null {
       process.env.JWT_SECRET
     ) as TokenPayload;
 
-    const role = String(decoded.role ?? "")
+    const role = String(
+      decoded.role ?? ""
+    )
       .trim()
       .toUpperCase();
 
-    if (role && role !== "FACULTY") {
+    if (role !== "FACULTY") {
       return null;
     }
 
     return (
-      (typeof decoded.id === "string" && decoded.id) ||
-      (typeof decoded.userId === "string" && decoded.userId) ||
-      (typeof decoded.facultyId === "string" && decoded.facultyId) ||
-      (typeof decoded.sub === "string" && decoded.sub) ||
+      (typeof decoded.id === "string" &&
+        decoded.id) ||
+      (typeof decoded.userId === "string" &&
+        decoded.userId) ||
+      (typeof decoded.facultyId === "string" &&
+        decoded.facultyId) ||
+      (typeof decoded.sub === "string" &&
+        decoded.sub) ||
       null
     );
   } catch (error) {
-    console.error("FACULTY PROFILE JWT ERROR:", error);
+    console.error(
+      "FACULTY PROFILE JWT ERROR:",
+      error
+    );
+
     return null;
   }
 }
 
-async function requireFaculty(request: NextRequest) {
-  const facultyId = getFacultyId(request);
+async function requireFaculty(
+  request: NextRequest
+) {
+  const facultyId =
+    getFacultyId(request);
 
   if (!facultyId) {
     return {
@@ -89,33 +118,38 @@ async function requireFaculty(request: NextRequest) {
       response: NextResponse.json(
         {
           success: false,
-          message: "Unauthorized faculty account.",
+          message:
+            "Unauthorized faculty account.",
         },
         { status: 401 }
       ),
     };
   }
 
-  const faculty = await prisma.user.findUnique({
-    where: {
-      id: facultyId,
-    },
-    select: {
-      id: true,
-      role: true,
-    },
-  });
+  const faculty =
+    await prisma.user.findUnique({
+      where: {
+        id: facultyId,
+      },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
 
   if (
     !faculty ||
-    String(faculty.role).trim().toUpperCase() !== "FACULTY"
+    String(faculty.role)
+      .trim()
+      .toUpperCase() !== "FACULTY"
   ) {
     return {
       facultyId: null,
       response: NextResponse.json(
         {
           success: false,
-          message: "Faculty account not found.",
+          message:
+            "Faculty account not found.",
         },
         { status: 404 }
       ),
@@ -132,8 +166,12 @@ async function requireFaculty(request: NextRequest) {
    HELPERS
    ========================================================= */
 
-function clean(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+function clean(
+  value: unknown
+): string {
+  return typeof value === "string"
+    ? value.trim()
+    : "";
 }
 
 /*
@@ -142,14 +180,17 @@ function clean(value: unknown): string {
  * The browser already limits the selected file to 2 MB.
  * The API validates again so the limit cannot be bypassed.
  */
-function validateProfileImage(profileImage: string): string | null {
+function validateProfileImage(
+  profileImage: string
+): string | null {
   if (!profileImage) {
     return "Profile image is required.";
   }
 
-  const match = profileImage.match(
-    /^data:image\/(png|jpe?g|webp);base64,(.+)$/i
-  );
+  const match =
+    profileImage.match(
+      /^data:image\/(png|jpe?g|webp);base64,(.+)$/i
+    );
 
   if (!match) {
     return "Only PNG, JPG/JPEG and WebP images are supported.";
@@ -158,9 +199,16 @@ function validateProfileImage(profileImage: string): string | null {
   const base64 = match[2];
 
   try {
-    const byteLength = Buffer.from(base64, "base64").byteLength;
+    const byteLength =
+      Buffer.from(
+        base64,
+        "base64"
+      ).byteLength;
 
-    if (byteLength > 2 * 1024 * 1024) {
+    if (
+      byteLength >
+      2 * 1024 * 1024
+    ) {
       return "Profile image is too large. Please use an image below 2 MB.";
     }
   } catch {
@@ -172,7 +220,8 @@ function validateProfileImage(profileImage: string): string | null {
 
 function responseHeaders() {
   return {
-    "Cache-Control": "no-store, max-age=0",
+    "Cache-Control":
+      "no-store, max-age=0",
   };
 }
 
@@ -181,26 +230,33 @@ function responseHeaders() {
    LOAD COMPLETE FACULTY PROFILE
    ========================================================= */
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
-    const auth = await requireFaculty(request);
+    const auth =
+      await requireFaculty(
+        request
+      );
 
     if (auth.response) {
       return auth.response;
     }
 
-    const faculty = await prisma.user.findUnique({
-      where: {
-        id: auth.facultyId!,
-      },
-      select: facultySelect,
-    });
+    const faculty =
+      await prisma.user.findUnique({
+        where: {
+          id: auth.facultyId!,
+        },
+        select: facultySelect,
+      });
 
     if (!faculty) {
       return NextResponse.json(
         {
           success: false,
-          message: "Faculty account not found.",
+          message:
+            "Faculty account not found.",
         },
         { status: 404 }
       );
@@ -217,12 +273,16 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error("FACULTY PROFILE GET ERROR:", error);
+    console.error(
+      "FACULTY PROFILE GET ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Unable to load faculty profile.",
+        message:
+          "Unable to load faculty profile.",
       },
       { status: 500 }
     );
@@ -246,15 +306,23 @@ export async function GET(request: NextRequest) {
    update-profile for everything.
    ========================================================= */
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest
+) {
   try {
-    const auth = await requireFaculty(request);
+    const auth =
+      await requireFaculty(
+        request
+      );
 
     if (auth.response) {
       return auth.response;
     }
 
-    let body: Record<string, unknown>;
+    let body: Record<
+      string,
+      unknown
+    >;
 
     try {
       body = await request.json();
@@ -262,7 +330,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid request body.",
+          message:
+            "Invalid request body.",
         },
         { status: 400 }
       );
@@ -273,19 +342,23 @@ export async function PATCH(request: NextRequest) {
         ? body.action
         : "update-profile";
 
-    const hasProfileImage = Object.prototype.hasOwnProperty.call(
-      body,
-      "profileImage"
-    );
+    const hasProfileImage =
+      Object.prototype.hasOwnProperty.call(
+        body,
+        "profileImage"
+      );
 
     if (
-      action !== "update-profile" &&
-      action !== "update-photo"
+      action !==
+        "update-profile" &&
+      action !==
+        "update-photo"
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid profile update action.",
+          message:
+            "Invalid profile update action.",
         },
         { status: 400 }
       );
@@ -295,12 +368,16 @@ export async function PATCH(request: NextRequest) {
        LEGACY PHOTO-ONLY UPDATE
        ===================================================== */
 
-    if (action === "update-photo") {
+    if (
+      action ===
+      "update-photo"
+    ) {
       if (!hasProfileImage) {
         return NextResponse.json(
           {
             success: false,
-            message: "Profile image is required.",
+            message:
+              "Profile image is required.",
           },
           { status: 400 }
         );
@@ -310,66 +387,98 @@ export async function PATCH(request: NextRequest) {
        * null is intentionally supported here as well, so an
        * older photo editor can remove the photo.
        */
-      if (body.profileImage === null) {
-        const updatedFaculty = await prisma.user.update({
-          where: {
-            id: auth.facultyId!,
-          },
-          data: {
-            profileImage: null,
-          },
-          select: facultySelect,
-        });
+      if (
+        body.profileImage ===
+        null
+      ) {
+        const updatedFaculty =
+          await prisma.user.update(
+            {
+              where: {
+                id: auth.facultyId!,
+              },
+              data: {
+                profileImage:
+                  null,
+              },
+              select:
+                facultySelect,
+            }
+          );
 
         return NextResponse.json(
           {
             success: true,
-            message: "Profile photo removed successfully.",
+            message:
+              "Profile photo removed successfully.",
             profileImage: null,
-            faculty: updatedFaculty,
+            faculty:
+              updatedFaculty,
           },
           {
             status: 200,
-            headers: responseHeaders(),
+            headers:
+              responseHeaders(),
           }
         );
       }
 
-      const profileImage = clean(body.profileImage);
-      const imageError = validateProfileImage(profileImage);
+      const profileImage =
+        clean(
+          body.profileImage
+        );
+
+      const imageError =
+        validateProfileImage(
+          profileImage
+        );
 
       if (imageError) {
         return NextResponse.json(
           {
             success: false,
-            message: imageError,
+            message:
+              imageError,
           },
           {
-            status: imageError.includes("too large") ? 413 : 400,
+            status:
+              imageError.includes(
+                "too large"
+              )
+                ? 413
+                : 400,
           }
         );
       }
 
-      const updatedFaculty = await prisma.user.update({
-        where: {
-          id: auth.facultyId!,
-        },
-        data: {
-          profileImage,
-        },
-        select: facultySelect,
-      });
+      const updatedFaculty =
+        await prisma.user.update(
+          {
+            where: {
+              id: auth.facultyId!,
+            },
+            data: {
+              profileImage,
+            },
+            select:
+              facultySelect,
+          }
+        );
 
       return NextResponse.json(
         {
           success: true,
-          message: "Profile photo updated successfully.",
-          profileImage: updatedFaculty.profileImage,
-          faculty: updatedFaculty,
+          message:
+            "Profile photo updated successfully.",
+          profileImage:
+            updatedFaculty.profileImage,
+          faculty:
+            updatedFaculty,
         },
         {
           status: 200,
-          headers: responseHeaders(),
+          headers:
+            responseHeaders(),
         }
       );
     }
@@ -378,13 +487,16 @@ export async function PATCH(request: NextRequest) {
        NORMAL PROFILE UPDATE
        ===================================================== */
 
-    const name = clean(body.name);
+    const name = clean(
+      body.name
+    );
 
     if (!name) {
       return NextResponse.json(
         {
           success: false,
-          message: "Please enter your full name.",
+          message:
+            "Please enter your full name.",
         },
         { status: 400 }
       );
@@ -407,14 +519,30 @@ export async function PATCH(request: NextRequest) {
       profileImage?: string | null;
     } = {
       name,
-      phone: clean(body.phone),
-      qualification: clean(body.qualification),
-      specialization: clean(body.specialization),
-      address: clean(body.address),
-      city: clean(body.city),
-      state: clean(body.state),
-      officeRoom: clean(body.officeRoom),
-      officeHours: clean(body.officeHours),
+      phone: clean(
+        body.phone
+      ),
+      qualification: clean(
+        body.qualification
+      ),
+      specialization: clean(
+        body.specialization
+      ),
+      address: clean(
+        body.address
+      ),
+      city: clean(
+        body.city
+      ),
+      state: clean(
+        body.state
+      ),
+      officeRoom: clean(
+        body.officeRoom
+      ),
+      officeHours: clean(
+        body.officeHours
+      ),
     };
 
     /*
@@ -430,69 +558,95 @@ export async function PATCH(request: NextRequest) {
      *   null      -> remove image
      */
     if (hasProfileImage) {
-      if (body.profileImage === null) {
+      if (
+        body.profileImage ===
+        null
+      ) {
         data.profileImage = null;
-      } else if (typeof body.profileImage === "string") {
-        const profileImage = body.profileImage.trim();
-        const imageError = validateProfileImage(profileImage);
+      } else if (
+        typeof body.profileImage ===
+        "string"
+      ) {
+        const profileImage =
+          body.profileImage.trim();
+
+        const imageError =
+          validateProfileImage(
+            profileImage
+          );
 
         if (imageError) {
           return NextResponse.json(
             {
               success: false,
-              message: imageError,
+              message:
+                imageError,
             },
             {
-              status: imageError.includes("too large")
-                ? 413
-                : 400,
+              status:
+                imageError.includes(
+                  "too large"
+                )
+                  ? 413
+                  : 400,
             }
           );
         }
 
-        data.profileImage = profileImage;
+        data.profileImage =
+          profileImage;
       } else {
         return NextResponse.json(
           {
             success: false,
-            message: "Invalid profile image.",
+            message:
+              "Invalid profile image.",
           },
           { status: 400 }
         );
       }
     }
 
-    const updatedFaculty = await prisma.user.update({
-      where: {
-        id: auth.facultyId!,
-      },
-      data,
-      select: facultySelect,
-    });
+    const updatedFaculty =
+      await prisma.user.update({
+        where: {
+          id: auth.facultyId!,
+        },
+        data,
+        select: facultySelect,
+      });
 
     return NextResponse.json(
       {
         success: true,
         message: hasProfileImage
-          ? data.profileImage === null
+          ? data.profileImage ===
+            null
             ? "Faculty profile and photo removal completed successfully."
             : "Faculty profile and photo updated successfully."
           : "Profile information updated successfully.",
-        faculty: updatedFaculty,
-        profileImage: updatedFaculty.profileImage,
+        faculty:
+          updatedFaculty,
+        profileImage:
+          updatedFaculty.profileImage,
       },
       {
         status: 200,
-        headers: responseHeaders(),
+        headers:
+          responseHeaders(),
       }
     );
   } catch (error) {
-    console.error("FACULTY PROFILE UPDATE ERROR:", error);
+    console.error(
+      "FACULTY PROFILE UPDATE ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Unable to update faculty profile.",
+        message:
+          "Unable to update faculty profile.",
       },
       { status: 500 }
     );

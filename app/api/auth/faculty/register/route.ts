@@ -18,6 +18,16 @@ export async function POST(request: Request) {
         ? body.email.trim().toLowerCase()
         : "";
 
+    const phone =
+      typeof body.phone === "string"
+        ? body.phone.trim()
+        : "";
+
+    const department =
+      typeof body.department === "string"
+        ? body.department.trim()
+        : "";
+
     const password =
       typeof body.password === "string"
         ? body.password
@@ -27,12 +37,18 @@ export async function POST(request: Request) {
     // VALIDATION
     // ==========================================
 
-    if (!name || !email || !password) {
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !department ||
+      !password
+    ) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Name, email and password are required.",
+            "Name, email, phone, department and password are required.",
         },
         { status: 400 }
       );
@@ -137,12 +153,15 @@ export async function POST(request: Request) {
         data: {
           name,
           email,
+          phone,
+          department,
           password: hashedPassword,
 
           // Faculty ID is generated after approval
           campusUserId: null,
 
           role: "FACULTY",
+
           approvalStatus: "PENDING",
         },
 
@@ -150,6 +169,8 @@ export async function POST(request: Request) {
           id: true,
           name: true,
           email: true,
+          phone: true,
+          department: true,
           role: true,
           approvalStatus: true,
           campusUserId: true,
@@ -213,7 +234,7 @@ export async function POST(request: Request) {
         success: false,
         message:
           "Something went wrong while creating the faculty account.",
-        },
+      },
       { status: 500 }
     );
   }

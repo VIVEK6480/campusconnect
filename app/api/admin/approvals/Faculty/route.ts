@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
+import { sendFacultyApprovalEmail } from "@/lib/sendFacultyApprovalEmail";
 
 /* ======================================================
    TYPES
@@ -149,6 +150,40 @@ async function authenticateAdmin(
 }
 
 /* ======================================================
+   GENERATE FACULTY ID
+====================================================== */
+
+async function generateFacultyId() {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const randomNumber =
+      Math.floor(
+        1000 + Math.random() * 9000
+      );
+
+    const facultyId =
+      `RNT-${randomNumber}`;
+
+    const existing =
+      await prisma.user.findUnique({
+        where: {
+          campusUserId: facultyId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!existing) {
+      return facultyId;
+    }
+  }
+
+  throw new Error(
+    "Unable to generate a unique Faculty ID."
+  );
+}
+
+/* ======================================================
    GET - LOAD ALL FACULTY APPROVAL REQUESTS
 ====================================================== */
 
@@ -178,13 +213,8 @@ export async function GET(
           campusUserId: true,
           name: true,
           email: true,
-
-          /*
-            phone and department are intentionally
-            NOT selected because they do not exist
-            in the current Prisma User model.
-          */
-
+          phone: true,
+          department: true,
           profileImage: true,
           role: true,
           createdAt: true,
@@ -358,13 +388,8 @@ export async function POST(
           campusUserId: true,
           name: true,
           email: true,
-
-          /*
-            Do not add phone or department here.
-            Those fields are not present in the
-            current Prisma User model.
-          */
-
+          phone: true,
+          department: true,
           profileImage: true,
           role: true,
           approvalStatus: true,
@@ -410,6 +435,21 @@ export async function POST(
     }
 
     /* ==================================================
+       GENERATE FACULTY ID ON APPROVAL
+    ================================================== */
+
+    let facultyId =
+      existingFaculty.campusUserId;
+
+    if (
+      action === "APPROVE" &&
+      !facultyId
+    ) {
+      facultyId =
+        await generateFacultyId();
+    }
+
+    /* ==================================================
        UPDATE APPROVAL STATUS
     ================================================== */
 
@@ -424,6 +464,11 @@ export async function POST(
             action === "APPROVE"
               ? "APPROVED"
               : "REJECTED",
+
+          campusUserId:
+            action === "APPROVE"
+              ? facultyId
+              : existingFaculty.campusUserId,
 
           approvedAt:
             action === "APPROVE"
@@ -441,6 +486,8 @@ export async function POST(
           campusUserId: true,
           name: true,
           email: true,
+          phone: true,
+          department: true,
           profileImage: true,
           role: true,
           approvalStatus: true,
@@ -450,6 +497,44 @@ export async function POST(
           updatedAt: true,
         },
       });
+
+    /* ==================================================
+       SEND APPROVAL / REJECTION EMAIL
+    ================================================== */
+
+    try {
+      await sendFacultyApprovalEmail({
+        name:
+          updatedFaculty.name ??
+          "Faculty Member",
+
+        email:
+          updatedFaculty.email,
+
+        phone:
+          updatedFaculty.phone,
+
+        department:
+          updatedFaculty.department,
+
+        userId:
+          updatedFaculty.campusUserId ??
+          updatedFaculty.id,
+
+        approved:
+          action === "APPROVE",
+
+        rejectionReason:
+          action === "REJECT"
+            ? rejectionReason
+            : null,
+      });
+    } catch (emailError) {
+      console.error(
+        "FACULTY APPROVAL EMAIL ERROR:",
+        emailError
+      );
+    }
 
     return NextResponse.json(
       {

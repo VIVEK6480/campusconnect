@@ -26,6 +26,8 @@ interface Faculty {
   campusUserId?: string | null;
   name: string;
   email: string;
+  phone?: string | null;
+  department?: string | null;
   profileImage?: string | null;
   role?: string | null;
   createdAt?: string;
@@ -185,7 +187,8 @@ export default function FacultyApprovalPage() {
     () =>
       faculty.filter(
         (member) =>
-          getStatus(member) === "PENDING"
+          getStatus(member) ===
+          "PENDING"
       ),
     [faculty]
   );
@@ -194,7 +197,8 @@ export default function FacultyApprovalPage() {
     () =>
       faculty.filter(
         (member) =>
-          getStatus(member) === "APPROVED"
+          getStatus(member) ===
+          "APPROVED"
       ),
     [faculty]
   );
@@ -203,7 +207,8 @@ export default function FacultyApprovalPage() {
     () =>
       faculty.filter(
         (member) =>
-          getStatus(member) === "REJECTED"
+          getStatus(member) ===
+          "REJECTED"
       ),
     [faculty]
   );
@@ -233,6 +238,12 @@ export default function FacultyApprovalPage() {
           .toLowerCase()
           .includes(query) ||
         member.campusUserId
+          ?.toLowerCase()
+          .includes(query) ||
+        member.phone
+          ?.toLowerCase()
+          .includes(query) ||
+        member.department
           ?.toLowerCase()
           .includes(query);
 
@@ -645,7 +656,7 @@ export default function FacultyApprovalPage() {
                       event.target.value
                     )
                   }
-                  placeholder="Search name, email or ID..."
+                  placeholder="Search name, email, ID or department..."
                   className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 />
               </div>
@@ -932,6 +943,28 @@ export default function FacultyApprovalPage() {
                     {formatDate(
                       selectedFaculty.createdAt
                     )}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-slate-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    Phone
+                  </p>
+
+                  <p className="mt-1 text-sm font-bold text-slate-800">
+                    {selectedFaculty.phone ||
+                      "Not provided"}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-slate-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    Department
+                  </p>
+
+                  <p className="mt-1 text-sm font-bold text-slate-800">
+                    {selectedFaculty.department ||
+                      "Not assigned"}
                   </p>
                 </div>
 

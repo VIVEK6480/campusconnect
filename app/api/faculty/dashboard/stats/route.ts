@@ -10,16 +10,27 @@ type TokenPayload = JwtPayload & {
 };
 
 function getFacultyId(request: NextRequest): string | null {
-  const authorization = request.headers.get("authorization") || "";
+  const authorization =
+    request.headers.get("authorization") || "";
 
-  const bearer = authorization
-    .toLowerCase()
-    .startsWith("bearer ")
-    ? authorization.slice(7).trim()
-    : "";
+  const bearer =
+    authorization
+      .toLowerCase()
+      .startsWith("bearer ")
+      ? authorization.slice(7).trim()
+      : "";
 
+  /*
+   * Faculty authentication:
+   *
+   * Authorization: Bearer <faculty-token>
+   * OR
+   * facultyToken HTTP-only cookie
+   */
   const token =
-    request.cookies.get("token")?.value || bearer;
+    bearer ||
+    request.cookies.get("facultyToken")?.value ||
+    "";
 
   if (!token || !process.env.JWT_SECRET) {
     return null;
@@ -35,7 +46,7 @@ function getFacultyId(request: NextRequest): string | null {
       .trim()
       .toUpperCase();
 
-    if (role && role !== "FACULTY") {
+    if (role !== "FACULTY") {
       return null;
     }
 
@@ -62,13 +73,15 @@ function getFacultyId(request: NextRequest): string | null {
 
 export async function GET(request: NextRequest) {
   try {
-    const facultyId = getFacultyId(request);
+    const facultyId =
+      getFacultyId(request);
 
     if (!facultyId) {
       return NextResponse.json(
         {
           success: false,
-          message: "Unauthorized faculty account.",
+          message:
+            "Unauthorized faculty account.",
         },
         {
           status: 401,
@@ -76,15 +89,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const faculty = await prisma.user.findUnique({
-      where: {
-        id: facultyId,
-      },
-      select: {
-        id: true,
-        role: true,
-      },
-    });
+    const faculty =
+      await prisma.user.findUnique({
+        where: {
+          id: facultyId,
+        },
+        select: {
+          id: true,
+          role: true,
+        },
+      });
 
     if (
       !faculty ||
@@ -95,7 +109,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Faculty account not found.",
+          message:
+            "Faculty account not found.",
         },
         {
           status: 404,
@@ -147,7 +162,8 @@ export async function GET(request: NextRequest) {
       {
         status: 200,
         headers: {
-          "Cache-Control": "no-store, max-age=0",
+          "Cache-Control":
+            "no-store, max-age=0",
         },
       }
     );

@@ -78,18 +78,37 @@ export default function proxy(req: NextRequest) {
   let token: string | undefined;
 
   if (authHeader?.startsWith("Bearer ")) {
-    token = authHeader
-      .substring(7)
-      .trim();
+    const bearerToken =
+      authHeader.substring(7).trim();
+
+    if (bearerToken) {
+      token = bearerToken;
+    }
   }
 
   // =========================================================
-  // HTTP-ONLY COOKIE
+  // HTTP-ONLY COOKIES
+  //
+  // Admin   -> token
+  // Student -> studentToken
+  // Faculty -> facultyToken
+  //
+  // Bearer token is checked first.
   // =========================================================
 
   if (!token) {
     token =
       req.cookies.get("token")?.value;
+  }
+
+  if (!token) {
+    token =
+      req.cookies.get("studentToken")?.value;
+  }
+
+  if (!token) {
+    token =
+      req.cookies.get("facultyToken")?.value;
   }
 
   // =========================================================

@@ -23,9 +23,15 @@ function getFacultyId(
           .trim()
       : "";
 
+  /*
+   * Faculty authentication:
+   * 1. Authorization: Bearer <token>
+   * 2. facultyToken HTTP-only cookie
+   */
   const token =
-    request.cookies.get("token")?.value ||
-    bearer;
+    bearer ||
+    request.cookies.get("facultyToken")?.value ||
+    "";
 
   if (
     !token ||
@@ -1020,7 +1026,8 @@ export async function PATCH(
             )
           ).size,
 
-        classAttendanceTotal: total,
+        classAttendanceTotal:
+          total,
 
         classAttendancePresent:
           present,
