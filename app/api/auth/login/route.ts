@@ -70,13 +70,19 @@ export async function POST(req: Request) {
 
         if (
           refererPath ===
-          "/auth/login"
+            "/auth/login" ||
+          refererPath.startsWith(
+            "/auth/login/"
+          )
         ) {
           requestedPortal =
             "student";
         } else if (
           refererPath ===
-          "/faculty/login"
+            "/faculty/login" ||
+          refererPath.startsWith(
+            "/faculty/login/"
+          )
         ) {
           requestedPortal =
             "faculty";
@@ -520,6 +526,8 @@ export async function POST(req: Request) {
           message:
             "Login Successful",
 
+          // Keep returning `token` because the
+          // existing frontend may already use it.
           token,
 
           approvalStatus:
@@ -546,11 +554,32 @@ export async function POST(req: Request) {
       );
 
     // =========================================================
-    // HTTP ONLY COOKIE
+    // PORTAL-SPECIFIC HTTP ONLY COOKIE
+    // =========================================================
+    //
+    // IMPORTANT:
+    //
+    // Admin login uses:
+    //     token
+    //
+    // Student login uses:
+    //     studentToken
+    //
+    // Faculty login uses:
+    //     facultyToken
+    //
+    // This prevents Student/Faculty login from overwriting
+    // the Admin authentication cookie.
+    //
     // =========================================================
 
+    const cookieName =
+      requestedPortal === "student"
+        ? "studentToken"
+        : "facultyToken";
+
     response.cookies.set({
-      name: "token",
+      name: cookieName,
       value: token,
       httpOnly: true,
       secure:
