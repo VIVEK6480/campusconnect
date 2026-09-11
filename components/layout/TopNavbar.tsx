@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import {
   Bell,
-  Search,
   RefreshCw,
   UserCircle,
   Menu,
@@ -18,16 +16,14 @@ export default function TopNavbar({
   mobileMenuOpen,
   onMenuClick,
 }: TopNavbarProps) {
-  const [search, setSearch] = useState("");
-
   return (
     <header className="sticky top-0 z-30 h-[76px] border-b border-slate-200 bg-white/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-full w-full max-w-[1500px] items-center justify-between gap-6 px-5 sm:px-6 xl:px-8">
+      <div className="flex h-full w-full items-center justify-between gap-4 px-3 sm:px-4 md:px-5">
         {/* ===================================================
             LEFT SIDE
         ==================================================== */}
 
-        <div className="flex min-w-0 flex-1 items-center gap-5">
+        <div className="flex min-w-0 items-center gap-4">
           {/* MOBILE MENU */}
 
           <button
@@ -41,7 +37,7 @@ export default function TopNavbar({
 
           {/* ADMIN TITLE */}
 
-          <div className="hidden min-w-[190px] shrink-0 sm:block">
+          <div className="min-w-[190px] shrink-0">
             <p className="text-[13px] font-bold uppercase tracking-[0.16em] text-blue-600">
               Admin Portal
             </p>
@@ -50,40 +46,19 @@ export default function TopNavbar({
               Your campus, under your control.
             </p>
           </div>
-
-          {/* SEARCH */}
-
-          <div className="hidden min-w-0 max-w-[460px] flex-1 lg:block xl:max-w-[520px]">
-            <div className="relative">
-              <Search
-                size={17}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                type="text"
-                value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                placeholder="Search anything..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-11 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-              />
-            </div>
-          </div>
         </div>
 
         {/* ===================================================
             RIGHT SIDE
         ==================================================== */}
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {/* REFRESH */}
 
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="hidden h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:flex"
+            className="hidden h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:flex"
           >
             <RefreshCw size={16} />
             Refresh
@@ -107,7 +82,7 @@ export default function TopNavbar({
 
           {/* ADMIN PROFILE */}
 
-          <div className="hidden items-center gap-3 sm:flex">
+          <div className="hidden items-center gap-2 sm:flex">
             <div className="text-right">
               <p className="text-sm font-bold text-slate-800">
                 Administrator

@@ -2,13 +2,11 @@
 
 import {
   ArrowLeft,
-  Bell,
   Check,
   Image as ImageIcon,
   Loader2,
   Pencil,
   Plus,
-  RefreshCw,
   Search,
   Trash2,
   Users,
@@ -608,83 +606,6 @@ export default function AdminClubsPage() {
     <div className="min-h-screen w-full overflow-x-hidden bg-[#f6f8fc]">
 
       {/* ==================================================
-          ADMIN HEADER
-      ================================================== */}
-
-      <header className="w-full border-b border-slate-200 bg-white">
-        <div className="flex w-full items-center justify-between gap-5 px-5 py-2 md:px-7 lg:px-8">
-
-          <div className="shrink-0">
-
-            <h1 className="font-serif text-xs font-bold tracking-[0.14em] text-indigo-700 md:text-sm">
-              ADMIN PORTAL
-            </h1>
-
-            <p className="mt-0.5 font-serif text-[10px] text-slate-500 md:text-[11px]">
-              Your campus, under your control.
-            </p>
-
-          </div>
-
-          <div className="flex items-center gap-3">
-
-            <button
-              type="button"
-              onClick={
-                handleRefresh
-              }
-              className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-            >
-
-              <RefreshCw
-                size={15}
-              />
-
-              <span className="hidden sm:inline">
-                Refresh
-              </span>
-
-            </button>
-
-            <button
-              type="button"
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
-            >
-
-              <Bell size={16} />
-
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500" />
-
-            </button>
-
-            <div className="hidden h-7 w-px bg-slate-200 sm:block" />
-
-            <div className="flex items-center gap-2">
-
-              <div className="hidden text-right sm:block">
-
-                <p className="text-xs font-semibold text-slate-900">
-                  Administrator
-                </p>
-
-                <p className="text-[10px] text-slate-400">
-                  System Admin
-                </p>
-
-              </div>
-
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-xs font-bold text-white shadow-sm">
-                A
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-      </header>
-
-      {/* ==================================================
           MAIN
       ================================================== */}
 
@@ -711,7 +632,7 @@ export default function AdminClubsPage() {
             HERO
         ================================================== */}
 
-        <section className="relative w-full overflow-hidden rounded-[22px] bg-gradient-to-r from-[#28346f] via-[#3d50a2] to-[#5872df] px-6 py-6 text-white shadow-lg md:min-h-[205px] md:px-8 md:py-6">
+        <section className="relative flex w-full flex-col justify-center overflow-hidden rounded-[22px] bg-gradient-to-r from-[#28346f] via-[#3d50a2] to-[#5872df] px-6 py-8 text-white shadow-lg md:min-h-[300px] md:px-8 md:py-8">
 
           <div className="pointer-events-none absolute -right-8 -top-14 h-40 w-40 rounded-full border border-white/10" />
 
@@ -719,7 +640,7 @@ export default function AdminClubsPage() {
 
           <div className="pointer-events-none absolute right-[17%] bottom-[-85px] h-56 w-56 rounded-full border border-white/10" />
 
-          <div className="relative z-10 max-w-3xl">
+          <div className="relative z-10 max-w-3xl lg:pr-44">
 
             <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold backdrop-blur-sm md:text-xs">
 
@@ -731,7 +652,7 @@ export default function AdminClubsPage() {
 
             </div>
 
-            <h2 className="mt-4 font-serif text-2xl font-bold leading-tight md:text-3xl lg:text-[40px]">
+            <h2 className="mt-5 font-serif text-2xl font-bold leading-tight md:text-3xl lg:text-[42px]">
 
               One workspace.
 
@@ -743,7 +664,7 @@ export default function AdminClubsPage() {
 
             </h2>
 
-            <p className="mt-3 max-w-2xl font-serif text-xs leading-5 text-white/85 md:text-sm">
+            <p className="mt-4 max-w-2xl font-serif text-xs leading-6 text-white/85 md:text-sm">
 
               Create, manage and organize college clubs,
               members and club information from one

@@ -22,8 +22,9 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
-  // Top navbar ONLY on dashboard
-  const showTopNavbar = pathname === "/admin/dashboard";
+  // Top navbar + mobile hamburger on ALL admin pages
+  // Dashboard, Users, Clubs, Events, Faculty, etc.
+  const showTopNavbar = true;
 
   return (
     <DashboardShell showTopNavbar={showTopNavbar}>

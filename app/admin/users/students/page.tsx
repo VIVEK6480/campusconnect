@@ -9,7 +9,6 @@ import {
 import type { CSSProperties, ReactNode } from "react";
 import {
   AlertCircle,
-  Bell,
   BookOpen,
   ChevronDown,
   Edit3,
@@ -836,49 +835,6 @@ export default function AdminStudentsPage() {
       <div className="pointer-events-none fixed left-1/2 top-0 z-0 h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-200/10 blur-3xl" />
 
       <div className="relative z-10 w-full px-4 py-6 sm:px-5 md:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        {/* ====================================================
-            ADMIN TOP HEADER
-        ==================================================== */}
-
-        <header className="-mx-4 -mt-6 mb-6 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-[0_1px_8px_rgba(15,23,42,0.04)] backdrop-blur-sm sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
-          <div className="mx-auto flex min-h-[62px] w-full items-center justify-between gap-4">
-            <div className="min-w-[190px]">
-              <div className="text-[15px] font-black tracking-[0.14em] text-indigo-600">
-                ADMIN PORTAL
-              </div>
-              <div className="mt-0.5 text-xs font-medium text-slate-400">
-                Your campus, under your control.
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-3">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-              >
-                <Bell size={19} />
-                <span className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </button>
-
-              <div className="hidden h-10 w-px bg-slate-200 sm:block" />
-
-              <div className="hidden text-right sm:block">
-                <div className="text-sm font-bold text-slate-800">
-                  Administrator
-                </div>
-                <div className="text-[11px] font-medium text-slate-400">
-                  System Admin
-                </div>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 text-sm font-black text-white shadow-lg shadow-indigo-200">
-                A
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* ERROR */}
 
         {error && (
