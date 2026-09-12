@@ -8,17 +8,28 @@ type TokenPayload = JwtPayload & {
   role?: string;
 };
 
+type NotificationAudience = "ALL" | "FACULTY";
+
+type AuthResult = {
+  authenticated: boolean;
+  role: string | null;
+};
+
 function isAuthenticated(
   request: NextRequest,
   allowedRoles: string[]
-): boolean {
+): AuthResult {
   const secret = process.env.JWT_SECRET;
 
   if (!secret) {
     console.error(
       "JWT_SECRET is missing from environment variables."
     );
-    return false;
+
+    return {
+      authenticated: false,
+      role: null,
+    };
   }
 
   const tokens: string[] = [];
@@ -72,14 +83,39 @@ function isAuthenticated(
       ).toUpperCase();
 
       if (allowedRoles.includes(role)) {
-        return true;
+        return {
+          authenticated: true,
+          role,
+        };
       }
     } catch {
       continue;
     }
   }
 
-  return false;
+  return {
+    authenticated: false,
+    role: null,
+  };
+}
+
+function getAudience(
+  value: unknown
+): NotificationAudience | null {
+  const audience = String(
+    value ?? "ALL"
+  )
+    .trim()
+    .toUpperCase();
+
+  if (
+    audience !== "ALL" &&
+    audience !== "FACULTY"
+  ) {
+    return null;
+  }
+
+  return audience as NotificationAudience;
 }
 
 // ======================================
@@ -90,15 +126,17 @@ export async function GET(
   request: NextRequest
 ) {
   try {
-    const authenticated =
-      isAuthenticated(request, [
+    const auth = isAuthenticated(
+      request,
+      [
         "ADMIN",
         "SUPER_ADMIN",
         "STUDENT",
         "FACULTY",
-      ]);
+      ]
+    );
 
-    if (!authenticated) {
+    if (!auth.authenticated) {
       return NextResponse.json(
         {
           success: false,
@@ -111,8 +149,48 @@ export async function GET(
       );
     }
 
+    let whereCondition = {};
+
+    /*
+     * STUDENT:
+     * Only notifications sent to everyone.
+     */
+    if (auth.role === "STUDENT") {
+      whereCondition = {
+        audience: "ALL",
+      };
+    }
+
+    /*
+     * FACULTY:
+     * Can see both:
+     * - ALL
+     * - FACULTY
+     */
+    else if (
+      auth.role === "FACULTY"
+    ) {
+      whereCondition = {
+        audience: {
+          in: [
+            "ALL",
+            "FACULTY",
+          ],
+        },
+      };
+    }
+
+    /*
+     * ADMIN / SUPER_ADMIN:
+     * Can see all notifications.
+     */
+    else {
+      whereCondition = {};
+    }
+
     const notifications =
       await prisma.notification.findMany({
+        where: whereCondition,
         orderBy: {
           createdAt: "desc",
         },
@@ -156,13 +234,15 @@ export async function POST(
   req: NextRequest
 ) {
   try {
-    const authenticated =
-      isAuthenticated(req, [
+    const auth = isAuthenticated(
+      req,
+      [
         "ADMIN",
         "SUPER_ADMIN",
-      ]);
+      ]
+    );
 
-    if (!authenticated) {
+    if (!auth.authenticated) {
       return NextResponse.json(
         {
           success: false,
@@ -181,6 +261,7 @@ export async function POST(
     const {
       title,
       message,
+      audience,
     } = body;
 
     if (!title || !message) {
@@ -196,11 +277,31 @@ export async function POST(
       );
     }
 
+    const selectedAudience =
+      getAudience(audience);
+
+    if (!selectedAudience) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Invalid notification audience. Use ALL or FACULTY.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     const notification =
       await prisma.notification.create({
         data: {
-          title,
-          message,
+          title:
+            String(title).trim(),
+          message:
+            String(message).trim(),
+          audience:
+            selectedAudience,
         },
       });
 
@@ -208,7 +309,10 @@ export async function POST(
       {
         success: true,
         message:
-          "Notification created successfully",
+          selectedAudience ===
+          "FACULTY"
+            ? "Faculty notification created successfully"
+            : "Notification created successfully for Students and Faculty",
         notification,
       },
       {
@@ -242,13 +346,15 @@ export async function DELETE(
   req: NextRequest
 ) {
   try {
-    const authenticated =
-      isAuthenticated(req, [
+    const auth = isAuthenticated(
+      req,
+      [
         "ADMIN",
         "SUPER_ADMIN",
-      ]);
+      ]
+    );
 
-    if (!authenticated) {
+    if (!auth.authenticated) {
       return NextResponse.json(
         {
           success: false,
@@ -281,11 +387,13 @@ export async function DELETE(
     }
 
     const existingNotification =
-      await prisma.notification.findUnique({
-        where: {
-          id,
-        },
-      });
+      await prisma.notification.findUnique(
+        {
+          where: {
+            id,
+          },
+        }
+      );
 
     if (!existingNotification) {
       return NextResponse.json(
