@@ -33,13 +33,13 @@ export default function AdminUsersPage() {
 
       <div className="pointer-events-none fixed bottom-[-180px] left-1/3 z-0 h-[460px] w-[460px] rounded-full bg-sky-300/10 blur-3xl" />
 
-      <div className="relative z-10 w-full px-4 py-6 sm:px-5 md:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="relative z-10 w-full px-4 py-5 md:px-6 lg:px-8">
 
         {/* ============================================================
             HERO
         ============================================================ */}
 
-        <section className="relative mb-7 overflow-hidden rounded-[28px] bg-gradient-to-r from-[#202f73] via-[#30499c] to-[#4d6be0] px-7 py-8 text-white shadow-[0_18px_45px_rgba(37,58,135,0.20)] sm:px-9 sm:py-9 lg:px-10 lg:py-10">
+        <section className="relative mb-7 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#07132f] via-[#102a62] to-[#1d4ed8] px-7 py-8 text-white shadow-[0_18px_45px_rgba(37,58,135,0.20)] sm:px-9 sm:py-9 lg:px-10 lg:py-10">
 
           <div className="pointer-events-none absolute -right-12 -top-20 h-52 w-52 rounded-full border border-white/10" />
 

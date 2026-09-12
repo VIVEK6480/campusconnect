@@ -509,7 +509,7 @@ export default function AdminNotificationsPage() {
     notifications.length;
 
   return (
-    <main className="min-h-screen w-full bg-[#f7fafc] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen w-full bg-[#f7fafc] px-4 py-5 md:px-6 lg:px-8">
 
       <div className="w-full max-w-none">
 
@@ -918,7 +918,7 @@ export default function AdminNotificationsPage() {
         ================================================== */}
 
         <section
-          className="relative mb-7 w-full overflow-hidden rounded-[26px] bg-gradient-to-r from-[#172554] via-[#1e3a8a] to-[#2563eb] px-7 py-8 shadow-lg sm:px-9 sm:py-9"
+          className="relative mb-7 h-[280px] w-full overflow-hidden rounded-[26px] bg-gradient-to-br from-[#07132f] via-[#102a62] to-[#1d4ed8] px-7 py-8 shadow-lg sm:px-9 sm:py-9"
           onMouseMove={(event) =>
             handleCursorMove(
               event,

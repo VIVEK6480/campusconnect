@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import {
   Bell,
@@ -6,6 +6,7 @@ import {
   UserCircle,
   Menu,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface TopNavbarProps {
@@ -13,11 +14,89 @@ interface TopNavbarProps {
   onMenuClick: () => void;
 }
 
+type AdminProfile = {
+  name?: string | null;
+  email?: string | null;
+  profileImage?: string | null;
+  role?: string | null;
+};
+
+type AdminSettingsResponse = {
+  success?: boolean;
+  message?: string;
+  user?: AdminProfile;
+};
+
 export default function TopNavbar({
   mobileMenuOpen,
   onMenuClick,
 }: TopNavbarProps) {
   const router = useRouter();
+
+  const [adminProfile, setAdminProfile] =
+    useState<AdminProfile | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAdminProfile = async () => {
+      try {
+        const response = await fetch(
+          "/api/admin/settings",
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data: AdminSettingsResponse =
+          await response.json();
+
+        if (
+          !cancelled &&
+          data.success &&
+          data.user
+        ) {
+          setAdminProfile(data.user);
+        }
+      } catch (error) {
+        console.error(
+          "TOP NAVBAR ADMIN PROFILE ERROR:",
+          error
+        );
+      }
+    };
+
+    const timer = window.setTimeout(() => {
+      void loadAdminProfile();
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  const adminName =
+    adminProfile?.name?.trim() ||
+    "Administrator";
+
+  const adminRole =
+    adminProfile?.role === "SUPER_ADMIN"
+      ? "Super Admin"
+      : "System Admin";
+
+  const adminInitial =
+    adminName.charAt(0).toUpperCase() || "A";
+
+  const openSettings = () => {
+    router.push("/admin/settings");
+  };
 
   return (
     <header className="sticky top-0 z-30 h-[76px] border-b border-slate-200 bg-white/95 backdrop-blur-xl">
@@ -93,34 +172,60 @@ export default function TopNavbar({
 
           <div className="hidden h-9 w-px bg-slate-200 sm:block" />
 
-          {/* ADMIN PROFILE */}
+          {/* ADMIN PROFILE / SETTINGS */}
 
-          <div className="hidden items-center gap-2 sm:flex">
+          <button
+            type="button"
+            onClick={openSettings}
+            aria-label="Open Admin Settings"
+            className="group hidden items-center gap-2 rounded-2xl px-2 py-1.5 text-left transition hover:bg-blue-50 sm:flex"
+          >
 
             <div className="text-right">
-              <p className="text-sm font-bold text-slate-800">
-                Administrator
+              <p className="text-sm font-bold text-slate-800 transition group-hover:text-blue-700">
+                {adminName}
               </p>
 
-              <p className="text-[11px] text-slate-400">
-                System Admin
+              <p className="text-[11px] text-slate-400 transition group-hover:text-blue-500">
+                {adminRole}
               </p>
             </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-md shadow-blue-500/20">
-              A
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-md shadow-blue-500/20 ring-2 ring-white transition duration-300 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-blue-500/30">
+              {adminProfile?.profileImage ? (
+                <img
+                  src={adminProfile.profileImage}
+                  alt={adminName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                adminInitial
+              )}
             </div>
 
-          </div>
+          </button>
 
           {/* MOBILE PROFILE */}
 
-          <div className="flex sm:hidden">
-            <UserCircle
-              size={28}
-              className="text-blue-600"
-            />
-          </div>
+          <button
+            type="button"
+            onClick={openSettings}
+            aria-label="Open Admin Settings"
+            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full transition hover:scale-105 sm:hidden"
+          >
+            {adminProfile?.profileImage ? (
+              <img
+                src={adminProfile.profileImage}
+                alt={adminName}
+                className="h-full w-full object-cover rounded-full"
+              />
+            ) : (
+              <UserCircle
+                size={28}
+                className="text-blue-600"
+              />
+            )}
+          </button>
 
         </div>
       </div>

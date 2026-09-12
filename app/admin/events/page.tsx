@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   CalendarDays,
   Check,
   Clock3,
@@ -398,18 +397,7 @@ export default function AdminEventsPage() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#f6f8fc]">
       <main className="w-full px-4 py-5 md:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={() => {
-            window.location.href = "/admin/dashboard";
-          }}
-          className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-slate-500 transition hover:text-[#0b1428]"
-        >
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </button>
-
-        <section className="relative flex min-h-[300px] w-full items-center overflow-hidden rounded-[22px] bg-gradient-to-r from-[#28346f] via-[#3d50a2] to-[#5872df] px-6 py-8 text-white shadow-lg md:px-9 lg:px-10">
+        <section className="relative flex h-[280px] w-full items-center overflow-hidden rounded-[22px] bg-gradient-to-br from-[#07132f] via-[#102a62] to-[#1d4ed8] px-6 py-8 text-white shadow-lg md:px-9 lg:px-10">
           <div className="pointer-events-none absolute -right-8 -top-14 h-40 w-40 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute right-12 -top-6 h-28 w-28 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute right-[17%] bottom-[-85px] h-56 w-56 rounded-full border border-white/10" />

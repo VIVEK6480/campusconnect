@@ -694,7 +694,7 @@ export default function AdminStudentsPage() {
         .cc-admin-banner {
           position: relative;
           overflow: hidden;
-          background: linear-gradient(112deg, #202b63 0%, #2d4fae 52%, #4669e2 100%);
+          background: linear-gradient(135deg, #07132f 0%, #102a62 50%, #1d4ed8 100%);
           box-shadow: 0 18px 45px rgba(37, 60, 145, .18);
           transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease;
         }
@@ -834,7 +834,7 @@ export default function AdminStudentsPage() {
 
       <div className="pointer-events-none fixed left-1/2 top-0 z-0 h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-200/10 blur-3xl" />
 
-      <div className="relative z-10 w-full px-4 py-6 sm:px-5 md:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="relative z-10 w-full px-4 py-5 md:px-6 lg:px-8">
         {/* ERROR */}
 
         {error && (
@@ -887,19 +887,6 @@ export default function AdminStudentsPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                document.getElementById("student-directory")?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                })
-              }
-              className="cc-banner-button relative z-10 inline-flex h-12 shrink-0 items-center justify-center gap-3 rounded-xl bg-white px-6 text-sm font-black text-indigo-700 shadow-lg shadow-indigo-950/10"
-            >
-              Manage Students
-              <span className="text-lg leading-none">›</span>
-            </button>
           </div>
         </section>
 

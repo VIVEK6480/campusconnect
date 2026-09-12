@@ -646,12 +646,12 @@ export default function Page() {
         }
       `}</style>
 
-      <div className="min-h-screen w-full bg-[#f4f7fb] px-2 py-4 sm:px-3 md:px-4 lg:px-5 lg:py-6">
+      <div className="min-h-screen w-full bg-[#f4f7fb] px-4 py-5 md:px-6 lg:px-8">
       <div className="relative w-full">
         <div className="pointer-events-none absolute -right-28 top-8 h-72 w-72 rounded-full bg-blue-500/5 blur-3xl" />
         <div className="pointer-events-none absolute -left-28 top-[42%] h-72 w-72 rounded-full bg-indigo-500/5 blur-3xl" />
         {/* HEADER */}
-        <section className="relative h-[300px] overflow-hidden rounded-3xl bg-[linear-gradient(112deg,#202b63_0%,#2d4fae_52%,#4669e2_100%)] px-6 py-7 text-white shadow-xl shadow-blue-900/15 sm:px-8 sm:py-8 lg:px-10">
+        <section className="relative h-[280px] overflow-hidden rounded-3xl bg-gradient-to-br from-[#07132f] via-[#102a62] to-[#1d4ed8] px-6 py-7 text-white shadow-xl shadow-blue-900/15 sm:px-8 sm:py-8 lg:px-10">
           <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-white/10 bg-white/5 blur-2xl" />
           <div className="absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-indigo-300/15 blur-3xl" />
 

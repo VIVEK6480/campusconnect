@@ -491,14 +491,14 @@ export default function AdminFacultyPage() {
       <div className="pointer-events-none fixed bottom-[-140px] left-1/3 z-0 h-96 w-96 rounded-full bg-sky-300/10 blur-3xl animate-pulse [animation-delay:2400ms]" />
       <div className="pointer-events-none fixed left-1/2 top-0 z-0 h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-200/10 blur-3xl" />
 
-      <div className="relative z-10 w-full px-4 py-6 sm:px-5 md:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="relative z-10 w-full px-4 py-5 md:px-6 lg:px-8">
         {/* ====================================================
 
         {/* ====================================================
             FACULTY BANNER
         ==================================================== */}
 
-        <section className="relative mb-6 overflow-hidden rounded-[24px] bg-gradient-to-r from-[#202f73] via-[#30499c] to-[#4d6be0] px-7 py-8 text-white shadow-[0_18px_45px_rgba(37,58,135,0.20)] sm:px-9 sm:py-9 lg:px-10 lg:py-10">
+        <section className="relative mb-6 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#07132f] via-[#102a62] to-[#1d4ed8] px-7 py-8 text-white shadow-[0_18px_45px_rgba(37,58,135,0.20)] sm:px-9 sm:py-9 lg:px-10 lg:py-10">
           <div className="pointer-events-none absolute -right-6 -top-12 h-36 w-36 rounded-full border border-white/15" />
           <div className="pointer-events-none absolute right-16 -top-5 h-24 w-24 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute bottom-[-70px] right-[-40px] h-48 w-48 rounded-full border border-white/10" />
@@ -523,22 +523,6 @@ export default function AdminFacultyPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                loadDepartments();
-                if (department) loadFaculty();
-              }}
-              disabled={loadingFaculty || loadingDepartments}
-              className="inline-flex h-12 shrink-0 items-center justify-center gap-3 rounded-2xl bg-white px-6 text-sm font-black text-indigo-700 shadow-[0_12px_28px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(15,23,42,0.22)] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${
-                  loadingFaculty || loadingDepartments ? "animate-spin" : ""
-                }`}
-              />
-              Refresh Faculty
-            </button>
           </div>
         </section>
 

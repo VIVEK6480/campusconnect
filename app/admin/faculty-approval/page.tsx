@@ -457,54 +457,34 @@ export default function FacultyApprovalPage() {
    */
 
   return (
-    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1500px]">
+    <div className="min-h-screen w-full px-4 py-5 md:px-6 lg:px-8">
+      <div className="w-full">
 
         {/* HERO */}
 
-        <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#07132f] via-[#102a62] to-[#1d4ed8] p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:p-8">
+        <section className="relative h-[280px] w-full overflow-hidden rounded-[28px] bg-gradient-to-br from-[#07132f] via-[#102a62] to-[#1d4ed8] px-6 py-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:px-8 sm:py-6">
 
           <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
 
           <div className="absolute -bottom-28 left-1/3 h-72 w-72 rounded-full bg-blue-300/10 blur-3xl" />
 
-          <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
-
+          <div className="relative flex h-full flex-col justify-center gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold backdrop-blur-md">
-                <ShieldCheck size={15} />
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-[11px] font-semibold text-blue-100">
+                <ShieldCheck size={14} />
                 Administrative Verification Center
               </div>
 
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
                 Faculty Acceptance
               </h1>
 
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-blue-100/75 sm:text-[15px]">
                 Review faculty registration requests,
                 verify applicant information, and manage
                 faculty approvals from one secure workspace.
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                void loadFaculty(true)
-              }
-              disabled={refreshing}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 text-sm font-semibold backdrop-blur-md transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw
-                size={17}
-                className={
-                  refreshing
-                    ? "animate-spin"
-                    : ""
-                }
-              />
-              Refresh Data
-            </button>
           </div>
         </section>
 
