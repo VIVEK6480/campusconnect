@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Activity,
   Bell,
   CalendarDays,
   CheckCircle2,
@@ -119,9 +120,11 @@ type ApiResponse = {
 
 const navigation = [
   { title: "Dashboard", href: "/dashboard/faculty", icon: GraduationCap },
-  { title: "Students",
+  {
+    title: "Students",
     href: "/dashboard/faculty/students",
-    icon: Users, },
+    icon: Users,
+  },
   {
     title: "Student Approval",
     href: "/dashboard/faculty/approvals/students",
@@ -132,12 +135,35 @@ const navigation = [
     href: "/dashboard/faculty/attendance",
     icon: ClipboardCheck,
   },
-  { title: "Events", href: "/events", icon: CalendarDays },
-  { title: "Faculty Profile", href: "/faculty/profile", icon: UserCircle },
+  {
+    title: "Events",
+    href: "/dashboard/faculty/events",
+    icon: CalendarDays,
+  },
+  {
+    title: "Activities",
+    href: "/dashboard/faculty/activities",
+    icon: Activity,
+  },
+  {
+    title: "Clubs",
+    href: "/dashboard/faculty/clubs",
+    icon: Users,
+  },
+  {
+    title: "Faculty Profile",
+    href: "/faculty/profile",
+    icon: UserCircle,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/faculty/notifications",
+    icon: Bell,
+  },
 ];
 
 const accountNavigation = [
-  { title: "Account Security", href: "/faculty/security", icon: ShieldCheck },
+  { title: "Settings", href: "/faculty/security", icon: Settings },
 ];
 
 const semesterOptions = [
@@ -822,10 +848,19 @@ export default function FacultyAttendancePage() {
                 </Link>
               );
             })}
+
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-[#9db0c3] transition hover:bg-red-500/10 hover:text-red-300"
+            >
+              <LogOut size={17} />
+              Sign Out
+            </button>
           </nav>
 
           <div className="border-t border-white/10 p-4">
-            <div className="mb-2 flex items-center gap-3 rounded-xl bg-white/5 p-3">
+            <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-sm font-bold text-[#07111f]">
                 {initials}
               </div>
@@ -834,75 +869,58 @@ export default function FacultyAttendancePage() {
                 <p className="truncate text-[10px] text-[#8497aa]">{user?.email || "Faculty"}</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#9db0c3] transition hover:bg-red-500/10 hover:text-red-300"
-            >
-              <LogOut size={17} />
-              Sign Out
-            </button>
           </div>
         </div>
       </aside>
 
       <main className="min-h-screen lg:pl-[272px]">
-        <header className="sticky top-0 z-30 flex h-[78px] items-center justify-between border-b border-[#d8e3ed] bg-white/95 px-5 backdrop-blur lg:px-8">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setMobileSidebarOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#d8e3ed] text-[#3e5870] lg:hidden"
-            >
-              <Menu size={19} />
-            </button>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#4b8bad]">Faculty Portal</p>
-              <p className="text-xs text-[#7890a5]">Attendance management workspace</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#d8e3ed] bg-white text-[#5d7890]">
-              <Bell size={18} />
-            </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#d8e3ed] bg-white text-[#5d7890]">
-              <Settings size={18} />
-            </button>
-            <div className="hidden h-9 w-px bg-[#d8e3ed] sm:block" />
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#72c5e9] text-xs font-bold text-[#08304a]">
-                {initials}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-xs font-bold text-[#263a51]">{facultyName}</p>
-                <p className="text-[10px] uppercase tracking-wide text-[#8497aa]">Faculty</p>
-              </div>
-            </div>
-          </div>
-        </header>
+        {/* MOBILE MENU */}
+        <button
+          type="button"
+          aria-label="Open faculty sidebar"
+          onClick={() => setMobileSidebarOpen(true)}
+          className="fixed left-4 top-4 z-[45] flex h-11 w-11 items-center justify-center rounded-xl border border-[#d5e4ed] bg-white text-[#38566d] shadow-lg lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
 
         <section className="px-4 py-5 lg:px-7 lg:py-6">
-          <div className="relative overflow-hidden rounded-[24px] bg-[#101b2d] px-6 py-8 text-white shadow-sm lg:px-8">
-            <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
-            <div className="pointer-events-none absolute -right-3 top-12 h-40 w-40 rounded-full border border-[#54bce5]/10" />
+          <div className="relative h-[280px] overflow-hidden rounded-[24px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-6 py-7 text-white shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 lg:px-10">
+            <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20 transition-transform duration-700 hover:scale-110" />
+            <div className="pointer-events-none absolute right-12 top-12 h-40 w-40 rounded-full border border-[#54bce5]/10" />
 
-            <div className="relative">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3 py-1.5 text-[10px] font-bold text-[#9dddf8]">
-                <ClipboardCheck size={13} />
-                Faculty Attendance
+            <div className="relative z-10 flex h-full items-center justify-between gap-8">
+              <div className="max-w-[900px]">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[10px] font-semibold text-[#76d0f1]">
+                  <ClipboardCheck size={13} />
+                  Faculty Attendance
+                </div>
+
+                <h1 className="font-serif text-[32px] font-bold leading-[1.03] tracking-[-0.035em] text-white sm:text-[43px] lg:text-[50px]">
+                  Manage class
+                  <br />
+                  <span className="text-[#69c9ed]">attendance with ease.</span>
+                </h1>
+
+                <p className="mt-4 max-w-[790px] text-[12px] leading-5 text-[#d9e3f4] sm:text-[13px]">
+                  Record, update and review registered student attendance by semester, section and subject from one focused Faculty workspace.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2.5">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[#72dcb4]/30 bg-[#72dcb4]/10 px-3 py-1.5 text-[10px] font-semibold text-[#9ae8c9]">
+                    <CheckCircle2 size={13} />
+                    Attendance Active
+                  </span>
+
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium text-[#d6e0ed]">
+                    Faculty ID:
+                    <span className="font-bold text-white">{facultyId}</span>
+                  </span>
+                </div>
               </div>
-              <h1 className="font-serif text-4xl font-bold tracking-tight lg:text-5xl">Class Attendance</h1>
-              <p className="mt-2 max-w-2xl text-sm text-[#a9bbcc]">
-                Record, update and monitor attendance for registered students by semester, section and subject.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[10px] font-bold text-emerald-200">
-                  <CheckCircle2 size={13} /> Attendance Active
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold text-[#c6d4e0]">
-                  Faculty ID: {facultyId}
-                </span>
+
+              <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-[20px] border border-[#54bce5]/20 bg-[#15273b]/80 text-[#67bfe6] shadow-[0_10px_30px_rgba(0,0,0,0.12)] lg:flex">
+                <ClipboardCheck size={38} strokeWidth={1.6} />
               </div>
             </div>
           </div>

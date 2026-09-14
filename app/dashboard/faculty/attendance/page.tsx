@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Activity,
   Bell,
   CalendarDays,
   CheckCircle2,
@@ -52,9 +53,24 @@ const navigation = [
     icon: CalendarDays,
   },
   {
+    title: "Activities",
+    href: "/dashboard/faculty/activities",
+    icon: Activity,
+  },
+  {
+    title: "Clubs",
+    href: "/dashboard/faculty/clubs",
+    icon: Users,
+  },
+  {
     title: "Faculty Profile",
     href: "/faculty/profile",
     icon: Users,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/faculty/notifications",
+    icon: Bell,
   },
 ];
 
@@ -259,10 +275,19 @@ export default function FacultyAttendanceLandingPage() {
             Account
           </p>
 
+          <Link
+            href="/faculty/security"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
+          >
+            <Settings size={18} />
+            Settings
+          </Link>
+
           <button
             type="button"
             onClick={logout}
-            className="flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
+            className="mt-1 flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
           >
             <LogOut size={18} />
             Sign Out
@@ -300,90 +325,26 @@ export default function FacultyAttendanceLandingPage() {
       {/* MAIN AREA */}
       <div className="min-h-screen lg:pl-[270px]">
 
-        {/* HEADER */}
-        <header className="sticky top-0 z-30 h-[86px] border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
-
-          <div className="flex h-full items-center justify-between px-5 sm:px-6">
-
-            <div className="flex items-center gap-4">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileSidebarOpen(true)
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white lg:hidden"
-              >
-                <Menu size={20} />
-              </button>
-
-              <div>
-
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
-                  Faculty Portal
-                </p>
-
-                <p className="mt-1 text-[11px] text-[#71839a]">
-                  Attendance management workspace
-                </p>
-
-              </div>
-
-            </div>
-
-            <div className="flex items-center gap-2">
-
-              <button
-                type="button"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white"
-              >
-                <Bell size={18} />
-              </button>
-
-              <button
-                type="button"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white sm:flex"
-              >
-                <Settings size={18} />
-              </button>
-
-              <div className="hidden items-center gap-2 sm:flex">
-
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-xs font-bold text-white">
-                  {initials}
-                </div>
-
-                <div>
-
-                  <p className="text-[12px] font-semibold">
-                    {facultyName}
-                  </p>
-
-                  <p className="text-[10px] text-[#72849a]">
-                    Faculty
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </header>
+        <button
+          type="button"
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label="Open faculty sidebar"
+          className="fixed left-4 top-4 z-[45] flex h-11 w-11 items-center justify-center rounded-xl border border-[#d5e4ed] bg-white text-[#38566d] shadow-lg lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
 
         {/* PAGE CONTENT */}
-        <main className="min-h-[calc(100vh-86px)] bg-[#edf4fa] px-5 py-7 sm:px-6">
+        <main className="min-h-screen bg-[#edf4fa] px-5 py-7 sm:px-6">
 
           <div className="w-full">
 
             {/* BANNER */}
-            <section className="relative overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9">
+            <section className="relative h-[280px] overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9">
 
               <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
 
-              <div className="relative z-10 flex items-center justify-between gap-6">
+              <div className="relative z-10 flex h-full items-center justify-between gap-6">
 
                 <div>
 
@@ -395,13 +356,17 @@ export default function FacultyAttendanceLandingPage() {
 
                   </div>
 
-                  <h1 className="font-serif text-[34px] font-bold text-white sm:text-[43px]">
-                    Attendance Management
+                  <h1 className="font-serif text-[34px] font-bold leading-[1.03] tracking-[-0.03em] text-white sm:text-[43px]">
+                    Manage attendance.
+                    <br />
+                    <span className="text-[#69c9ed]">
+                      Keep every record accurate.
+                    </span>
                   </h1>
 
-                  <p className="mt-3 text-sm leading-6 text-[#a7b7c9]">
-                    Choose the attendance type you want to
-                    manage.
+                  <p className="mt-4 max-w-[780px] text-sm leading-6 text-[#a7b7c9] sm:text-[13px]">
+                    Record class and event attendance from one focused Faculty workspace,
+                    with clear workflows for students, sections, subjects and campus events.
                   </p>
 
                   <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3.5 py-2 text-[11px] text-[#b3c0d0]">
@@ -413,97 +378,6 @@ export default function FacultyAttendanceLandingPage() {
                     </span>
 
                   </div>
-
-                </div>
-
-                <div
-                  onMouseMove={(e) => {
-                    const rect =
-                      e.currentTarget.getBoundingClientRect();
-
-                    const x =
-                      e.clientX - rect.left;
-
-                    const y =
-                      e.clientY - rect.top;
-
-                    e.currentTarget.style.setProperty(
-                      "--mouse-x",
-                      `${x}px`
-                    );
-
-                    e.currentTarget.style.setProperty(
-                      "--mouse-y",
-                      `${y}px`
-                    );
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.setProperty(
-                      "--glow-opacity",
-                      "1"
-                    );
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.setProperty(
-                      "--glow-opacity",
-                      "0"
-                    );
-                  }}
-                  className="
-                    group relative hidden h-[92px] w-[92px] cursor-pointer
-                    items-center justify-center overflow-hidden
-                    rounded-[21px] border border-[#54bce5]/25
-                    bg-[#15273b]/90 text-[#67bfe6]
-                    shadow-[0_10px_30px_rgba(0,0,0,0.12)]
-                    transition-all duration-300 ease-out
-                    hover:-translate-y-1 hover:scale-105
-                    hover:border-[#54bce5]
-                    hover:shadow-[0_0_0_5px_rgba(84,188,229,0.10),0_18px_45px_rgba(84,188,229,0.30)]
-                    active:scale-100
-                    sm:flex
-                  "
-                  style={
-                    {
-                      "--mouse-x": "50%",
-                      "--mouse-y": "50%",
-                      "--glow-opacity": "0",
-                    } as React.CSSProperties
-                  }
-                >
-
-                  {/* Cursor-following glow */}
-                  <span
-                    aria-hidden="true"
-                    className="
-                      pointer-events-none absolute inset-0 rounded-[21px]
-                      transition-opacity duration-150
-                    "
-                    style={{
-                      background:
-                        "radial-gradient(circle 42px at var(--mouse-x) var(--mouse-y), rgba(84,188,229,0.55), rgba(84,188,229,0.16) 38%, transparent 72%)",
-                      opacity: "var(--glow-opacity)",
-                    }}
-                  />
-
-                  {/* Inner highlight */}
-                  <span
-                    aria-hidden="true"
-                    className="
-                      pointer-events-none absolute inset-[1px] rounded-[20px]
-                      border border-white/0 transition-all duration-200
-                      group-hover:border-white/20
-                    "
-                  />
-
-                  <ClipboardCheck
-                    size={46}
-                    strokeWidth={1.8}
-                    className="
-                      relative z-10 transition-all duration-300 ease-out
-                      group-hover:scale-110
-                      group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.55)]
-                    "
-                  />
 
                 </div>
 

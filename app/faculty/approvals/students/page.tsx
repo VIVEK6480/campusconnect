@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
+  Bell,
   Check,
   CheckCircle2,
   Clock3,
@@ -379,17 +380,31 @@ export default function FacultyStudentApprovalPage() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={refreshStudents}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-200 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Notifications"
+              title="Notifications"
+              onClick={() => {
+                window.location.assign("/dashboard/faculty/notifications");
+              }}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
+            >
+              <Bell className="h-5 w-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={refreshStudents}
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-200 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
             <RefreshCw
               className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
             />
             Refresh
           </button>
+          </div>
         </div>
 
         {/* Faculty Information */}
@@ -718,3 +733,5 @@ export default function FacultyStudentApprovalPage() {
     </main>
   );
 }
+
+

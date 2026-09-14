@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Activity,
   Bell,
   CalendarDays,
   CheckCircle2,
@@ -130,17 +131,32 @@ const navigation = [
     icon: CalendarDays,
   },
   {
+    title: "Activities",
+    href: "/dashboard/faculty/activities",
+    icon: Activity,
+  },
+  {
+    title: "Clubs",
+    href: "/dashboard/faculty/clubs",
+    icon: Users,
+  },
+  {
     title: "Faculty Profile",
-    href: "/faculty/profile",
+    href: "/dashboard/faculty/profile",
     icon: UserCircle,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/faculty/notifications",
+    icon: Bell,
   },
 ];
 
 const accountNavigation = [
   {
-    title: "Account Security",
+    title: "Settings",
     href: "/faculty/security",
-    icon: ShieldCheck,
+    icon: Settings,
   },
 ];
 
@@ -1408,102 +1424,23 @@ export default function FacultyEventAttendancePage() {
             HEADER
         ================================================= */}
 
-        <header className="sticky top-0 z-30 h-[86px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
+        {/* MOBILE MENU BUTTON */}
+        <button
+          type="button"
+          aria-label="Open faculty sidebar"
+          onClick={() => setMobileSidebarOpen(true)}
+          className="fixed left-4 top-4 z-[45] flex h-11 w-11 items-center justify-center rounded-xl border border-[#d5e4ed] bg-white text-[#38566d] shadow-lg lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
 
-          <div className="flex h-full w-full items-center justify-between px-5 sm:px-6">
 
-            <div className="flex items-center gap-4">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileSidebarOpen(
-                    true
-                  )
-                }
-                aria-label="Open sidebar"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-sm lg:hidden"
-              >
-                <Menu size={20} />
-              </button>
-
-              <div>
-
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
-                  Faculty Portal
-                </p>
-
-                <p className="mt-1 hidden text-[11px] text-[#71839a] sm:block">
-                  Attendance management workspace
-                </p>
-
-              </div>
-
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe]"
-              >
-
-                <Bell
-                  size={18}
-                  strokeWidth={1.8}
-                />
-
-                <span className="absolute right-[9px] top-[8px] h-1.5 w-1.5 rounded-full bg-[#54bce5]" />
-
-              </button>
-
-              <button
-                type="button"
-                aria-label="Settings"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe] sm:flex"
-              >
-
-                <Settings
-                  size={18}
-                  strokeWidth={1.8}
-                />
-
-              </button>
-
-              <div className="mx-1 hidden h-8 w-px bg-[#dce6f0] sm:block" />
-
-              <div className="hidden items-center gap-2.5 sm:flex">
-
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-[12px] font-bold text-white">
-                  {initials}
-                </div>
-
-                <div>
-
-                  <p className="text-[12px] font-semibold text-[#18283d]">
-                    {facultyName}
-                  </p>
-
-                  <p className="text-[10px] text-[#72849a]">
-                    {facultyRole}
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </header>
 
         {/* =================================================
             CONTENT
         ================================================= */}
 
-        <main className="relative min-h-[calc(100vh-86px)] w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6">
 
           {/* BACKGROUND */}
 
@@ -1530,13 +1467,13 @@ export default function FacultyEventAttendancePage() {
                 HERO
             ================================================== */}
 
-            <section className="relative w-full overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-6 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 sm:py-7">
+            <section className="relative h-[280px] w-full overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-6 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 sm:py-7">
 
               <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
 
               <div className="pointer-events-none absolute -right-3 top-12 h-40 w-40 rounded-full border border-[#54bce5]/10" />
 
-              <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative z-10 flex h-full flex-col justify-center gap-6 lg:flex-row lg:items-center lg:justify-between">
 
                 <div>
 
@@ -1550,17 +1487,20 @@ export default function FacultyEventAttendancePage() {
 
                   </div>
 
-                  <h1 className="font-serif text-[34px] font-bold leading-tight tracking-[-0.03em] text-white sm:text-[43px]">
+                  <h1 className="font-serif text-[34px] font-bold leading-[1.03] tracking-[-0.03em] text-white sm:text-[43px]">
 
-                    Event Attendance
+                    Manage event
+                    <br />
+                    <span className="text-[#69c9ed]">
+                      attendance with ease.
+                    </span>
 
                   </h1>
 
-                  <p className="mt-3 max-w-[800px] text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
+                  <p className="mt-4 max-w-[800px] text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
 
-                    Record, update and monitor
-                    student attendance from
-                    your Faculty Dashboard.
+                    Record, update and monitor student attendance for campus events
+                    directly from your Faculty workspace.
 
                   </p>
 

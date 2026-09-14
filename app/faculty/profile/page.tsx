@@ -87,7 +87,10 @@ const navigation = [
   { title: "Student Approval", href: "/dashboard/faculty/approvals/students", icon: CheckCircle2 },
   { title: "Attendance", href: "/dashboard/faculty/attendance", icon: ClipboardCheck },
   { title: "Events", href: "/dashboard/faculty/events", icon: CalendarDays },
+  { title: "Activities", href: "/dashboard/faculty/activities", icon: Activity },
+  { title: "Clubs", href: "/dashboard/faculty/clubs", icon: Users },
   { title: "Faculty Profile", href: "/faculty/profile", icon: UserCircle },
+  { title: "Notifications", href: "/dashboard/faculty/notifications", icon: Bell },
 ];
 
 function normalizeFaculty(raw: Partial<FacultyUser>): FacultyUser {
@@ -136,12 +139,12 @@ export default function FacultyProfilePage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [user, setUser] = useState<FacultyUser>(() => readStoredFaculty());
+  const [user, setUser] = useState<FacultyUser>(DEFAULT_FACULTY);
   const [editing, setEditing] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState<ProfileForm>(() => formFromUser(readStoredFaculty()));
+  const [form, setForm] = useState<ProfileForm>(() => formFromUser(DEFAULT_FACULTY));
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -558,6 +561,15 @@ export default function FacultyProfilePage() {
             Account
           </p>
           <nav className="space-y-1.5">
+            <Link
+              href="/faculty/security"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
+            >
+              <Settings size={18} className="text-[#8195ad] transition group-hover:text-[#63c9ef]" />
+              <span>Settings</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => void signOut()}
@@ -581,55 +593,7 @@ export default function FacultyProfilePage() {
       </aside>
 
       <div className="min-h-screen min-w-0 lg:pl-[270px]">
-        {/* HEADER */}
-        <header className="sticky top-0 z-30 h-[86px] border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
-          <div className="mx-auto flex h-full w-full max-w-[1500px] items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => setMobileSidebarOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-sm lg:hidden"
-                aria-label="Open sidebar"
-              >
-                <Menu size={20} />
-              </button>
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">Faculty Portal</p>
-                <p className="mt-1 hidden text-[11px] text-[#71839a] sm:block">
-                  Faculty profile & account workspace
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:-translate-y-0.5 hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe]"
-              >
-                <Bell size={18} />
-                <span className="absolute right-[9px] top-[8px] h-1.5 w-1.5 rounded-full bg-[#54bce5]" />
-              </button>
-              <button
-                type="button"
-                aria-label="Settings"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:-translate-y-0.5 hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe] sm:flex"
-              >
-                <Settings size={18} />
-              </button>
-              <div className="mx-1 hidden h-8 w-px bg-[#dce6f0] sm:block" />
-              <div className="hidden items-center gap-2.5 sm:flex">
-                <Avatar user={user} initials={initials} size="md" />
-                <div>
-                  <p className="text-[12px] font-semibold text-[#18283d]">{facultyName}</p>
-                  <p className="text-[10px] text-[#72849a]">{facultyRole}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="relative min-h-[calc(100vh-86px)] w-full min-w-0 overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6 lg:px-8">
+        <main className="relative min-h-screen w-full min-w-0 overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div
               className="absolute inset-0"
@@ -645,11 +609,11 @@ export default function FacultyProfilePage() {
 
           <div className="relative mx-auto w-full min-w-0">
             {/* HERO */}
-            <section className="group relative overflow-hidden rounded-[28px] border border-[#263951] bg-gradient-to-br from-[#0b1423] via-[#101d30] to-[#162a40] shadow-[0_22px_55px_rgba(10,27,48,0.18)]">
+            <section className="group relative h-[280px] overflow-hidden rounded-[28px] border border-[#263951] bg-gradient-to-br from-[#0b1423] via-[#101d30] to-[#162a40] shadow-[0_22px_55px_rgba(10,27,48,0.18)]">
               <div className="pointer-events-none absolute -right-28 -top-32 h-[390px] w-[390px] rounded-full border border-[#54bce5]/20 transition-transform duration-700 group-hover:scale-110" />
               <div className="pointer-events-none absolute right-10 top-16 h-44 w-44 rounded-full border border-[#54bce5]/10" />
 
-              <div className="relative z-10 grid gap-8 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:p-10">
+              <div className="relative z-10 flex h-full flex-col justify-between gap-5 p-6 sm:p-8 lg:flex-row lg:items-center lg:gap-8 lg:p-10">
                 <div className="min-w-0">
                   <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
                     <UserRound size={14} />
@@ -671,25 +635,27 @@ export default function FacultyProfilePage() {
                     </div>
                   </div>
 
-                  <p className="mt-6 max-w-3xl text-[13px] leading-6 text-[#a7b7c9]">
-                    Manage your professional identity, teaching information, contact details and faculty account information from one centralized workspace.
+                  <p className="mt-5 max-w-2xl text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
+                    Keep your faculty profile, teaching details, account security and campus activity access organized in one professional workspace.
                   </p>
                 </div>
 
-                <div className="flex flex-col items-start justify-end gap-3 lg:items-end">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 backdrop-blur-xl">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#71879e]">Faculty ID</p>
-                    <p className="mt-1 font-mono text-[17px] font-bold text-white">{facultyId}</p>
+                <div className="flex w-full flex-col items-start justify-end gap-3 lg:w-auto lg:min-w-[285px] lg:items-end">
+                  <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3.5 backdrop-blur-xl">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#71879e]">Faculty ID</p>
+                      <p className="mt-1 font-mono text-[17px] font-bold text-white">{facultyId}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openEditor}
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#54bce5] px-5 text-xs font-bold text-white shadow-[0_10px_25px_rgba(84,188,229,0.25)] transition duration-300 hover:-translate-y-1 hover:bg-[#3eabd7] hover:shadow-[0_15px_30px_rgba(84,188,229,0.35)]"
+                    >
+                      <Edit3 size={16} />
+                      Edit Profile
+                      <ChevronRight size={15} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={openEditor}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#54bce5] px-5 text-xs font-bold text-white shadow-[0_10px_25px_rgba(84,188,229,0.25)] transition duration-300 hover:-translate-y-1 hover:bg-[#3eabd7] hover:shadow-[0_15px_30px_rgba(84,188,229,0.35)]"
-                  >
-                    <Edit3 size={16} />
-                    Edit Profile
-                    <ChevronRight size={15} />
-                  </button>
                 </div>
               </div>
             </section>

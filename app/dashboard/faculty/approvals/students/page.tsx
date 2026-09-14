@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Activity,
   Bell,
   CalendarDays,
   Check,
@@ -110,9 +111,24 @@ const navigation = [
     icon: CalendarDays,
   },
   {
+    title: "Activities",
+    href: "/dashboard/faculty/activities",
+    icon: Activity,
+  },
+  {
+    title: "Clubs",
+    href: "/dashboard/faculty/clubs",
+    icon: Users,
+  },
+  {
     title: "Faculty Profile",
     href: "/faculty/profile",
     icon: UserCircle,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/faculty/notifications",
+    icon: Bell,
   },
 ];
 
@@ -804,10 +820,30 @@ export default function FacultyStudentApprovalPage() {
       )}
 
       {/* =====================================================
+          SIDEBAR CURSOR MINI UI
+      ====================================================== */}
+      <div
+        id="sidebar-cursor-ui"
+        className="pointer-events-none fixed left-0 top-0 z-[70] h-3 w-3 rounded-[3px] border border-[#8ee0ff] bg-[#54bce5] shadow-[0_0_16px_rgba(84,188,229,0.85)] opacity-0 transition-opacity duration-150"
+      />
+
+      {/* =====================================================
           SIDEBAR
       ====================================================== */}
 
       <aside
+        onMouseMove={(event) => {
+          const cursorUI = document.getElementById("sidebar-cursor-ui");
+          if (!cursorUI) return;
+
+          cursorUI.style.left = `${event.clientX + 10}px`;
+          cursorUI.style.top = `${event.clientY + 10}px`;
+          cursorUI.style.opacity = "1";
+        }}
+        onMouseLeave={() => {
+          const cursorUI = document.getElementById("sidebar-cursor-ui");
+          if (cursorUI) cursorUI.style.opacity = "0";
+        }}
         className={`
           fixed left-0 top-0 z-50
           flex h-screen w-[270px] shrink-0
@@ -869,8 +905,13 @@ export default function FacultyStudentApprovalPage() {
               const Icon = item.icon;
 
               const active =
-                item.title ===
-                "Student Approval";
+                (item.title === "Student Approval") ||
+                (item.title === "Activities" &&
+                  typeof window !== "undefined" &&
+                  window.location.pathname.startsWith("/dashboard/faculty/activities")) ||
+                (item.title === "Notifications" &&
+                  typeof window !== "undefined" &&
+                  window.location.pathname.startsWith("/faculty/notifications"));
 
               return (
                 <Link
@@ -880,10 +921,16 @@ export default function FacultyStudentApprovalPage() {
                     closeMobileSidebar
                   }
                   className={`
-                    group flex h-11 w-full items-center gap-3
+                    group relative flex h-11 w-full items-center gap-3
                     rounded-xl px-3.5
                     text-[13px] font-medium
                     transition-all duration-200
+                    before:pointer-events-none before:absolute before:left-1 before:top-1
+                    before:h-2 before:w-2 before:rounded-[2px]
+                    before:bg-[#54bce5] before:opacity-0 before:scale-50
+                    before:transition-all before:duration-200
+                    group-hover:before:opacity-100 group-hover:before:scale-100
+                    group-hover:before:shadow-[0_0_10px_rgba(84,188,229,0.9)]
                     ${
                       active
                         ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
@@ -891,17 +938,32 @@ export default function FacultyStudentApprovalPage() {
                     }
                   `}
                 >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    className={
-                      active
-                        ? "text-[#63c9ef]"
-                        : "text-[#8195ad] group-hover:text-[#63c9ef]"
-                    }
-                  />
+                  <span
+                    className={`
+                      flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
+                      transition-all duration-200 ease-out
+                      ${
+                        active
+                          ? "bg-[#20344d] shadow-[0_4px_12px_rgba(84,188,229,0.10)]"
+                          : "bg-transparent group-hover:bg-[#17304a] group-hover:shadow-[0_4px_14px_rgba(84,188,229,0.12)] group-hover:scale-105"
+                      }
+                    `}
+                  >
+                    <Icon
+                      size={17}
+                      strokeWidth={1.8}
+                      className={`
+                        transition-all duration-200
+                        ${
+                          active
+                            ? "text-[#63c9ef]"
+                            : "text-[#8195ad] group-hover:text-[#63c9ef]"
+                        }
+                      `}
+                    />
+                  </span>
 
-                  <span>
+                  <span className="transition-transform duration-200 group-hover:translate-x-0.5">
                     {item.title}
                   </span>
 
@@ -923,18 +985,40 @@ export default function FacultyStudentApprovalPage() {
           </p>
 
           <nav className="space-y-1.5">
+            <Link
+              href="/faculty/settings"
+              onClick={closeMobileSidebar}
+              className="group relative flex h-11 w-full items-center gap-3 before:pointer-events-none before:absolute before:left-1 before:top-1 before:h-2 before:w-2 before:rounded-[2px] before:bg-[#54bce5] before:opacity-0 before:scale-50 before:transition-all before:duration-200 group-hover:before:opacity-100 group-hover:before:scale-100 group-hover:before:shadow-[0_0_10px_rgba(84,188,229,0.9)] rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-transparent transition-all duration-200 ease-out group-hover:scale-105 group-hover:bg-[#17304a] group-hover:shadow-[0_4px_14px_rgba(84,188,229,0.12)]">
+                <Settings
+                  size={17}
+                  strokeWidth={1.8}
+                  className="text-[#8195ad] transition-colors duration-200 group-hover:text-[#63c9ef]"
+                />
+              </span>
+
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                Settings
+              </span>
+            </Link>
+
             <button
               type="button"
               onClick={handleSignOut}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
+              className="group relative flex h-11 w-full items-center gap-3 before:pointer-events-none before:absolute before:left-1 before:top-1 before:h-2 before:w-2 before:rounded-[2px] before:bg-[#54bce5] before:opacity-0 before:scale-50 before:transition-all before:duration-200 group-hover:before:opacity-100 group-hover:before:scale-100 group-hover:before:shadow-[0_0_10px_rgba(84,188,229,0.9)] rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
             >
-              <LogOut
-                size={18}
-                strokeWidth={1.8}
-                className="text-[#8195ad] group-hover:text-[#63c9ef]"
-              />
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-transparent transition-all duration-200 ease-out group-hover:scale-105 group-hover:bg-[#17304a] group-hover:shadow-[0_4px_14px_rgba(84,188,229,0.12)]">
+                <LogOut
+                  size={17}
+                  strokeWidth={1.8}
+                  className="text-[#8195ad] transition-colors duration-200 group-hover:text-[#63c9ef]"
+                />
+              </span>
 
-              <span>Sign Out</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                Sign Out
+              </span>
             </button>
           </nav>
         </div>
@@ -967,87 +1051,19 @@ export default function FacultyStudentApprovalPage() {
       <div className="min-h-screen w-full min-w-0 lg:ml-[270px] lg:w-[calc(100%-270px)]">
 
         {/* ===================================================
-            TOP HEADER
-        ==================================================== */}
-
-        <header className="sticky top-0 z-30 h-[86px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
-          <div className="flex h-full w-full items-center justify-between px-5 sm:px-6 lg:px-8">
-
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileSidebarOpen(true)
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-sm lg:hidden"
-              >
-                <Menu size={20} />
-              </button>
-
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
-                  Faculty Portal
-                </p>
-
-                <p className="mt-1 hidden text-[11px] text-[#71839a] sm:block">
-                  Academic management workspace
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe]"
-              >
-                <Bell
-                  size={18}
-                  strokeWidth={1.8}
-                />
-
-                <span className="absolute right-[9px] top-[8px] h-1.5 w-1.5 rounded-full bg-[#54bce5]" />
-              </button>
-
-              <button
-                type="button"
-                aria-label="Settings"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe] sm:flex"
-              >
-                <Settings
-                  size={18}
-                  strokeWidth={1.8}
-                />
-              </button>
-
-              <div className="mx-1 hidden h-8 w-px bg-[#dce6f0] sm:block" />
-
-              <div className="hidden items-center gap-2.5 sm:flex">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-[12px] font-bold text-white">
-                  {initials}
-                </div>
-
-                <div>
-                  <p className="text-[12px] font-semibold text-[#18283d]">
-                    {facultyName}
-                  </p>
-
-                  <p className="text-[10px] text-[#72849a]">
-                    {facultyRole}
-                  </p>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </header>
-
-        {/* ===================================================
             CONTENT
         ==================================================== */}
 
-        <main className="relative min-h-[calc(100vh-86px)] w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6 lg:px-8">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6 lg:px-8">
+
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(true)}
+            aria-label="Open sidebar"
+            className="fixed right-5 top-5 z-30 flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-[0_8px_24px_rgba(20,50,80,0.10)] lg:hidden"
+          >
+            <Menu size={19} />
+          </button>
 
           {/* BACKGROUND GRID */}
 
@@ -1077,7 +1093,7 @@ export default function FacultyStudentApprovalPage() {
                 HERO
             ================================================= */}
 
-            <section className="relative overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 sm:py-8 lg:px-10">
+            <section className="relative flex h-[280px] w-full items-center overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 lg:px-10">
 
               <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
 
@@ -1085,65 +1101,40 @@ export default function FacultyStudentApprovalPage() {
 
               <div className="pointer-events-none absolute bottom-[-100px] left-[42%] h-64 w-64 rounded-full bg-[#54bce5]/5 blur-3xl" />
 
-              <div className="relative z-10 max-w-[820px]">
+              <div className="pointer-events-none absolute left-[38%] top-[-80px] h-56 w-56 rounded-full bg-[#54bce5]/6 blur-3xl" />
+
+              <div className="relative z-10 max-w-[900px]">
 
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
                   <ShieldCheck size={14} />
                   Faculty Verification
                 </div>
 
-                <h1 className="font-serif text-[37px] font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-[45px] lg:text-[51px]">
-                  Student
+                <h1 className="font-serif text-[30px] font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-[36px] lg:text-[40px]">
+                  Student Registration
                   <br />
                   <span className="text-[#69c9ed]">
-                    Approval
+                    Approval Center
                   </span>
                 </h1>
 
-                <p className="mt-4 max-w-[680px] text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
-                  Review student registration
-                  requests, verify applicant
-                  information, and manage
-                  approval decisions from one
-                  secure workspace.
+                <p className="mt-3 max-w-[650px] text-[11px] leading-5 text-[#a7b7c9] sm:text-[12px]">
+                  Review new student registrations, verify applicant details, and approve or reject requests from one clear and secure faculty workspace.
                 </p>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2.5">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#49c997]/30 bg-[#49c997]/10 px-3 py-1.5 text-[10px] font-semibold text-[#72dcb4]">
+                    <CheckCircle2 size={14} />
+                    {counts.pending} Pending Reviews
+                  </div>
+
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3 py-1.5 text-[10px] text-[#b3c0d0]">
+                    <Users size={14} />
+                    {counts.total} Total Applications
+                  </div>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={refreshStudents}
-                disabled={loading}
-                className="absolute right-7 top-7 hidden items-center gap-2 rounded-xl border border-[#718ba8]/40 bg-white/[0.05] px-4 py-2.5 text-[12px] font-semibold text-[#dbe8f4] transition hover:border-[#69c9ed]/50 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60 lg:flex"
-              >
-                <RefreshCw
-                  size={16}
-                  className={
-                    loading
-                      ? "animate-spin"
-                      : ""
-                  }
-                />
-                Refresh Data
-              </button>
-
-              <div className="mt-6 lg:hidden">
-                <button
-                  type="button"
-                  onClick={refreshStudents}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#718ba8]/40 bg-white/[0.05] px-4 py-2.5 text-[12px] font-semibold text-[#dbe8f4]"
-                >
-                  <RefreshCw
-                    size={16}
-                    className={
-                      loading
-                        ? "animate-spin"
-                        : ""
-                    }
-                  />
-                  Refresh Data
-                </button>
-              </div>
             </section>
 
             {/* =================================================
@@ -1230,6 +1221,7 @@ export default function FacultyStudentApprovalPage() {
                 description="Awaiting faculty review"
                 icon={Clock3}
                 iconClass="bg-[#fff8e9] text-[#e79a00]"
+                hoverBoxClass="bg-[#fff8e9] border-[#f3c96b]"
               />
 
               <ApprovalStatCard
@@ -1238,6 +1230,7 @@ export default function FacultyStudentApprovalPage() {
                 description="Successfully approved"
                 icon={CheckCircle2}
                 iconClass="bg-[#edf9f3] text-[#39a675]"
+                hoverBoxClass="bg-[#edf9f3] border-[#8ed6b1]"
               />
 
               <ApprovalStatCard
@@ -1246,6 +1239,7 @@ export default function FacultyStudentApprovalPage() {
                 description="Registration rejected"
                 icon={UserX}
                 iconClass="bg-[#fff1f1] text-[#df6262]"
+                hoverBoxClass="bg-[#fff1f1] border-[#eaa0a0]"
               />
 
               <ApprovalStatCard
@@ -1254,6 +1248,7 @@ export default function FacultyStudentApprovalPage() {
                 description="All registration requests"
                 icon={Users}
                 iconClass="bg-[#edf7fc] text-[#4e9ed0]"
+                hoverBoxClass="bg-[#edf7fc] border-[#9bcbe4]"
               />
 
             </section>
@@ -1555,6 +1550,7 @@ type ApprovalStatCardProps = {
   description: string;
   icon: React.ElementType;
   iconClass: string;
+  hoverBoxClass: string;
 };
 
 function ApprovalStatCard({
@@ -1563,11 +1559,16 @@ function ApprovalStatCard({
   description,
   icon: Icon,
   iconClass,
+  hoverBoxClass,
 }: ApprovalStatCardProps) {
   return (
-    <div className="group min-w-0 rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#b9d8e9] hover:shadow-[0_12px_28px_rgba(30,70,100,0.09)]">
+    <div className="group relative min-w-0 overflow-hidden rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#b9d8e9] hover:shadow-[0_12px_28px_rgba(30,70,100,0.09)]">
 
-      <div className="flex items-start justify-between gap-4">
+      <div
+        className={`pointer-events-none absolute inset-2.5 rounded-[15px] border opacity-0 scale-[0.97] transition-all duration-250 ease-out group-hover:scale-100 group-hover:opacity-100 ${hoverBoxClass}`}
+      />
+
+      <div className="relative z-10 flex items-start justify-between gap-4">
 
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#687c93]">
@@ -1590,7 +1591,7 @@ function ApprovalStatCard({
 
       </div>
 
-      <p className="mt-4 text-[10px] leading-5 text-[#7890a8]">
+      <p className="relative z-10 mt-4 text-[10px] leading-5 text-[#7890a8]">
         {description}
       </p>
     </div>
@@ -1758,7 +1759,13 @@ function StudentApplicationRow({
   );
 
   return (
-    <div className="p-5 transition hover:bg-[#f9fbfd] sm:px-6">
+    <div className="group relative p-5 transition-all duration-200 hover:bg-[#f9fbfd] sm:px-6">
+
+      {/* Premium hover accent — appears only when cursor enters this application */}
+      <span
+        className="pointer-events-none absolute left-2 top-2 h-2 w-2 scale-50 rounded-[3px] bg-[#54bce5] opacity-0 shadow-[0_0_12px_rgba(84,188,229,0.75)] transition-all duration-200 ease-out group-hover:scale-100 group-hover:opacity-100"
+        aria-hidden="true"
+      />
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
@@ -1766,7 +1773,17 @@ function StudentApplicationRow({
 
         <div className="flex min-w-0 items-start gap-4">
 
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#e9f5fb] text-[#4c9ec9]">
+          <div
+            className="
+              flex h-12 w-12 shrink-0 items-center justify-center
+              overflow-hidden rounded-xl bg-[#e9f5fb] text-[#4c9ec9]
+              transition-all duration-200 ease-out
+              group-hover:scale-[1.04]
+              group-hover:bg-[#69c9ed]
+              group-hover:text-white
+              group-hover:shadow-[0_8px_20px_rgba(84,188,229,0.24)]
+            "
+          >
 
             {student.profileImage ? (
               <img
@@ -1828,17 +1845,19 @@ function StudentApplicationRow({
 
             <div className="mt-2 flex flex-col gap-1.5 text-[11px] text-[#71849a] sm:flex-row sm:flex-wrap sm:gap-x-5">
 
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-center gap-2 transition-colors duration-200 group-hover:text-[#4f93b9]">
                 <Mail
                   size={14}
+                  className="transition-colors duration-200 group-hover:text-[#54bce5]"
                 />
                 {student.email}
               </span>
 
               {student.campusUserId && (
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center gap-2 transition-colors duration-200 group-hover:text-[#4f93b9]">
                   <GraduationCap
                     size={14}
+                    className="transition-colors duration-200 group-hover:text-[#54bce5]"
                   />
                   {student.campusUserId}
                 </span>
@@ -1883,7 +1902,7 @@ function StudentApplicationRow({
                   actionLoading ===
                   student.id
                 }
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#3da678] px-4 py-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#329267] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#3da678] px-4 py-2.5 text-[11px] font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#329267] hover:shadow-[0_6px_16px_rgba(61,166,120,0.18)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actionLoading ===
                 student.id ? (
@@ -1907,7 +1926,7 @@ function StudentApplicationRow({
                   actionLoading ===
                   student.id
                 }
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#efcaca] bg-white px-4 py-2.5 text-[11px] font-semibold text-[#d25e5e] transition hover:bg-[#fff5f5] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#efcaca] bg-white px-4 py-2.5 text-[11px] font-semibold text-[#d25e5e] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#fff5f5] hover:shadow-[0_6px_16px_rgba(210,94,94,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <UserX
                   size={14}

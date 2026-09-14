@@ -319,13 +319,15 @@ model Certificate {
 // ======================================================
 
 model Notification {
-  id        String   @id @default(cuid())
-  title     String
-  message   String
-  audience  String   @default("ALL")
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  title      String
+  message    String
+  audience   String   @default("ALL")
+  senderRole String   @default("ADMIN")
+  senderId   String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("Notification")
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import {
+  Activity,
   Bell,
   CalendarDays,
-  Check,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -14,7 +14,7 @@ import {
   Plus,
   Pencil,
   RefreshCw,
-  Settings,
+  Search,
   ShieldCheck,
   Trash2,
   UserCircle,
@@ -86,7 +86,7 @@ const navigation = [
   },
   {
     title: "Students",
-    href: "/students",
+    href: "/dashboard/faculty/approvals/students",
     icon: Users,
   },
   {
@@ -105,19 +105,92 @@ const navigation = [
     icon: CalendarDays,
   },
   {
+    title: "Activities",
+    href: "/dashboard/faculty/activities",
+    icon: Activity,
+  },
+  {
+    title: "Clubs",
+    href: "/dashboard/faculty/clubs",
+    icon: Users,
+  },
+  {
     title: "Faculty Profile",
     href: "/faculty/profile",
     icon: UserCircle,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/faculty/notifications",
+    icon: Bell,
   },
 ];
 
 const accountNavigation = [
   {
-    title: "Account Security",
+    title: "Settings",
     href: "/faculty/security",
     icon: ShieldCheck,
   },
 ];
+
+
+type EventStatCardProps = {
+  title: string;
+  value: number;
+  description: string;
+  icon: React.ElementType;
+  iconClass: string;
+};
+
+function EventStatCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  iconClass,
+}: EventStatCardProps) {
+  return (
+    <div
+      className="group/stat relative min-w-0 overflow-hidden rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-300 hover:-translate-y-1 hover:border-[#b9d8e9] hover:shadow-[0_16px_32px_rgba(30,70,100,0.11)]"
+    >
+      <span className="pointer-events-none absolute -left-1/2 top-0 h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 transition-all duration-700 group-hover/stat:left-[120%] group-hover/stat:opacity-100" />
+
+      <div className="relative z-10 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium text-[#687c93]">
+            {title}
+          </p>
+
+          <p className="mt-2 font-serif text-[27px] font-bold leading-none text-[#0b1728]">
+            {value}
+          </p>
+        </div>
+
+        <div
+          className={`group/stat-icon relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${iconClass} transition-all duration-300 group-hover/stat:h-12 group-hover/stat:w-12 group-hover/stat:rounded-2xl group-hover/stat:bg-[#54bce5] group-hover/stat:text-white group-hover/stat:shadow-[0_10px_28px_rgba(84,188,229,0.32)]`}
+        >
+          <span
+            className="pointer-events-none absolute inset-y-0 left-[-120%] w-[55%] -skew-x-[18deg] bg-gradient-to-r from-transparent via-white/65 to-transparent opacity-0 transition-all duration-700 group-hover/stat-icon:left-[150%] group-hover/stat-icon:opacity-100"
+          />
+
+          <span className="pointer-events-none absolute inset-0 rounded-xl border border-white/30 opacity-0 transition-opacity duration-300 group-hover/stat-icon:opacity-100 group-hover/stat-icon:rounded-2xl" />
+
+          <Icon
+            size={18}
+            className="relative z-10 transition-all duration-300 group-hover/stat:scale-110 group-hover/stat-icon:scale-110 group-hover/stat-icon:rotate-3"
+          />
+        </div>
+      </div>
+
+      <p className="relative z-10 mt-4 text-[10px] leading-5 text-[#7890a8]">
+        {description}
+      </p>
+
+      <div className="pointer-events-none absolute bottom-0 left-4 right-4 h-[3px] origin-left scale-x-0 rounded-full bg-[#54bce5] transition-transform duration-300 group-hover/stat:scale-x-100" />
+    </div>
+  );
+}
 
 export default function FacultyEventsPage() {
   const router = useRouter();
@@ -139,6 +212,10 @@ export default function FacultyEventsPage() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [eventFilter, setEventFilter] = useState<"all" | "upcoming" | "past">("all");
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   const [cursorEffect, setCursorEffect] = useState<{
     id: string;
@@ -274,6 +351,19 @@ export default function FacultyEventsPage() {
     }, 0);
 
     return () => window.clearTimeout(timer);
+  }, []);
+
+  /* =========================================================
+     CURRENT DATE (PURE RENDER SAFE)
+  ========================================================= */
+
+  useEffect(() => {
+    const updateCurrentDate = () => setCurrentDate(new Date());
+
+    updateCurrentDate();
+    const interval = window.setInterval(updateCurrentDate, 60_000);
+
+    return () => window.clearInterval(interval);
   }, []);
 
   /* =========================================================
@@ -524,6 +614,32 @@ export default function FacultyEventsPage() {
   }
 
   /* =========================================================
+     FILTERED EVENTS
+  ========================================================= */
+
+  const filteredEvents = events.filter((event) => {
+    const term = searchTerm.trim().toLowerCase();
+    const eventDate = new Date(event.eventDate);
+    const isUpcoming = currentDate
+      ? eventDate.getTime() >= currentDate.getTime()
+      : true;
+
+    const matchesSearch =
+      !term ||
+      event.title.toLowerCase().includes(term) ||
+      event.description.toLowerCase().includes(term) ||
+      event.venue.toLowerCase().includes(term) ||
+      (event.club?.name ?? "").toLowerCase().includes(term);
+
+    const matchesFilter =
+      eventFilter === "all" ||
+      (eventFilter === "upcoming" && isUpcoming) ||
+      (eventFilter === "past" && !isUpcoming);
+
+    return matchesSearch && matchesFilter;
+  });
+
+  /* =========================================================
      DATE / TIME
   ========================================================= */
 
@@ -754,78 +870,24 @@ export default function FacultyEventsPage() {
 
       <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
 
-        {/* HEADER */}
+        {/* =====================================================
+            MOBILE MENU BUTTON
+        ===================================================== */}
 
-        <header className="sticky top-0 z-30 h-[86px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
-          <div className="flex h-full w-full items-center justify-between px-5 sm:px-7">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileSidebarOpen(true)
-                }
-                aria-label="Open sidebar"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-sm lg:hidden"
-              >
-                <Menu size={20} />
-              </button>
-
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
-                  Faculty Portal
-                </p>
-
-                <p className="mt-1 hidden text-[11px] text-[#71839a] sm:block">
-                  Academic management workspace
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe]"
-              >
-                <Bell size={18} />
-
-                <span className="absolute right-[9px] top-[8px] h-1.5 w-1.5 rounded-full bg-[#54bce5]" />
-              </button>
-
-              <button
-                type="button"
-                aria-label="Settings"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm transition hover:border-[#9bcbe4] hover:bg-[#f4f9fd] hover:text-[#398fbe] sm:flex"
-              >
-                <Settings size={18} />
-              </button>
-
-              <div className="mx-1 hidden h-8 w-px bg-[#dce6f0] sm:block" />
-
-              <div className="hidden items-center gap-2.5 sm:flex">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-[12px] font-bold text-white">
-                  {initials}
-                </div>
-
-                <div>
-                  <p className="text-[12px] font-semibold text-[#18283d]">
-                    {facultyName}
-                  </p>
-
-                  <p className="text-[10px] text-[#72849a]">
-                    {facultyRole}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+        <button
+          type="button"
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label="Open sidebar"
+          className="fixed right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white/95 text-[#263a53] shadow-lg backdrop-blur-xl lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
 
         {/* =====================================================
             CONTENT
         ===================================================== */}
 
-        <main className="relative min-h-[calc(100vh-86px)] w-full overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6">
 
           {/* BACKGROUND EFFECT */}
 
@@ -850,80 +912,131 @@ export default function FacultyEventsPage() {
                 HERO
             ================================================= */}
 
-            <section className="group/hero relative overflow-hidden rounded-[24px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] transition-all duration-500 hover:border-[#31516d] hover:shadow-[0_25px_60px_rgba(10,27,48,0.25)] sm:px-9 lg:px-10">
+            <section className="group/hero relative h-[280px] overflow-hidden rounded-[24px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 shadow-[0_18px_45px_rgba(20,40,80,0.18)] transition-all duration-500 hover:shadow-[0_25px_60px_rgba(20,40,80,0.25)] sm:px-9 lg:px-11">
 
-              <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20 transition-transform duration-700 group-hover/hero:scale-110" />
+              <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border border-white/10 transition-transform duration-700 group-hover/hero:scale-110" />
 
-              <div className="pointer-events-none absolute right-8 top-14 h-40 w-40 rounded-full border border-[#54bce5]/10 transition-transform duration-700 group-hover/hero:scale-110" />
+              <div className="pointer-events-none absolute right-12 top-10 h-40 w-40 rounded-full border border-white/10 transition-transform duration-700 group-hover/hero:scale-110" />
 
-              <div className="pointer-events-none absolute bottom-[-100px] left-[42%] h-64 w-64 rounded-full bg-[#54bce5]/5 blur-3xl" />
+              <div className="pointer-events-none absolute right-[15%] bottom-[-110px] h-64 w-64 rounded-full border border-[#78d4f1]/10" />
 
-              <div className="relative z-10 max-w-[1100px]">
+              <div className="relative z-10 flex h-full items-center justify-between gap-8">
 
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
-                  <GraduationCap size={14} />
-                  Faculty Event Management
+                <div className="max-w-[900px]">
+
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-3.5 py-1.5 text-[10px] font-semibold text-white/95 backdrop-blur-sm">
+                    <CalendarDays size={13} />
+                    CampusConnect Faculty Events
+                  </div>
+
+                  <h1 className="font-serif text-[32px] font-bold leading-[1.03] tracking-[-0.035em] text-white sm:text-[43px] lg:text-[50px]">
+                    Manage campus
+                    <br />
+                    <span className="text-[#69c9ed]">
+                      events with ease.
+                    </span>
+                  </h1>
+
+                  <p className="mt-4 max-w-[780px] text-[12px] leading-5 text-[#d9e3f4] sm:text-[13px]">
+                    Create, update and manage campus events from one focused workspace. Every change stays synced with the shared Events data used across CampusConnect.
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2.5">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#72dcb4]/30 bg-[#72dcb4]/10 px-3 py-1.5 text-[10px] font-semibold text-[#9ae8c9]">
+                      <CheckCircle2 size={13} />
+                      Faculty Access
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium text-[#d6e0ed]">
+                      <UserCircle size={13} />
+                      Faculty ID:
+                      <span className="font-bold text-white">
+                        {facultyId}
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
 
-                <h1 className="font-serif text-[35px] font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-[45px] lg:text-[51px]">
-                  Create campus
-                  <br />
-                  <span className="text-[#69c9ed]">
-                    events & activities.
+                {/* CREATE EVENT — CENTER RIGHT */}
+                <button
+                  type="button"
+                  onClick={openCreateForm}
+                  className="group/create relative hidden shrink-0 items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3 text-[12px] font-bold text-[#243a75] shadow-[0_10px_28px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#f7fbff] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] lg:inline-flex"
+                >
+                  <span className="absolute inset-0 -translate-x-full bg-[#54bce5]/10 transition-transform duration-500 group-hover/create:translate-x-full" />
+
+                  <Plus
+                    size={16}
+                    className="relative"
+                  />
+
+                  <span className="relative">
+                    Create Event
                   </span>
-                </h1>
+                </button>
 
-                <p className="mt-4 max-w-[900px] text-[13px] leading-6 text-[#a7b7c9] sm:text-[14px]">
-                  Create, manage and remove campus events directly
-                  from the Faculty Portal. Changes are reflected in
-                  the same database used by the Student Events section.
-                </p>
+                {/* MOBILE CREATE EVENT */}
+                <button
+                  type="button"
+                  onClick={openCreateForm}
+                  className="absolute bottom-6 right-6 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-[11px] font-bold text-[#243a75] shadow-[0_8px_22px_rgba(0,0,0,0.15)] transition-all duration-300 hover:bg-[#f7fbff] lg:hidden"
+                >
+                  <Plus size={15} />
+                  Create Event
+                </button>
 
-                {/* =================================================
-                    HERO CREATE BUTTON
-                ================================================= */}
-
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-
-                  <button
-                    type="button"
-                    onClick={openCreateForm}
-                    className="group/create relative inline-flex h-12 items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-[#54bce5] px-5 text-[13px] font-bold text-white shadow-[0_10px_30px_rgba(84,188,229,0.28)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#43b1dc] hover:shadow-[0_16px_35px_rgba(84,188,229,0.4)] active:translate-y-0"
-                  >
-                    <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-500 group-hover/create:translate-x-full" />
-
-                    <Plus
-                      size={18}
-                      className="relative transition-transform duration-300 group-hover/create:rotate-90"
-                    />
-
-                    <span className="relative">
-                      Create Event
-                    </span>
-                  </button>
-
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#49c997]/30 bg-[#49c997]/10 px-3.5 py-2 text-[11px] font-semibold text-[#72dcb4]">
-                    <CheckCircle2 size={14} />
-                    Faculty Access
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#7890aa]/30 bg-white/[0.04] px-3.5 py-2 text-[11px] font-medium text-[#b3c0d0]">
-                    <UserCircle size={14} />
-                    Faculty ID:
-                    <span className="font-bold text-white">
-                      {facultyId}
-                    </span>
-                  </div>
-                </div>
               </div>
 
-              <div className="absolute bottom-7 right-8 hidden h-[92px] w-[92px] items-center justify-center rounded-[21px] border border-[#54bce5]/25 bg-[#15273b]/90 shadow-[0_20px_45px_rgba(0,0,0,0.2)] transition-all duration-500 group-hover/hero:scale-105 group-hover/hero:border-[#54bce5]/50 lg:flex">
-                <CalendarDays
-                  size={46}
-                  strokeWidth={1.5}
-                  className="text-[#67bfe6]"
-                />
-              </div>
+            </section>
+
+            {/* =================================================
+                EVENT STATS
+            ================================================= */}
+
+            <section className="mt-5 grid w-full grid-cols-1 gap-4 md:grid-cols-3">
+              <EventStatCard
+                title="Total Events"
+                value={events.length}
+                description="Campus events"
+                icon={CalendarDays}
+                iconClass="bg-[#eef2ff] text-[#4f46e5]"
+              />
+
+              <EventStatCard
+                title="Upcoming"
+                value={
+                  currentDate
+                    ? events.filter(
+                        (event) =>
+                          new Date(event.eventDate).getTime() >
+                          currentDate.getTime()
+                      ).length
+                    : 0
+                }
+                description="Future events"
+                icon={Clock}
+                iconClass="bg-[#eef2ff] text-[#4f46e5]"
+              />
+
+              <EventStatCard
+                title="Today"
+                value={
+                  currentDate
+                    ? events.filter((event) => {
+                        const date = new Date(event.eventDate);
+                        return (
+                          date.getFullYear() === currentDate.getFullYear() &&
+                          date.getMonth() === currentDate.getMonth() &&
+                          date.getDate() === currentDate.getDate()
+                        );
+                      }).length
+                    : 0
+                }
+                description="Events happening today"
+                icon={CalendarDays}
+                iconClass="bg-[#eef2ff] text-[#4f46e5]"
+              />
             </section>
 
             {/* =================================================
@@ -950,59 +1063,60 @@ export default function FacultyEventsPage() {
                 EVENTS
             ================================================= */}
 
-            <section className="mt-8">
+            <section className="mt-6">
 
-              <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+              {/* =================================================
+                  SEARCH + FILTERS
+              ================================================= */}
 
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#438bb8]">
-                    Campus Events
-                  </p>
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-                  <h2 className="mt-1 font-serif text-[27px] font-bold text-[#0d1728]">
-                    Created Events
-                  </h2>
+                <div className="relative w-full sm:max-w-[650px]">
+                  <Search
+                    size={18}
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8ea2b7]"
+                  />
 
-                  <p className="mt-1 text-[12px] text-[#72849a]">
-                    Events created here are visible to students.
-                  </p>
+                  <input
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Search events by title, venue or club..."
+                    className="h-12 w-full rounded-xl border border-[#d8e3ed] bg-white pl-11 pr-10 text-[12px] text-[#24384e] shadow-[0_7px_22px_rgba(30,60,90,0.04)] outline-none transition placeholder:text-[#9aabba] focus:border-[#8fc7e3] focus:ring-4 focus:ring-[#54bce5]/10"
+                  />
+
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      aria-label="Clear search"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[#8194a8] transition hover:bg-[#eef5fa] hover:text-[#3989b7]"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex gap-2">
-
-                  {/* CREATE EVENT BUTTON */}
-
-                  <button
-                    type="button"
-                    onClick={openCreateForm}
-                    className="group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#54bce5] px-4 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(84,188,229,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3eabd7] hover:shadow-[0_12px_25px_rgba(84,188,229,0.32)]"
-                  >
-                    <Plus
-                      size={16}
-                      className="transition-transform duration-300 group-hover:rotate-90"
-                    />
-
-                    Create Event
-                  </button>
-
-                  {/* REFRESH */}
-
-                  <button
-                    type="button"
-                    onClick={() => void fetchEvents()}
-                    disabled={loading}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#d8e3ed] bg-white px-4 text-xs font-semibold text-[#526b84] shadow-sm transition hover:border-[#9bcbe4] hover:text-[#3989b7] disabled:opacity-50"
-                  >
-                    <RefreshCw
-                      size={15}
-                      className={
-                        loading ? "animate-spin" : ""
-                      }
-                    />
-
-                    Refresh
-                  </button>
+                <div className="flex shrink-0 gap-2">
+                  {[
+                    ["all", "All Events"],
+                    ["upcoming", "Upcoming"],
+                    ["past", "Past"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setEventFilter(value as "all" | "upcoming" | "past")}
+                      className={`rounded-xl px-4 py-2.5 text-[11px] font-semibold transition-all duration-200 ${
+                        eventFilter === value
+                          ? "bg-[#111d2e] text-white shadow-sm"
+                          : "border border-[#d8e3ed] bg-white text-[#526b84] hover:border-[#9bcce6] hover:text-[#3989b7]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
+
               </div>
 
               {/* =================================================
@@ -1032,27 +1146,31 @@ export default function FacultyEventsPage() {
                   </div>
 
                   <h3 className="mt-5 font-serif text-[21px] font-bold text-[#142238]">
-                    No events created yet
+                    {searchTerm || eventFilter !== "all"
+                      ? "No matching events"
+                      : "No events created yet"}
                   </h3>
 
                   <p className="mx-auto mt-2 max-w-md text-[12px] leading-6 text-[#72849a]">
-                    Create your first campus event. After creation,
-                    students will be able to see it in their Events
-                    section.
+                    {searchTerm || eventFilter !== "all"
+                      ? "Try a different search term or filter."
+                      : "Create your first campus event. After creation, students will be able to see it in their Events section."}
                   </p>
 
-                  <button
-                    type="button"
-                    onClick={openCreateForm}
-                    className="group mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#54bce5] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(84,188,229,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3eabd7] hover:shadow-[0_14px_28px_rgba(84,188,229,0.3)]"
-                  >
-                    <Plus
-                      size={17}
-                      className="transition-transform duration-300 group-hover:rotate-90"
-                    />
+                  {!searchTerm && eventFilter === "all" && (
+                    <button
+                      type="button"
+                      onClick={openCreateForm}
+                      className="group mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#54bce5] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(84,188,229,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3eabd7] hover:shadow-[0_14px_28px_rgba(84,188,229,0.3)]"
+                    >
+                      <Plus
+                        size={17}
+                        className="transition-transform duration-300 group-hover:rotate-90"
+                      />
 
-                    Create First Event
-                  </button>
+                      Create First Event
+                    </button>
+                  )}
                 </div>
 
               ) : (
@@ -1063,7 +1181,7 @@ export default function FacultyEventsPage() {
 
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
 
-                  {events.map((event) => {
+                  {filteredEvents.map((event) => {
 
                     const effect =
                       cursorEffect?.id === event.id

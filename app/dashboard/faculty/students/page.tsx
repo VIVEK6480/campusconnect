@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  ArrowLeft,
   Award,
   Bell,
   BookOpen,
   CalendarDays,
   CheckCircle2,
+  Activity,
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
@@ -241,9 +241,24 @@ const navigation = [
     icon: CalendarDays,
   },
   {
+    title: "Activities",
+    href: "/dashboard/faculty/activities",
+    icon: Activity,
+  },
+  {
+    title: "Clubs",
+    href: "/dashboard/faculty/clubs",
+    icon: Users,
+  },
+  {
     title: "Faculty Profile",
     href: "/faculty/profile",
     icon: UserCircle,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/faculty/notifications",
+    icon: Bell,
   },
 ];
 
@@ -1140,6 +1155,20 @@ export default function FacultyStudentsPage() {
           </p>
 
           <nav className="space-y-1.5">
+            <Link
+              href="/faculty/security"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
+            >
+              <Settings
+                size={18}
+                strokeWidth={1.8}
+                className="text-[#8195ad] group-hover:text-[#63c9ef]"
+              />
+
+              <span>Settings</span>
+            </Link>
+
             <button
               type="button"
               onClick={handleSignOut}
@@ -1158,20 +1187,23 @@ export default function FacultyStudentsPage() {
         {/* FACULTY CARD */}
 
         <div className="shrink-0 border-t border-[#223149] p-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-[#111e2f] px-3.5 py-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold">
-              {initials}
+          <div className="flex items-center gap-2 rounded-2xl bg-[#111e2f] px-2.5 py-2.5">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold">
+                {initials}
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-semibold">
+                  {facultyName}
+                </p>
+
+                <p className="truncate text-[10px] text-[#8296ae]">
+                  Faculty Portal
+                </p>
+              </div>
             </div>
 
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold">
-                {facultyName}
-              </p>
-
-              <p className="truncate text-[10px] text-[#8296ae]">
-                Faculty Portal
-              </p>
-            </div>
           </div>
         </div>
       </aside>
@@ -1182,75 +1214,13 @@ export default function FacultyStudentsPage() {
 
       <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
 
-        {/* HEADER */}
-
-        <header className="sticky top-0 z-30 h-[74px] w-full border-b border-[#dce6f0] bg-white/95 backdrop-blur-xl">
-          <div className="flex h-full w-full items-center justify-between px-4 sm:px-7">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileSidebarOpen(true)
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white shadow-sm lg:hidden"
-              >
-                <Menu size={20} />
-              </button>
-
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
-                  Faculty Workspace
-                </p>
-
-                <p className="mt-1 text-[11px] text-[#71839a]">
-                  Student Management
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm"
-              >
-                <Bell size={18} />
-
-                <span className="absolute right-[9px] top-[8px] h-1.5 w-1.5 rounded-full bg-[#54bce5]" />
-              </button>
-
-              <button
-                type="button"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#4f6680] shadow-sm sm:flex"
-              >
-                <Settings size={18} />
-              </button>
-
-              <div className="hidden h-8 w-px bg-[#dce6f0] sm:block" />
-
-              <div className="hidden items-center gap-2.5 sm:flex">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#69acd2] text-[12px] font-bold text-white">
-                  {initials}
-                </div>
-
-                <div>
-                  <p className="text-[12px] font-semibold">
-                    {facultyName}
-                  </p>
-
-                  <p className="text-[10px] text-[#72849a]">
-                    Faculty
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+        {/* TOP HEADER REMOVED - COMMON FACULTY HEADER IS PROVIDED BY LAYOUT */}
 
         {/* ====================================================
             CONTENT
         ==================================================== */}
 
-        <main className="relative min-h-[calc(100vh-74px)] w-full overflow-hidden bg-[#edf4fa] px-3 py-5 sm:px-5 lg:px-7 xl:px-8">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-3 py-5 sm:px-5 lg:px-7 xl:px-8">
 
           {/* BACKGROUND GRID */}
 
@@ -1273,58 +1243,61 @@ export default function FacultyStudentsPage() {
             ================================================= */}
 
             <section className="mb-5">
-              <Link
-                href="/dashboard/faculty"
-                className="mb-4 inline-flex items-center gap-2 text-[11px] font-medium text-[#4d83aa] transition hover:text-[#1e648f]"
-              >
-                <ArrowLeft size={14} />
-                Back to Faculty Dashboard
-              </Link>
-
-              <div className="relative overflow-hidden rounded-[25px] bg-[#101c2e] px-5 py-7 text-white shadow-[0_20px_60px_rgba(20,45,70,0.14)] sm:px-8 sm:py-8">
+              <div className="relative h-[280px] overflow-hidden rounded-[25px] bg-[#101c2e] text-white shadow-[0_20px_60px_rgba(20,45,70,0.14)]">
 
                 <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full border border-[#6fc9ed]/20" />
 
                 <div className="pointer-events-none absolute right-[-30px] top-[55px] h-56 w-56 rounded-full border border-[#6fc9ed]/10" />
 
-                <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div className="pointer-events-none absolute bottom-[-110px] left-[40%] h-64 w-64 rounded-full bg-[#54bce5]/5 blur-3xl" />
 
-                  <div>
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#63c9ef]/30 bg-[#17314a] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-[#73d0f3]">
-                      <Users size={13} />
-                      Faculty Student Management
-                    </div>
+                <div className="relative flex h-full w-full items-center px-6 sm:px-9 lg:px-10">
 
-                    <h1 className="font-serif text-[34px] font-bold tracking-[-0.03em] sm:text-[46px]">
-                      Student Directory
-                    </h1>
+                  <div className="flex w-full items-center justify-between gap-6">
 
-                    <p className="mt-2 max-w-[780px] text-[11px] leading-5 text-[#a9b9ca] sm:text-[12px]">
-                      Select a semester and section first.
-                      Only students belonging to that
-                      class will be displayed. Complete
-                      student information stays inside the
-                      details panel.
-                    </p>
-                  </div>
+                    <div className="max-w-[780px]">
 
-                  <div className="relative flex shrink-0 items-center gap-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 backdrop-blur-sm">
-                      <p className="text-[8px] uppercase tracking-[0.18em] text-[#8ea4b9]">
-                        Students Found
+                      <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#63c9ef]/30 bg-[#17314a] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#73d0f3]">
+                        <Users size={13} />
+                        Faculty Student Management
+                      </div>
+
+                      <h1 className="font-serif text-[32px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
+                        Student Directory
+                      </h1>
+
+                      <p className="mt-3 max-w-[680px] text-[11px] leading-5 text-[#a9b9ca] sm:text-[12px]">
+                        Select a semester and section to view the
+                        approved students for that class. Review
+                        student information, attendance, and
+                        academic details from one secure faculty
+                        workspace.
                       </p>
 
-                      <p className="mt-1 text-[26px] font-bold">
-                        {hasLoadedClass
-                          ? filteredStudents.length
-                          : 0}
-                      </p>
                     </div>
 
-                    <div className="flex h-[67px] w-[67px] items-center justify-center rounded-2xl border border-[#61c8ee]/20 bg-[#17324b] text-[#68cbed]">
-                      <GraduationCap size={32} />
+                    <div className="relative flex shrink-0 items-center gap-3">
+
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 backdrop-blur-sm">
+                        <p className="text-[8px] uppercase tracking-[0.18em] text-[#8ea4b9]">
+                          Students Found
+                        </p>
+
+                        <p className="mt-1 text-[24px] font-bold leading-none">
+                          {hasLoadedClass
+                            ? filteredStudents.length
+                            : 0}
+                        </p>
+                      </div>
+
+                      <div className="flex h-[62px] w-[62px] items-center justify-center rounded-2xl border border-[#61c8ee]/20 bg-[#17324b] text-[#68cbed]">
+                        <GraduationCap size={29} />
+                      </div>
+
                     </div>
+
                   </div>
+
                 </div>
               </div>
             </section>
