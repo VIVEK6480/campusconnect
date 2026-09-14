@@ -15,6 +15,7 @@ import {
   Clock3,
   GraduationCap,
   LogOut,
+  Menu,
   RefreshCw,
   Settings,
   ShieldCheck,
@@ -1191,6 +1192,18 @@ export default function FacultyDashboardPage() {
             {/* MOBILE HEADER */}
 
             <div className="mb-4 flex items-center justify-between lg:hidden">
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileSidebarOpen(
+                    true,
+                  )
+                }
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#d7e3ed] bg-white text-[#38546b]"
+              >
+                <Menu size={18} />
+              </button>
+
               <p className="text-[12px] font-bold text-[#203b52]">
                 Faculty Command Center
               </p>
