@@ -227,12 +227,12 @@ export default function FacultyLayout({
 
         {/* Drawer */}
         <aside
-          className={`absolute left-0 top-0 flex h-full w-[286px] max-w-[86vw] flex-col border-r border-[#d8e5ee] bg-white shadow-[15px_0_50px_rgba(20,48,72,0.18)] transition-transform duration-300 ease-out ${
+          className={`absolute left-0 top-0 flex h-full w-[286px] max-w-[86vw] flex-col border-r border-[#23344d] bg-[#0b1423] text-white shadow-[15px_0_50px_rgba(5,15,30,0.28)] transition-transform duration-300 ease-out ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           {/* Drawer header */}
-          <div className="flex h-[82px] shrink-0 items-center justify-between border-b border-[#e2eaf0] px-5">
+          <div className="flex h-[82px] shrink-0 items-center justify-between border-b border-[#23344d] px-5">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#54bce5] text-white shadow-[0_8px_18px_rgba(84,188,229,0.22)]">
                 <GraduationCap size={20} />
@@ -242,7 +242,7 @@ export default function FacultyLayout({
                 <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#3985b6]">
                   CampusConnect
                 </p>
-                <p className="mt-0.5 font-serif text-[17px] font-bold text-[#17283d]">
+                <p className="mt-0.5 font-serif text-[17px] font-bold text-white">
                   Faculty Portal
                 </p>
               </div>
@@ -252,24 +252,24 @@ export default function FacultyLayout({
               type="button"
               onClick={closeMobileSidebar}
               aria-label="Close sidebar"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#dce6f0] bg-[#f8fbfd] text-[#5d7288] transition-all hover:border-[#9bcbe4] hover:bg-[#edf8fc] hover:text-[#3989b7]"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#2b3c55] bg-[#111e31] text-[#9aacc0] transition-all hover:border-[#4b6684] hover:bg-[#16263a] hover:text-white"
             >
               <X size={18} />
             </button>
           </div>
 
           {/* Faculty mini profile */}
-          <div className="mx-4 mt-5 rounded-2xl border border-[#dce8ef] bg-[#f6fbfe] p-3">
+          <div className="mx-4 mt-5 rounded-2xl border border-[#23344d] bg-[#111e31] p-3">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#69acd2] text-[12px] font-bold text-white shadow-sm">
                 {initials}
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-[12px] font-bold text-[#18283d]">
+                <p className="truncate text-[12px] font-bold text-white">
                   {facultyName}
                 </p>
-                <p className="mt-0.5 truncate text-[9px] uppercase tracking-wide text-[#72849a]">
+                <p className="mt-0.5 truncate text-[9px] uppercase tracking-wide text-[#9aacc0]">
                   {facultyRole}
                 </p>
               </div>
@@ -278,7 +278,7 @@ export default function FacultyLayout({
 
           {/* Navigation */}
           <nav className="mt-5 flex-1 overflow-y-auto px-4 pb-4">
-            <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#9aaab8]">
+            <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#71849b]">
               Menu
             </p>
 
@@ -291,9 +291,9 @@ export default function FacultyLayout({
                     key={item.href}
                     href={item.href}
                     onClick={closeMobileSidebar}
-                    className="group flex h-11 items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-[#526a80] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#edf8fc] hover:text-[#3284b2]"
+                    className="group flex h-11 items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-[#b7c6d5] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#16263a] hover:text-[#69c7ee]"
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f1f8fc] text-[#69acd2] transition-all duration-200 group-hover:bg-[#54bce5] group-hover:text-white group-hover:shadow-[0_7px_16px_rgba(84,188,229,0.22)]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#16263a] text-[#69acd2] transition-all duration-200 group-hover:bg-[#54bce5] group-hover:text-white group-hover:shadow-[0_7px_16px_rgba(84,188,229,0.22)]">
                       <Icon size={16} />
                     </span>
 
@@ -305,13 +305,13 @@ export default function FacultyLayout({
           </nav>
 
           {/* Bottom actions */}
-          <div className="shrink-0 border-t border-[#e2eaf0] p-4">
+          <div className="shrink-0 border-t border-[#23344d] p-4">
             <Link
               href="/dashboard/faculty/settings"
               onClick={closeMobileSidebar}
-              className="group mb-2 flex h-11 items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-[#526a80] transition-all hover:bg-[#edf8fc] hover:text-[#3284b2]"
+              className="group mb-2 flex h-11 items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-[#526a80] transition-all hover:bg-[#16263a] hover:text-[#69c7ee]"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f1f8fc] text-[#69acd2] transition group-hover:bg-[#54bce5] group-hover:text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#16263a] text-[#69acd2] transition group-hover:bg-[#54bce5] group-hover:text-white">
                 <Settings size={16} />
               </span>
               Settings
@@ -320,9 +320,9 @@ export default function FacultyLayout({
             <button
               type="button"
               onClick={handleSignOut}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[11px] font-semibold text-[#6e7180] transition-all hover:bg-red-50 hover:text-red-600"
+              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[11px] font-semibold text-[#b7c0cc] transition-all hover:bg-red-950/30 hover:text-red-400"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f7f8fa] text-[#7c8794] transition group-hover:bg-red-100 group-hover:text-red-600">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#16263a] text-[#9aacc0] transition group-hover:bg-red-900/40 group-hover:text-red-400">
                 <LogOut size={16} />
               </span>
               Sign Out
