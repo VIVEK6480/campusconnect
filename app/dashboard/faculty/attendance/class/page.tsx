@@ -1,27 +1,18 @@
 "use client";
 
 import {
-  Activity,
-  Bell,
   CalendarDays,
   CheckCircle2,
-  ChevronRight,
   ClipboardCheck,
   Edit3,
   GraduationCap,
-  LogOut,
-  Menu,
   RefreshCw,
   Save,
   Search,
-  Settings,
-  ShieldCheck,
   Trash2,
-  UserCircle,
   Users,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
@@ -118,54 +109,6 @@ type ApiResponse = {
   count?: number;
 };
 
-const navigation = [
-  { title: "Dashboard", href: "/dashboard/faculty", icon: GraduationCap },
-  {
-    title: "Students",
-    href: "/dashboard/faculty/students",
-    icon: Users,
-  },
-  {
-    title: "Student Approval",
-    href: "/dashboard/faculty/approvals/students",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Attendance",
-    href: "/dashboard/faculty/attendance",
-    icon: ClipboardCheck,
-  },
-  {
-    title: "Events",
-    href: "/dashboard/faculty/events",
-    icon: CalendarDays,
-  },
-  {
-    title: "Activities",
-    href: "/dashboard/faculty/activities",
-    icon: Activity,
-  },
-  {
-    title: "Clubs",
-    href: "/dashboard/faculty/clubs",
-    icon: Users,
-  },
-  {
-    title: "Faculty Profile",
-    href: "/faculty/profile",
-    icon: UserCircle,
-  },
-  {
-    title: "Notifications",
-    href: "/dashboard/faculty/notifications",
-    icon: Bell,
-  },
-];
-
-const accountNavigation = [
-  { title: "Settings", href: "/faculty/security", icon: Settings },
-];
-
 const semesterOptions = [
   "Semester 1",
   "Semester 2",
@@ -252,9 +195,6 @@ export default function FacultyAttendancePage() {
     () => true,
     () => false
   );
-
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [attendanceMenuOpen, setAttendanceMenuOpen] = useState(true);
 
   const [attendance, setAttendance] = useState<ClassAttendanceRecord[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -437,8 +377,7 @@ export default function FacultyAttendancePage() {
         record.session?.sessionDate || record.markedAt
       );
 
-      const matchesDate =
-        recordSessionDate === dateFilter;
+      const matchesDate = recordSessionDate === dateFilter;
 
       const matchesSelectedSemester =
         !selectedSemester ||
@@ -530,16 +469,12 @@ export default function FacultyAttendancePage() {
     setSaveMessage("");
 
     if (!selectedSemester || !selectedSection || !selectedSubject) {
-      setSaveError(
-        "Select semester, section and subject above first."
-      );
+      setSaveError("Select semester, section and subject above first.");
       return;
     }
 
     if (!dateFilter) {
-      setSaveError(
-        "Select a date in Attendance History first."
-      );
+      setSaveError("Select a date in Attendance History first.");
       return;
     }
 
@@ -557,17 +492,12 @@ export default function FacultyAttendancePage() {
       applyLoadedData(data);
       setShowingHistory(true);
     } catch (showError) {
-      console.error(
-        "SHOW CLASS ATTENDANCE HISTORY ERROR:",
-        showError
-      );
-
+      console.error("SHOW CLASS ATTENDANCE HISTORY ERROR:", showError);
       setSaveError(
         showError instanceof Error
           ? showError.message
           : "Unable to show attendance history."
       );
-
       setShowingHistory(false);
     } finally {
       setRefreshing(false);
@@ -704,679 +634,506 @@ export default function FacultyAttendancePage() {
     }
   }
 
-  async function handleSignOut() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-      });
-    } catch (logoutError) {
-      console.error("FACULTY LOGOUT ERROR:", logoutError);
-    }
-
-    try {
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("facultyUser");
-      localStorage.removeItem("faculty");
-      localStorage.removeItem("currentFaculty");
-      localStorage.removeItem("facultyToken");
-    } catch (storageError) {
-      console.error("FACULTY STORAGE CLEANUP ERROR:", storageError);
-    }
-
-    router.replace("/faculty/login");
-  }
-
-  const facultyName = user?.name || "Faculty Member";
   const facultyId = user?.campusUserId || "Faculty";
-  const initials =
-    facultyName
-      .split(" ")
-      .filter(Boolean)
-      .map((part) => part.charAt(0))
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "FM";
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fa] text-[#0d1728]">
-      {mobileSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
-        />
-      )}
+      <div className="min-h-screen w-full min-w-0">
+        <main className="min-h-screen w-full bg-[#edf4fa] px-4 py-5 sm:px-6 lg:px-8">
+          <section className="px-0 py-2">
+            <div className="relative h-[280px] overflow-hidden rounded-[24px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-6 py-7 text-white shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 lg:px-10">
+              <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20 transition-transform duration-700 hover:scale-110" />
+              <div className="pointer-events-none absolute right-12 top-12 h-40 w-40 rounded-full border border-[#54bce5]/10" />
 
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[272px] border-r border-[#1b3048] bg-[#091321] text-white transition-transform duration-300 lg:translate-x-0 ${
-          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#54bce5] text-[#07111f]">
-              <GraduationCap size={23} />
-            </div>
-            <div>
-              <p className="font-serif text-xl font-bold tracking-tight">CampusConnect</p>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-[#91a5ba]">Faculty Portal</p>
-            </div>
-          </div>
+              <div className="relative z-10 flex h-full items-center justify-between gap-8">
+                <div className="max-w-[900px]">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[10px] font-semibold text-[#76d0f1]">
+                    <ClipboardCheck size={13} />
+                    Faculty Attendance
+                  </div>
 
-          <nav className="flex-1 overflow-y-auto px-4 py-6">
-            <p className="mb-3 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6f8499]">
-              Main Menu
-            </p>
+                  <h1 className="font-serif text-[32px] font-bold leading-[1.03] tracking-[-0.035em] text-white sm:text-[43px] lg:text-[50px]">
+                    Manage class
+                    <br />
+                    <span className="text-[#69c9ed]">attendance with ease.</span>
+                  </h1>
 
-            <div className="space-y-1">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                const isAttendance = item.title === "Attendance";
+                  <p className="mt-4 max-w-[790px] text-[12px] leading-5 text-[#d9e3f4] sm:text-[13px]">
+                    Record, update and review registered student attendance by semester, section and subject from one focused Faculty workspace.
+                  </p>
 
-                if (isAttendance) {
-                  return (
-                    <div key={item.title}>
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceMenuOpen((value) => !value)}
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-semibold text-[#9db0c3] transition hover:bg-white/5 hover:text-white"
-                      >
-                        <span className="flex items-center gap-3">
-                          <Icon size={17} />
-                          Attendance
-                        </span>
-                        <ChevronRight
-                          size={15}
-                          className={`transition-transform ${attendanceMenuOpen ? "rotate-90" : ""}`}
-                        />
-                      </button>
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-[#72dcb4]/30 bg-[#72dcb4]/10 px-3 py-1.5 text-[10px] font-semibold text-[#9ae8c9]">
+                      <CheckCircle2 size={13} />
+                      Attendance Active
+                    </span>
 
-                      {attendanceMenuOpen && (
-                        <div className="ml-5 border-l border-white/10 pl-3">
-                          <Link
-                            href="/dashboard/faculty/attendance/class"
-                            className="block rounded-lg bg-[#18263a] px-3 py-2.5 text-xs font-semibold text-[#d9ecfa]"
-                            onClick={() => setMobileSidebarOpen(false)}
-                          >
-                            Mark Class Attendance
-                          </Link>
-                          <Link
-                            href="/dashboard/faculty/attendance/event"
-                            className="mt-1 block rounded-lg px-3 py-2.5 text-xs font-medium text-[#8ea3b8] transition hover:bg-white/5 hover:text-white"
-                            onClick={() => setMobileSidebarOpen(false)}
-                          >
-                            Mark Event Attendance
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#9db0c3] transition hover:bg-white/5 hover:text-white"
-                    onClick={() => setMobileSidebarOpen(false)}
-                  >
-                    <Icon size={17} />
-                    {item.title}
-                  </Link>
-                );
-              })}
-            </div>
-
-            <p className="mb-3 mt-8 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6f8499]">
-              Account
-            </p>
-            {accountNavigation.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#9db0c3] transition hover:bg-white/5 hover:text-white"
-                  onClick={() => setMobileSidebarOpen(false)}
-                >
-                  <Icon size={17} />
-                  {item.title}
-                </Link>
-              );
-            })}
-
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-[#9db0c3] transition hover:bg-red-500/10 hover:text-red-300"
-            >
-              <LogOut size={17} />
-              Sign Out
-            </button>
-          </nav>
-
-          <div className="border-t border-white/10 p-4">
-            <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-sm font-bold text-[#07111f]">
-                {initials}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-white">{facultyName}</p>
-                <p className="truncate text-[10px] text-[#8497aa]">{user?.email || "Faculty"}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <main className="min-h-screen lg:pl-[272px]">
-        {/* MOBILE MENU */}
-        <button
-          type="button"
-          aria-label="Open faculty sidebar"
-          onClick={() => setMobileSidebarOpen(true)}
-          className="fixed left-4 top-4 z-[45] flex h-11 w-11 items-center justify-center rounded-xl border border-[#d5e4ed] bg-white text-[#38566d] shadow-lg lg:hidden"
-        >
-          <Menu size={20} />
-        </button>
-
-        <section className="px-4 py-5 lg:px-7 lg:py-6">
-          <div className="relative h-[280px] overflow-hidden rounded-[24px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-6 py-7 text-white shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 lg:px-10">
-            <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20 transition-transform duration-700 hover:scale-110" />
-            <div className="pointer-events-none absolute right-12 top-12 h-40 w-40 rounded-full border border-[#54bce5]/10" />
-
-            <div className="relative z-10 flex h-full items-center justify-between gap-8">
-              <div className="max-w-[900px]">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[10px] font-semibold text-[#76d0f1]">
-                  <ClipboardCheck size={13} />
-                  Faculty Attendance
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium text-[#d6e0ed]">
+                      Faculty ID:
+                      <span className="font-bold text-white">{facultyId}</span>
+                    </span>
+                  </div>
                 </div>
 
-                <h1 className="font-serif text-[32px] font-bold leading-[1.03] tracking-[-0.035em] text-white sm:text-[43px] lg:text-[50px]">
-                  Manage class
-                  <br />
-                  <span className="text-[#69c9ed]">attendance with ease.</span>
-                </h1>
-
-                <p className="mt-4 max-w-[790px] text-[12px] leading-5 text-[#d9e3f4] sm:text-[13px]">
-                  Record, update and review registered student attendance by semester, section and subject from one focused Faculty workspace.
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2.5">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[#72dcb4]/30 bg-[#72dcb4]/10 px-3 py-1.5 text-[10px] font-semibold text-[#9ae8c9]">
-                    <CheckCircle2 size={13} />
-                    Attendance Active
-                  </span>
-
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium text-[#d6e0ed]">
-                    Faculty ID:
-                    <span className="font-bold text-white">{facultyId}</span>
-                  </span>
+                <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-[20px] border border-[#54bce5]/20 bg-[#15273b]/80 text-[#67bfe6] shadow-[0_10px_30px_rgba(0,0,0,0.12)] lg:flex">
+                  <ClipboardCheck size={38} strokeWidth={1.6} />
                 </div>
               </div>
+            </div>
 
-              <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-[20px] border border-[#54bce5]/20 bg-[#15273b]/80 text-[#67bfe6] shadow-[0_10px_30px_rgba(0,0,0,0.12)] lg:flex">
-                <ClipboardCheck size={38} strokeWidth={1.6} />
+            {error && (
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
+                <p className="text-sm font-bold">Unable to load attendance</p>
+                <p className="mt-1 text-xs">{error}</p>
               </div>
-            </div>
-          </div>
+            )}
 
-          {error && (
-            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
-              <p className="text-sm font-bold">Unable to load attendance</p>
-              <p className="mt-1 text-xs">{error}</p>
-            </div>
-          )}
-
-          {saveError && (
-            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
-              <p className="text-sm font-bold">Attendance action failed</p>
-              <p className="mt-1 text-xs">{saveError}</p>
-            </div>
-          )}
-
-          {saveMessage && (
-            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700">
-              <p className="text-sm font-bold">{saveMessage}</p>
-            </div>
-          )}
-
-          <section className="mt-5 rounded-[22px] border border-[#d8e3ed] bg-white p-5 shadow-sm lg:p-6">
-            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4b8bad]">Attendance Entry</p>
-                <h2 className="mt-1 font-serif text-2xl font-bold text-[#17283b]">Mark Class Attendance</h2>
-                <p className="mt-1 text-xs text-[#7d92a7]">
-                  Select semester, section and subject. Every registered student is shown; checked students are marked present and unchecked students are marked absent.
-                </p>
+            {saveError && (
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
+                <p className="text-sm font-bold">Attendance action failed</p>
+                <p className="mt-1 text-xs">{saveError}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => void refreshData()}
-                disabled={refreshing}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#d8e3ed] bg-white px-4 text-xs font-bold text-[#46627b] transition hover:bg-[#f5f8fb] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-                Refresh
-              </button>
-            </div>
+            )}
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-4">
-              <label className="block">
-                <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Semester</span>
-                <select
-                  value={selectedSemester}
-                  onChange={(event) => {
-                    setSelectedSemester(event.target.value);
-                    setSelectedSubject("");
-                    setSelectedStudents([]);
-                    setShowingHistory(false);
-                  }}
-                  className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
-                >
-                  <option value="">Select semester</option>
-                  {semesterOptions.map((semester) => (
-                    <option key={semester} value={semester}>{semester}</option>
-                  ))}
-                </select>
-              </label>
+            {saveMessage && (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700">
+                <p className="text-sm font-bold">{saveMessage}</p>
+              </div>
+            )}
 
-              <label className="block">
-                <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Section</span>
-                <select
-                  value={selectedSection}
-                  onChange={(event) => {
-                    setSelectedSection(event.target.value);
-                    setSelectedStudents([]);
-                    setShowingHistory(false);
-                  }}
-                  className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
-                >
-                  <option value="">Select section</option>
-                  {sectionOptions.map((section) => (
-                    <option key={section} value={section}>{section}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Subject</span>
-                <select
-                  value={selectedSubject}
-                  disabled={!selectedSemester}
-                  onChange={(event) => {
-                    setSelectedSubject(event.target.value);
-                    setSelectedStudents([]);
-                    setShowingHistory(false);
-                  }}
-                  className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5] disabled:cursor-not-allowed disabled:bg-[#f4f7fa] disabled:text-[#9aacbb]"
-                >
-                  <option value="">
-                    {selectedSemester ? "Select subject" : "Select semester first"}
-                  </option>
-                  {filteredSubjectOptions.map((subject) => (
-                    <option key={subject.id} value={subject.id}>{subject.name}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Status for checked students</span>
-                <select
-                  value={selectedStatus}
-                  onChange={(event) => setSelectedStatus(event.target.value)}
-                  className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
-                >
-                  <option value="Present">Present</option>
-                  <option value="Late">Late</option>
-                  <option value="Excused">Excused</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-5 overflow-hidden rounded-2xl border border-[#d8e3ed]">
-              <div className="flex flex-col justify-between gap-3 border-b border-[#d8e3ed] bg-[#f8fafc] px-4 py-3 sm:flex-row sm:items-center">
+            <section className="mt-5 rounded-[22px] border border-[#d8e3ed] bg-white p-5 shadow-sm lg:p-6">
+              <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#4b6279]">Student Attendance</p>
-                  <p className="mt-1 text-[10px] text-[#8ca0b2]">
-                    {selectedSemester && selectedSection && selectedSubject
-                      ? `${students.length} registered student${students.length === 1 ? "" : "s"} found for this exact semester, section and subject.`
-                      : "Select semester, section and subject to load registered students."}
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4b8bad]">Attendance Entry</p>
+                  <h2 className="mt-1 font-serif text-2xl font-bold text-[#17283b]">Mark Class Attendance</h2>
+                  <p className="mt-1 text-xs text-[#7d92a7]">
+                    Select semester, section and subject. Every registered student is shown; checked students are marked present and unchecked students are marked absent.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void refreshData()}
+                  disabled={refreshing}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#d8e3ed] bg-white px-4 text-xs font-bold text-[#46627b] transition hover:bg-[#f5f8fb] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+                  Refresh
+                </button>
+              </div>
+
+              <div className="mt-6 grid gap-4 lg:grid-cols-4">
+                <label className="block">
+                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Semester</span>
+                  <select
+                    value={selectedSemester}
+                    onChange={(event) => {
+                      setSelectedSemester(event.target.value);
+                      setSelectedSubject("");
+                      setSelectedStudents([]);
+                      setShowingHistory(false);
+                    }}
+                    className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
+                  >
+                    <option value="">Select semester</option>
+                    {semesterOptions.map((semester) => (
+                      <option key={semester} value={semester}>{semester}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Section</span>
+                  <select
+                    value={selectedSection}
+                    onChange={(event) => {
+                      setSelectedSection(event.target.value);
+                      setSelectedStudents([]);
+                      setShowingHistory(false);
+                    }}
+                    className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
+                  >
+                    <option value="">Select section</option>
+                    {sectionOptions.map((section) => (
+                      <option key={section} value={section}>{section}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Subject</span>
+                  <select
+                    value={selectedSubject}
+                    disabled={!selectedSemester}
+                    onChange={(event) => {
+                      setSelectedSubject(event.target.value);
+                      setSelectedStudents([]);
+                      setShowingHistory(false);
+                    }}
+                    className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5] disabled:cursor-not-allowed disabled:bg-[#f4f7fa] disabled:text-[#9aacbb]"
+                  >
+                    <option value="">
+                      {selectedSemester ? "Select subject" : "Select semester first"}
+                    </option>
+                    {filteredSubjectOptions.map((subject) => (
+                      <option key={subject.id} value={subject.id}>{subject.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-[#6f8499]">Status for checked students</span>
+                  <select
+                    value={selectedStatus}
+                    onChange={(event) => setSelectedStatus(event.target.value)}
+                    className="h-11 w-full rounded-xl border border-[#d8e3ed] bg-white px-3 text-sm font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
+                  >
+                    <option value="Present">Present</option>
+                    <option value="Late">Late</option>
+                    <option value="Excused">Excused</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-5 overflow-hidden rounded-2xl border border-[#d8e3ed]">
+                <div className="flex flex-col justify-between gap-3 border-b border-[#d8e3ed] bg-[#f8fafc] px-4 py-3 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#4b6279]">Student Attendance</p>
+                    <p className="mt-1 text-[10px] text-[#8ca0b2]">
+                      {selectedSemester && selectedSection && selectedSubject
+                        ? `${students.length} registered student${students.length === 1 ? "" : "s"} found for this exact semester, section and subject.`
+                        : "Select semester, section and subject to load registered students."}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={toggleAllStudents}
+                      disabled={students.length === 0}
+                      className="rounded-lg border border-[#cfdde8] bg-white px-3 py-2 text-[10px] font-bold text-[#547089] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {allSelected ? "Clear All" : "Select All"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStudents([])}
+                      disabled={selectedStudents.length === 0}
+                      className="rounded-lg border border-[#cfdde8] bg-white px-3 py-2 text-[10px] font-bold text-[#547089] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-[430px] overflow-y-auto">
+                  {loading ? (
+                    <div className="px-5 py-14 text-center text-sm text-[#7890a5]">Loading students...</div>
+                  ) : students.length === 0 ? (
+                    <div className="px-5 py-14 text-center">
+                      <Users className="mx-auto text-[#8ca0b2]" size={24} />
+                      <p className="mt-2 text-sm font-semibold text-[#4b6279]">No registered students found.</p>
+                      <p className="mt-1 text-xs text-[#8ca0b2]">Select the exact semester, section and subject.</p>
+                    </div>
+                  ) : (
+                    students.map((student) => {
+                      const checked = selectedStudents.includes(student.id);
+                      return (
+                        <label
+                          key={student.id}
+                          className="flex cursor-pointer items-center justify-between gap-4 border-b border-[#edf2f6] px-4 py-3 transition last:border-b-0 hover:bg-[#f8fbfd]"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleStudent(student.id)}
+                              className="h-4 w-4 rounded border-[#b7c9d8] text-[#54bce5] focus:ring-[#54bce5]"
+                            />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f5fb] text-xs font-bold text-[#3989b7]">
+                              {(student.name || "S").charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-bold text-[#263a51]">{student.name || "Unnamed Student"}</p>
+                              <p className="truncate text-[10px] text-[#8497aa]">
+                                {student.campusUserId || student.email || student.id}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold ${checked ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-500"}`}>
+                            {checked ? selectedStatus : "Absent"}
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col justify-between gap-3 rounded-2xl border border-[#d8e3ed] bg-[#f8fafc] p-4 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-xs font-bold text-[#263a51]">
+                    {selectedStudents.length} of {students.length} student{students.length === 1 ? "" : "s"} selected as {selectedStatus.toLowerCase()}.
+                  </p>
+                  <p className="mt-1 text-[10px] text-[#8497aa]">
+                    Unchecked registered students will be saved as Absent for this class session.
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={toggleAllStudents}
-                    disabled={students.length === 0}
-                    className="rounded-lg border border-[#cfdde8] bg-white px-3 py-2 text-[10px] font-bold text-[#547089] disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={clearClassSelection}
+                    className="h-11 rounded-xl border border-[#d8e3ed] bg-white px-5 text-xs font-bold text-[#5b748c] hover:bg-[#f3f7fa]"
                   >
-                    {allSelected ? "Clear All" : "Select All"}
+                    Clear Class
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedStudents([])}
-                    disabled={selectedStudents.length === 0}
-                    className="rounded-lg border border-[#cfdde8] bg-white px-3 py-2 text-[10px] font-bold text-[#547089] disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => void handleMarkAttendance()}
+                    disabled={
+                      saving ||
+                      !selectedSemester ||
+                      !selectedSection ||
+                      !selectedSubject ||
+                      students.length === 0
+                    }
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#102038] px-6 text-xs font-bold text-white transition hover:bg-[#1b3048] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Clear
+                    {saving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                    {saving ? "Saving..." : "Mark Attendance"}
                   </button>
                 </div>
               </div>
+            </section>
 
-              <div className="max-h-[430px] overflow-y-auto">
-                {loading ? (
-                  <div className="px-5 py-14 text-center text-sm text-[#7890a5]">Loading students...</div>
-                ) : students.length === 0 ? (
-                  <div className="px-5 py-14 text-center">
-                    <Users className="mx-auto text-[#8ca0b2]" size={24} />
-                    <p className="mt-2 text-sm font-semibold text-[#4b6279]">No registered students found.</p>
-                    <p className="mt-1 text-xs text-[#8ca0b2]">Select the exact semester, section and subject.</p>
-                  </div>
-                ) : (
-                  students.map((student) => {
-                    const checked = selectedStudents.includes(student.id);
-                    return (
-                      <label
-                        key={student.id}
-                        className="flex cursor-pointer items-center justify-between gap-4 border-b border-[#edf2f6] px-4 py-3 transition last:border-b-0 hover:bg-[#f8fbfd]"
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleStudent(student.id)}
-                            className="h-4 w-4 rounded border-[#b7c9d8] text-[#54bce5] focus:ring-[#54bce5]"
-                          />
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f5fb] text-xs font-bold text-[#3989b7]">
-                            {(student.name || "S").charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-xs font-bold text-[#263a51]">{student.name || "Unnamed Student"}</p>
-                            <p className="truncate text-[10px] text-[#8497aa]">
-                              {student.campusUserId || student.email || student.id}
-                            </p>
-                          </div>
-                        </div>
-                        <span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold ${checked ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-500"}`}>
-                          {checked ? selectedStatus : "Absent"}
-                        </span>
-                      </label>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-col justify-between gap-3 rounded-2xl border border-[#d8e3ed] bg-[#f8fafc] p-4 sm:flex-row sm:items-center">
-              <div>
-                <p className="text-xs font-bold text-[#263a51]">
-                  {selectedStudents.length} of {students.length} student{students.length === 1 ? "" : "s"} selected as {selectedStatus.toLowerCase()}.
-                </p>
-                <p className="mt-1 text-[10px] text-[#8497aa]">
-                  Unchecked registered students will be saved as Absent for this class session.
-                </p>
-              </div>
-              <div className="flex gap-2">
+            <section className="mt-5 rounded-[22px] border border-[#d8e3ed] bg-white p-5 shadow-sm lg:p-6">
+              <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4b8bad]">Class Records</p>
+                  <h2 className="mt-1 font-serif text-2xl font-bold text-[#17283b]">Attendance History</h2>
+                  <p className="mt-1 text-xs text-[#7d92a7]">Select the semester, section and subject above, then choose a date here to find and correct attendance records. Event attendance is handled separately.</p>
+                </div>
                 <button
                   type="button"
-                  onClick={clearClassSelection}
-                  className="h-11 rounded-xl border border-[#d8e3ed] bg-white px-5 text-xs font-bold text-[#5b748c] hover:bg-[#f3f7fa]"
+                  onClick={() => {
+                    setSearch("");
+                    setDateFilter("");
+                    setStatusFilter("ALL");
+                    setShowingHistory(false);
+                    void refreshData();
+                  }}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#d8e3ed] bg-white px-4 text-xs font-bold text-[#46627b]"
                 >
-                  Clear Class
+                  <RefreshCw size={14} />
+                  Refresh
                 </button>
+              </div>
+
+              <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_190px_170px_auto_auto]">
+                <div className="relative">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8ba0b5]" />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search student, ID, email or subject..."
+                    className="h-10 w-full rounded-xl border border-[#d8e3ed] bg-white pl-9 pr-3 text-xs text-[#263a51] outline-none focus:border-[#54bce5]"
+                  />
+                </div>
+
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(event) => {
+                    setDateFilter(event.target.value);
+                    setShowingHistory(false);
+                  }}
+                  className="h-10 rounded-xl border border-[#d8e3ed] bg-white px-3 text-xs font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
+                />
+
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                  className="h-10 rounded-xl border border-[#d8e3ed] bg-white px-3 text-xs font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
+                >
+                  <option value="ALL">All Status</option>
+                  <option value="PRESENT">Present</option>
+                  <option value="ABSENT">Absent</option>
+                  <option value="LATE">Late</option>
+                  <option value="EXCUSED">Excused</option>
+                </select>
+
                 <button
                   type="button"
-                  onClick={() => void handleMarkAttendance()}
+                  onClick={() => void handleShowHistory()}
                   disabled={
-                    saving ||
+                    refreshing ||
                     !selectedSemester ||
                     !selectedSection ||
                     !selectedSubject ||
-                    students.length === 0
+                    !dateFilter
                   }
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#102038] px-6 text-xs font-bold text-white transition hover:bg-[#1b3048] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#102038] px-5 text-xs font-bold text-white transition hover:bg-[#1b3048] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {saving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                  {saving ? "Saving..." : "Mark Attendance"}
+                  {refreshing ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <Search size={14} />
+                  )}
+                  {refreshing ? "Loading..." : "Show"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setDateFilter("");
+                    setStatusFilter("ALL");
+                    setShowingHistory(false);
+                  }}
+                  className="h-10 rounded-xl border border-[#d8e3ed] bg-white px-4 text-xs font-bold text-[#647e95] hover:bg-[#f5f8fb]"
+                >
+                  Clear
                 </button>
               </div>
-            </div>
-          </section>
 
-          <section className="mt-5 rounded-[22px] border border-[#d8e3ed] bg-white p-5 shadow-sm lg:p-6">
-            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4b8bad]">Class Records</p>
-                <h2 className="mt-1 font-serif text-2xl font-bold text-[#17283b]">Attendance History</h2>
-                <p className="mt-1 text-xs text-[#7d92a7]">Select the semester, section and subject above, then choose a date here to find and correct attendance records. Event attendance is handled separately.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  setDateFilter("");
-                  setStatusFilter("ALL");
-                  setShowingHistory(false);
-                  void refreshData();
-                }}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#d8e3ed] bg-white px-4 text-xs font-bold text-[#46627b]"
-              >
-                <RefreshCw size={14} />
-                Refresh
-              </button>
-            </div>
-
-            <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_190px_170px_auto_auto]">
-              <div className="relative">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8ba0b5]" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search student, ID, email or subject..."
-                  className="h-10 w-full rounded-xl border border-[#d8e3ed] bg-white pl-9 pr-3 text-xs text-[#263a51] outline-none focus:border-[#54bce5]"
-                />
-              </div>
-
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(event) => {
-                  setDateFilter(event.target.value);
-                  setShowingHistory(false);
-                }}
-                className="h-10 rounded-xl border border-[#d8e3ed] bg-white px-3 text-xs font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
-              />
-
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-10 rounded-xl border border-[#d8e3ed] bg-white px-3 text-xs font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
-              >
-                <option value="ALL">All Status</option>
-                <option value="PRESENT">Present</option>
-                <option value="ABSENT">Absent</option>
-                <option value="LATE">Late</option>
-                <option value="EXCUSED">Excused</option>
-              </select>
-
-              <button
-                type="button"
-                onClick={() => void handleShowHistory()}
-                disabled={
-                  refreshing ||
-                  !selectedSemester ||
-                  !selectedSection ||
-                  !selectedSubject ||
-                  !dateFilter
-                }
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#102038] px-5 text-xs font-bold text-white transition hover:bg-[#1b3048] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {refreshing ? (
-                  <RefreshCw size={14} className="animate-spin" />
-                ) : (
-                  <Search size={14} />
-                )}
-                {refreshing ? "Loading..." : "Show"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  setDateFilter("");
-                  setStatusFilter("ALL");
-                  setShowingHistory(false);
-                }}
-                className="h-10 rounded-xl border border-[#d8e3ed] bg-white px-4 text-xs font-bold text-[#647e95] hover:bg-[#f5f8fb]"
-              >
-                Clear
-              </button>
-            </div>
-
-            <div className="mt-5 overflow-x-auto rounded-2xl border border-[#d8e3ed]">
-              <table className="min-w-[920px] w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#f8fafc] text-left">
-                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Student</th>
-                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Subject</th>
-                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Class</th>
-                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Date</th>
-                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Status</th>
-                    <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAttendance.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-16 text-center">
-                        <ClipboardCheck className="mx-auto text-[#9ab0c0]" size={25} />
-                        <p className="mt-2 text-sm font-semibold text-[#536d84]">No class attendance records found</p>
-                        <p className="mt-1 text-xs text-[#8ca0b2]">Select semester, section, subject and date to quickly find the exact class attendance record.</p>
-                      </td>
+              <div className="mt-5 overflow-x-auto rounded-2xl border border-[#d8e3ed]">
+                <table className="min-w-[920px] w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#f8fafc] text-left">
+                      <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Student</th>
+                      <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Subject</th>
+                      <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Class</th>
+                      <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Date</th>
+                      <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Status</th>
+                      <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8499]">Actions</th>
                     </tr>
-                  ) : (
-                    filteredAttendance.map((record) => {
-                      const status = record.status || "Absent";
-                      return (
-                        <tr key={record.id} className="border-t border-[#edf2f6] hover:bg-[#fbfdff]">
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f5fb] text-xs font-bold text-[#3989b7]">
-                                {(record.student?.name || "S").charAt(0).toUpperCase()}
+                  </thead>
+                  <tbody>
+                    {filteredAttendance.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-5 py-16 text-center">
+                          <ClipboardCheck className="mx-auto text-[#9ab0c0]" size={25} />
+                          <p className="mt-2 text-sm font-semibold text-[#536d84]">No class attendance records found</p>
+                          <p className="mt-1 text-xs text-[#8ca0b2]">Select semester, section, subject and date to quickly find the exact class attendance record.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredAttendance.map((record) => {
+                        const status = record.status || "Absent";
+                        return (
+                          <tr key={record.id} className="border-t border-[#edf2f6] hover:bg-[#fbfdff]">
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f5fb] text-xs font-bold text-[#3989b7]">
+                                  {(record.student?.name || "S").charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="truncate text-xs font-bold text-[#263a51]">{record.student?.name || "Unknown Student"}</p>
+                                  <p className="truncate text-[10px] text-[#8497aa]">{record.student?.campusUserId || record.student?.email || record.studentId}</p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <p className="truncate text-xs font-bold text-[#263a51]">{record.student?.name || "Unknown Student"}</p>
-                                <p className="truncate text-[10px] text-[#8497aa]">{record.student?.campusUserId || record.student?.email || record.studentId}</p>
-                              </div>
-                            </div>
-                          </td>
+                            </td>
 
-                          <td className="px-5 py-4">
-                            <p className="text-xs font-semibold text-[#354b63]">{record.subject?.name || "Unknown Subject"}</p>
-                          </td>
+                            <td className="px-5 py-4">
+                              <p className="text-xs font-semibold text-[#354b63]">{record.subject?.name || "Unknown Subject"}</p>
+                            </td>
 
-                          <td className="px-5 py-4">
-                            <p className="text-xs font-semibold text-[#354b63]">
-                              Semester {record.session?.semester ?? "—"}
-                            </p>
-                            <p className="mt-0.5 text-[10px] text-[#8497aa]">
-                              {record.session?.section || "—"}
-                            </p>
-                          </td>
+                            <td className="px-5 py-4">
+                              <p className="text-xs font-semibold text-[#354b63]">
+                                Semester {record.session?.semester ?? "—"}
+                              </p>
+                              <p className="mt-0.5 text-[10px] text-[#8497aa]">
+                                {record.session?.section || "—"}
+                              </p>
+                            </td>
 
-                          <td className="px-5 py-4">
-                            <p className="text-[11px] font-semibold text-[#354b63]">{formatDate(record.session?.sessionDate || record.markedAt)}</p>
-                            <p className="mt-0.5 text-[10px] text-[#8497aa]">{formatTime(record.session?.sessionDate || record.markedAt)}</p>
-                          </td>
+                            <td className="px-5 py-4">
+                              <p className="text-[11px] font-semibold text-[#354b63]">{formatDate(record.session?.sessionDate || record.markedAt)}</p>
+                              <p className="mt-0.5 text-[10px] text-[#8497aa]">{formatTime(record.session?.sessionDate || record.markedAt)}</p>
+                            </td>
 
-                          <td className="px-5 py-4">
-                            {editingId === record.id ? (
-                              <select
-                                value={editingStatus}
-                                onChange={(event) => setEditingStatus(event.target.value)}
-                                className="h-9 rounded-lg border border-[#d8e3ed] bg-white px-2 text-xs font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
-                              >
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                                <option value="Late">Late</option>
-                                <option value="Excused">Excused</option>
-                              </select>
-                            ) : (
-                              <span className={`inline-flex rounded-full border px-3 py-1.5 text-[10px] font-bold ${getStatusClass(status)}`}>
-                                {status}
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="px-5 py-4">
-                            <div className="flex justify-end gap-2">
+                            <td className="px-5 py-4">
                               {editingId === record.id ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleUpdateAttendance(record.id)}
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0d1728] text-white hover:bg-[#1b3048]"
-                                    title="Save"
-                                  >
-                                    <Save size={15} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditingId(null);
-                                      setEditingStatus("Present");
-                                    }}
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#d8e3ed] bg-white text-[#70849a] hover:bg-[#f5f8fb]"
-                                    title="Cancel"
-                                  >
-                                    <X size={15} />
-                                  </button>
-                                </>
+                                <select
+                                  value={editingStatus}
+                                  onChange={(event) => setEditingStatus(event.target.value)}
+                                  className="h-9 rounded-lg border border-[#d8e3ed] bg-white px-2 text-xs font-semibold text-[#263a51] outline-none focus:border-[#54bce5]"
+                                >
+                                  <option value="Present">Present</option>
+                                  <option value="Absent">Absent</option>
+                                  <option value="Late">Late</option>
+                                  <option value="Excused">Excused</option>
+                                </select>
                               ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditingId(record.id);
-                                      setEditingStatus(record.status || "Present");
-                                    }}
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#d8e3ed] bg-white text-[#5c7690] hover:border-[#9bcbe4] hover:bg-[#f3f9fd] hover:text-[#3989b7]"
-                                    title="Edit"
-                                  >
-                                    <Edit3 size={15} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={deletingId === record.id}
-                                    onClick={() => void handleDeleteAttendance(record.id)}
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                    title="Delete"
-                                  >
-                                    {deletingId === record.id ? (
-                                      <RefreshCw size={15} className="animate-spin" />
-                                    ) : (
-                                      <Trash2 size={15} />
-                                    )}
-                                  </button>
-                                </>
+                                <span className={`inline-flex rounded-full border px-3 py-1.5 text-[10px] font-bold ${getStatusClass(status)}`}>
+                                  {status}
+                                </span>
                               )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <div className="flex justify-end gap-2">
+                                {editingId === record.id ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleUpdateAttendance(record.id)}
+                                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0d1728] text-white hover:bg-[#1b3048]"
+                                      title="Save"
+                                    >
+                                      <Save size={15} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingId(null);
+                                        setEditingStatus("Present");
+                                      }}
+                                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#d8e3ed] bg-white text-[#70849a] hover:bg-[#f5f8fb]"
+                                      title="Cancel"
+                                    >
+                                      <X size={15} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingId(record.id);
+                                        setEditingStatus(record.status || "Present");
+                                      }}
+                                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#d8e3ed] bg-white text-[#5c7690] hover:border-[#9bcbe4] hover:bg-[#f3f9fd] hover:text-[#3989b7]"
+                                      title="Edit"
+                                    >
+                                      <Edit3 size={15} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={deletingId === record.id}
+                                      onClick={() => void handleDeleteAttendance(record.id)}
+                                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                      title="Delete"
+                                    >
+                                      {deletingId === record.id ? (
+                                        <RefreshCw size={15} className="animate-spin" />
+                                      ) : (
+                                        <Trash2 size={15} />
+                                      )}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </section>
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

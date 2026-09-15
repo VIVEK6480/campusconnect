@@ -4,25 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Activity,
-  Bell,
-  CalendarDays,
   Check,
   CheckCircle2,
-  ChevronRight,
-  ClipboardCheck,
   Clock3,
   GraduationCap,
   Loader2,
-  LogOut,
   Mail,
-  Menu,
   RefreshCw,
   Search,
-  Settings,
   ShieldCheck,
   User,
-  UserCircle,
   Users,
   UserX,
   X,
@@ -79,58 +70,6 @@ const defaultFaculty: Faculty = {
   facultyId: "RNT-9457",
   role: "Faculty Member",
 };
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-const navigation = [
-  {
-    title: "Dashboard",
-    href: "/dashboard/faculty",
-    icon: GraduationCap,
-  },
-  {
-    title: "Students",
-    href: "/dashboard/faculty/students",
-    icon: Users,
-  },
-  {
-    title: "Student Approval",
-    href: "/dashboard/faculty/approvals/students",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Attendance",
-    href: "/dashboard/faculty/attendance",
-    icon: ClipboardCheck,
-  },
-  {
-    title: "Events",
-    href: "/dashboard/faculty/events",
-    icon: CalendarDays,
-  },
-  {
-    title: "Activities",
-    href: "/dashboard/faculty/activities",
-    icon: Activity,
-  },
-  {
-    title: "Clubs",
-    href: "/dashboard/faculty/clubs",
-    icon: Users,
-  },
-  {
-    title: "Faculty Profile",
-    href: "/faculty/profile",
-    icon: UserCircle,
-  },
-  {
-    title: "Notifications",
-    href: "/dashboard/faculty/notifications",
-    icon: Bell,
-  },
-];
 
 /* =========================================================
    HELPERS
@@ -215,9 +154,6 @@ export default function FacultyStudentApprovalPage() {
   const [rejectionReason, setRejectionReason] =
     useState("");
 
-  const [mobileSidebarOpen, setMobileSidebarOpen] =
-    useState(false);
-
   /* =========================================================
      INITIALS
   ========================================================== */
@@ -227,12 +163,6 @@ export default function FacultyStudentApprovalPage() {
 
   const facultyEmail =
     faculty.email || defaultFaculty.email;
-
-  const facultyId =
-    faculty.facultyId || defaultFaculty.facultyId;
-
-  const facultyRole =
-    faculty.role || defaultFaculty.role;
 
   const initials = facultyName
     .split(" ")
@@ -384,10 +314,6 @@ export default function FacultyStudentApprovalPage() {
         !storedFaculty ||
         !storedFaculty.id
       ) {
-        /*
-         * Keep dashboard usable with existing
-         * default faculty information.
-         */
         setFaculty(defaultFaculty);
 
         setError(
@@ -504,34 +430,6 @@ export default function FacultyStudentApprovalPage() {
     searchTerm,
     activeFilter,
   ]);
-
-  /* =========================================================
-     REFRESH
-  ========================================================== */
-
-  const refreshStudents = async () => {
-    if (!faculty.id) {
-      setError(
-        "Faculty information was not found."
-      );
-
-      return;
-    }
-
-    setLoading(true);
-    setSuccess("");
-    setError("");
-
-    try {
-      await loadStudents(faculty);
-
-      setSuccess(
-        "Student approval data refreshed successfully."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   /* =========================================================
      APPROVE STUDENT
@@ -756,317 +654,14 @@ export default function FacultyStudentApprovalPage() {
   };
 
   /* =========================================================
-     SIGN OUT
-  ========================================================== */
-
-  const handleSignOut = () => {
-    try {
-      localStorage.removeItem(
-        "facultyUser"
-      );
-
-      localStorage.removeItem(
-        "faculty"
-      );
-
-      localStorage.removeItem(
-        "currentFaculty"
-      );
-
-      localStorage.removeItem(
-        "user"
-      );
-
-      localStorage.removeItem(
-        "token"
-      );
-
-      localStorage.removeItem(
-        "facultyToken"
-      );
-    } catch {
-      // Ignore storage errors.
-    }
-
-    router.push("/faculty/login");
-  };
-
-  /* =========================================================
-     CLOSE MOBILE SIDEBAR
-  ========================================================== */
-
-  const closeMobileSidebar = () => {
-    setMobileSidebarOpen(false);
-  };
-
-  /* =========================================================
      RETURN
   ========================================================== */
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fa] text-[#0d1728]">
-
-      {/* =====================================================
-          MOBILE OVERLAY
-      ====================================================== */}
-
-      {mobileSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={closeMobileSidebar}
-          className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
-        />
-      )}
-
-      {/* =====================================================
-          SIDEBAR CURSOR MINI UI
-      ====================================================== */}
-      <div
-        id="sidebar-cursor-ui"
-        className="pointer-events-none fixed left-0 top-0 z-[70] h-3 w-3 rounded-[3px] border border-[#8ee0ff] bg-[#54bce5] shadow-[0_0_16px_rgba(84,188,229,0.85)] opacity-0 transition-opacity duration-150"
-      />
-
-      {/* =====================================================
-          SIDEBAR
-      ====================================================== */}
-
-      <aside
-        onMouseMove={(event) => {
-          const cursorUI = document.getElementById("sidebar-cursor-ui");
-          if (!cursorUI) return;
-
-          cursorUI.style.left = `${event.clientX + 10}px`;
-          cursorUI.style.top = `${event.clientY + 10}px`;
-          cursorUI.style.opacity = "1";
-        }}
-        onMouseLeave={() => {
-          const cursorUI = document.getElementById("sidebar-cursor-ui");
-          if (cursorUI) cursorUI.style.opacity = "0";
-        }}
-        className={`
-          fixed left-0 top-0 z-50
-          flex h-screen w-[270px] shrink-0
-          flex-col
-          border-r border-[#23344d]
-          bg-[#0b1423]
-          text-white
-          shadow-[8px_0_35px_rgba(5,15,30,0.16)]
-          transition-transform duration-300
-          lg:translate-x-0
-          ${
-            mobileSidebarOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
-          }
-        `}
-      >
-        {/* BRAND */}
-
-        <div className="flex h-[92px] shrink-0 items-center justify-between border-b border-[#223149] px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_8px_25px_rgba(84,188,229,0.25)]">
-              <GraduationCap
-                size={25}
-                strokeWidth={2}
-                className="text-white"
-              />
-            </div>
-
-            <div className="min-w-0">
-              <h1 className="font-serif text-[19px] font-bold tracking-tight text-white">
-                CampusConnect
-              </h1>
-
-              <p className="mt-0.5 text-[11px] font-medium text-[#91a4bb]">
-                Faculty Portal
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={closeMobileSidebar}
-            className="rounded-lg p-2 text-[#8fa3bb] transition hover:bg-white/10 hover:text-white lg:hidden"
-          >
-            <X size={19} />
-          </button>
-        </div>
-
-        {/* NAVIGATION */}
-
-        <div className="flex-1 overflow-y-auto px-4 py-7">
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Main Menu
-          </p>
-
-          <nav className="space-y-1.5">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-
-              const active =
-                (item.title === "Student Approval") ||
-                (item.title === "Activities" &&
-                  typeof window !== "undefined" &&
-                  window.location.pathname.startsWith("/dashboard/faculty/activities")) ||
-                (item.title === "Notifications" &&
-                  typeof window !== "undefined" &&
-                  window.location.pathname.startsWith("/faculty/notifications"));
-
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={
-                    closeMobileSidebar
-                  }
-                  className={`
-                    group relative flex h-11 w-full items-center gap-3
-                    rounded-xl px-3.5
-                    text-[13px] font-medium
-                    transition-all duration-200
-                    before:pointer-events-none before:absolute before:left-1 before:top-1
-                    before:h-2 before:w-2 before:rounded-[2px]
-                    before:bg-[#54bce5] before:opacity-0 before:scale-50
-                    before:transition-all before:duration-200
-                    group-hover:before:opacity-100 group-hover:before:scale-100
-                    group-hover:before:shadow-[0_0_10px_rgba(84,188,229,0.9)]
-                    ${
-                      active
-                        ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
-                        : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
-                    }
-                  `}
-                >
-                  <span
-                    className={`
-                      flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
-                      transition-all duration-200 ease-out
-                      ${
-                        active
-                          ? "bg-[#20344d] shadow-[0_4px_12px_rgba(84,188,229,0.10)]"
-                          : "bg-transparent group-hover:bg-[#17304a] group-hover:shadow-[0_4px_14px_rgba(84,188,229,0.12)] group-hover:scale-105"
-                      }
-                    `}
-                  >
-                    <Icon
-                      size={17}
-                      strokeWidth={1.8}
-                      className={`
-                        transition-all duration-200
-                        ${
-                          active
-                            ? "text-[#63c9ef]"
-                            : "text-[#8195ad] group-hover:text-[#63c9ef]"
-                        }
-                      `}
-                    />
-                  </span>
-
-                  <span className="transition-transform duration-200 group-hover:translate-x-0.5">
-                    {item.title}
-                  </span>
-
-                  {active && (
-                    <ChevronRight
-                      size={16}
-                      className="ml-auto text-[#63c9ef]"
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="my-7 h-px bg-[#223149]" />
-
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Account
-          </p>
-
-          <nav className="space-y-1.5">
-            <Link
-              href="/faculty/settings"
-              onClick={closeMobileSidebar}
-              className="group relative flex h-11 w-full items-center gap-3 before:pointer-events-none before:absolute before:left-1 before:top-1 before:h-2 before:w-2 before:rounded-[2px] before:bg-[#54bce5] before:opacity-0 before:scale-50 before:transition-all before:duration-200 group-hover:before:opacity-100 group-hover:before:scale-100 group-hover:before:shadow-[0_0_10px_rgba(84,188,229,0.9)] rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-transparent transition-all duration-200 ease-out group-hover:scale-105 group-hover:bg-[#17304a] group-hover:shadow-[0_4px_14px_rgba(84,188,229,0.12)]">
-                <Settings
-                  size={17}
-                  strokeWidth={1.8}
-                  className="text-[#8195ad] transition-colors duration-200 group-hover:text-[#63c9ef]"
-                />
-              </span>
-
-              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
-                Settings
-              </span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="group relative flex h-11 w-full items-center gap-3 before:pointer-events-none before:absolute before:left-1 before:top-1 before:h-2 before:w-2 before:rounded-[2px] before:bg-[#54bce5] before:opacity-0 before:scale-50 before:transition-all before:duration-200 group-hover:before:opacity-100 group-hover:before:scale-100 group-hover:before:shadow-[0_0_10px_rgba(84,188,229,0.9)] rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-transparent transition-all duration-200 ease-out group-hover:scale-105 group-hover:bg-[#17304a] group-hover:shadow-[0_4px_14px_rgba(84,188,229,0.12)]">
-                <LogOut
-                  size={17}
-                  strokeWidth={1.8}
-                  className="text-[#8195ad] transition-colors duration-200 group-hover:text-[#63c9ef]"
-                />
-              </span>
-
-              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
-                Sign Out
-              </span>
-            </button>
-          </nav>
-        </div>
-
-        {/* SIDEBAR USER */}
-
-        <div className="shrink-0 border-t border-[#223149] p-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-[#111e2f] px-3.5 py-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold text-white">
-              {initials}
-            </div>
-
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold text-white">
-                {facultyName}
-              </p>
-
-              <p className="truncate text-[11px] text-[#8296ae]">
-                {facultyRole}
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* =====================================================
-          MAIN AREA
-      ====================================================== */}
-
-      <div className="min-h-screen w-full min-w-0 lg:ml-[270px] lg:w-[calc(100%-270px)]">
-
-        {/* ===================================================
-            CONTENT
-        ==================================================== */}
-
-        <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-5 py-6 sm:px-6 lg:px-8">
-
-          <button
-            type="button"
-            onClick={() => setMobileSidebarOpen(true)}
-            aria-label="Open sidebar"
-            className="fixed right-5 top-5 z-30 flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white text-[#263a53] shadow-[0_8px_24px_rgba(20,50,80,0.10)] lg:hidden"
-          >
-            <Menu size={19} />
-          </button>
-
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#edf4fa] text-[#0d1728]">
+      <div className="min-h-screen w-full min-w-0">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6 lg:px-8">
           {/* BACKGROUND GRID */}
-
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div
               className="absolute inset-0"
@@ -1079,32 +674,21 @@ export default function FacultyStudentApprovalPage() {
             />
 
             <div className="absolute left-[20%] top-[8%] h-[450px] w-[450px] rounded-full bg-[#dceef8] opacity-50 blur-3xl" />
-
             <div className="absolute right-[5%] top-[30%] h-[350px] w-[350px] rounded-full bg-[#e4f2f9] opacity-60 blur-3xl" />
           </div>
 
-          {/* =================================================
-              CENTERED CONTENT WRAPPER
-          ================================================= */}
-
-          <div className="relative ml-0 w-full max-w-none">
-
+          <div className="relative w-full max-w-none">
             {/* =================================================
                 HERO
             ================================================= */}
 
             <section className="relative flex h-[280px] w-full items-center overflow-hidden rounded-[23px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 py-7 shadow-[0_18px_45px_rgba(10,27,48,0.18)] sm:px-9 lg:px-10">
-
               <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border border-[#54bce5]/20" />
-
               <div className="pointer-events-none absolute right-4 top-12 h-40 w-40 rounded-full border border-[#54bce5]/10" />
-
               <div className="pointer-events-none absolute bottom-[-100px] left-[42%] h-64 w-64 rounded-full bg-[#54bce5]/5 blur-3xl" />
-
               <div className="pointer-events-none absolute left-[38%] top-[-80px] h-56 w-56 rounded-full bg-[#54bce5]/6 blur-3xl" />
 
               <div className="relative z-10 max-w-[900px]">
-
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#54bce5]/30 bg-[#54bce5]/10 px-3.5 py-1.5 text-[11px] font-semibold text-[#76d0f1]">
                   <ShieldCheck size={14} />
                   Faculty Verification
@@ -1134,7 +718,6 @@ export default function FacultyStudentApprovalPage() {
                   </div>
                 </div>
               </div>
-
             </section>
 
             {/* =================================================
@@ -1142,9 +725,7 @@ export default function FacultyStudentApprovalPage() {
             ================================================= */}
 
             <section className="mt-5 rounded-[20px] border border-[#d8e3ed] bg-white px-5 py-4 shadow-[0_8px_25px_rgba(30,60,90,0.06)] sm:px-6">
-
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e8f3fa] text-[12px] font-bold text-[#4b9ac4]">
                     {initials}
@@ -1163,13 +744,10 @@ export default function FacultyStudentApprovalPage() {
 
                 <div className="sm:ml-auto">
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#bde5d3] bg-[#f0faf5] px-3.5 py-2 text-[11px] font-semibold text-[#318c67]">
-                    <ShieldCheck
-                      size={14}
-                    />
+                    <ShieldCheck size={14} />
                     Faculty Access
                   </div>
                 </div>
-
               </div>
             </section>
 
@@ -1214,7 +792,6 @@ export default function FacultyStudentApprovalPage() {
             ================================================= */}
 
             <section className="mt-5 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
               <ApprovalStatCard
                 title="Pending"
                 value={counts.pending}
@@ -1250,7 +827,6 @@ export default function FacultyStudentApprovalPage() {
                 iconClass="bg-[#edf7fc] text-[#4e9ed0]"
                 hoverBoxClass="bg-[#edf7fc] border-[#9bcbe4]"
               />
-
             </section>
 
             {/* =================================================
@@ -1258,18 +834,12 @@ export default function FacultyStudentApprovalPage() {
             ================================================= */}
 
             <section className="mt-7 overflow-hidden rounded-[21px] border border-[#d8e3ed] bg-white shadow-[0_8px_25px_rgba(30,60,90,0.055)]">
-
               {/* SECTION HEADER */}
-
               <div className="border-b border-[#e7edf3] px-5 py-5 sm:px-6">
-
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#edf7fc] text-[#4d9dca]">
-                      <GraduationCap
-                        size={21}
-                      />
+                      <GraduationCap size={21} />
                     </div>
 
                     <div>
@@ -1284,7 +854,6 @@ export default function FacultyStudentApprovalPage() {
                   </div>
 
                   {/* SEARCH */}
-
                   <div className="relative w-full lg:w-[330px]">
                     <Search
                       size={17}
@@ -1303,74 +872,41 @@ export default function FacultyStudentApprovalPage() {
                       className="h-11 w-full rounded-xl border border-[#dbe5ed] bg-[#f8fbfd] pl-10 pr-4 text-[12px] text-[#142238] outline-none transition placeholder:text-[#9aabba] focus:border-[#8fc7e3] focus:bg-white focus:ring-2 focus:ring-[#dff1fa]"
                     />
                   </div>
-
                 </div>
 
                 {/* FILTERS */}
-
                 <div className="mt-5 flex flex-wrap gap-2">
-
                   <FilterButton
-                    active={
-                      activeFilter ===
-                      "all"
-                    }
-                    onClick={() =>
-                      setActiveFilter(
-                        "all"
-                      )
-                    }
+                    active={activeFilter === "all"}
+                    onClick={() => setActiveFilter("all")}
                     label="All Applications"
                     count={counts.total}
                   />
 
                   <FilterButton
-                    active={
-                      activeFilter ===
-                      "pending"
-                    }
-                    onClick={() =>
-                      setActiveFilter(
-                        "pending"
-                      )
-                    }
+                    active={activeFilter === "pending"}
+                    onClick={() => setActiveFilter("pending")}
                     label="Pending"
                     count={counts.pending}
                   />
 
                   <FilterButton
-                    active={
-                      activeFilter ===
-                      "approved"
-                    }
-                    onClick={() =>
-                      setActiveFilter(
-                        "approved"
-                      )
-                    }
+                    active={activeFilter === "approved"}
+                    onClick={() => setActiveFilter("approved")}
                     label="Approved"
                     count={counts.approved}
                   />
 
                   <FilterButton
-                    active={
-                      activeFilter ===
-                      "rejected"
-                    }
-                    onClick={() =>
-                      setActiveFilter(
-                        "rejected"
-                      )
-                    }
+                    active={activeFilter === "rejected"}
+                    onClick={() => setActiveFilter("rejected")}
                     label="Rejected"
                     count={counts.rejected}
                   />
-
                 </div>
               </div>
 
               {/* APPLICATION LIST */}
-
               {loading ? (
                 <div className="flex min-h-[330px] items-center justify-center">
                   <div className="flex flex-col items-center gap-3 text-[#74879c]">
@@ -1384,39 +920,27 @@ export default function FacultyStudentApprovalPage() {
                     </p>
                   </div>
                 </div>
-              ) : filteredStudents.length ===
-                0 ? (
+              ) : filteredStudents.length === 0 ? (
                 <EmptyState
                   filter={activeFilter}
                   searchTerm={searchTerm}
                 />
               ) : (
                 <div className="divide-y divide-[#edf1f5]">
-
-                  {filteredStudents.map(
-                    (student) => (
-                      <StudentApplicationRow
-                        key={student.id}
-                        student={student}
-                        actionLoading={
-                          actionLoading
-                        }
-                        onApprove={
-                          approveStudent
-                        }
-                        onReject={
-                          openRejectModal
-                        }
-                      />
-                    )
-                  )}
-
+                  {filteredStudents.map((student) => (
+                    <StudentApplicationRow
+                      key={student.id}
+                      student={student}
+                      actionLoading={actionLoading}
+                      onApprove={approveStudent}
+                      onReject={openRejectModal}
+                    />
+                  ))}
                 </div>
               )}
             </section>
 
             <div className="h-8" />
-
           </div>
         </main>
       </div>
@@ -1424,118 +948,83 @@ export default function FacultyStudentApprovalPage() {
       {/* =====================================================
           REJECT MODAL
       ====================================================== */}
+      {showRejectModal && selectedStudent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f]/55 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-[22px] border border-[#dbe5ed] bg-white shadow-[0_25px_70px_rgba(5,20,40,0.25)]">
+            <div className="flex items-start justify-between border-b border-[#edf1f5] px-6 py-5">
+              <div>
+                <h2 className="font-serif text-[21px] font-bold text-[#142238]">
+                  Reject Student
+                </h2>
 
-      {showRejectModal &&
-        selectedStudent && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f]/55 p-4 backdrop-blur-sm">
+                <p className="mt-1 text-[12px] leading-5 text-[#71849a]">
+                  Rejecting registration for{" "}
+                  <span className="font-semibold text-[#263b53]">
+                    {selectedStudent.name}
+                  </span>
+                  .
+                </p>
+              </div>
 
-            <div className="w-full max-w-md overflow-hidden rounded-[22px] border border-[#dbe5ed] bg-white shadow-[0_25px_70px_rgba(5,20,40,0.25)]">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setSelectedStudent(null);
+                  setRejectionReason("");
+                }}
+                className="rounded-xl p-2 text-[#91a0b0] transition hover:bg-[#f1f5f8] hover:text-[#263b53]"
+              >
+                <X size={19} />
+              </button>
+            </div>
 
-              <div className="flex items-start justify-between border-b border-[#edf1f5] px-6 py-5">
+            <div className="px-6 py-5">
+              <label className="mb-2 block text-[12px] font-semibold text-[#263b53]">
+                Rejection Reason
+              </label>
 
-                <div>
-                  <h2 className="font-serif text-[21px] font-bold text-[#142238]">
-                    Reject Student
-                  </h2>
+              <textarea
+                value={rejectionReason}
+                onChange={(event) =>
+                  setRejectionReason(event.target.value)
+                }
+                rows={4}
+                placeholder="Enter the reason for rejecting this student..."
+                className="w-full resize-none rounded-xl border border-[#dbe5ed] bg-[#f8fbfd] p-3 text-[12px] leading-5 text-[#142238] outline-none transition placeholder:text-[#9aabba] focus:border-[#df9b9b] focus:bg-white focus:ring-2 focus:ring-[#fdecec]"
+              />
 
-                  <p className="mt-1 text-[12px] leading-5 text-[#71849a]">
-                    Rejecting registration for{" "}
-                    <span className="font-semibold text-[#263b53]">
-                      {selectedStudent.name}
-                    </span>
-                    .
-                  </p>
-                </div>
-
+              <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => {
-                    setShowRejectModal(
-                      false
-                    );
-                    setSelectedStudent(
-                      null
-                    );
-                    setRejectionReason(
-                      ""
-                    );
+                    setShowRejectModal(false);
+                    setSelectedStudent(null);
+                    setRejectionReason("");
                   }}
-                  className="rounded-xl p-2 text-[#91a0b0] transition hover:bg-[#f1f5f8] hover:text-[#263b53]"
+                  className="rounded-xl border border-[#dbe5ed] px-4 py-2.5 text-[12px] font-semibold text-[#51667e] transition hover:bg-[#f7fafc]"
                 >
-                  <X size={19} />
+                  Cancel
                 </button>
 
-              </div>
-
-              <div className="px-6 py-5">
-
-                <label className="mb-2 block text-[12px] font-semibold text-[#263b53]">
-                  Rejection Reason
-                </label>
-
-                <textarea
-                  value={
-                    rejectionReason
-                  }
-                  onChange={(event) =>
-                    setRejectionReason(
-                      event.target.value
-                    )
-                  }
-                  rows={4}
-                  placeholder="Enter the reason for rejecting this student..."
-                  className="w-full resize-none rounded-xl border border-[#dbe5ed] bg-[#f8fbfd] p-3 text-[12px] leading-5 text-[#142238] outline-none transition placeholder:text-[#9aabba] focus:border-[#df9b9b] focus:bg-white focus:ring-2 focus:ring-[#fdecec]"
-                />
-
-                <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowRejectModal(
-                        false
-                      );
-                      setSelectedStudent(
-                        null
-                      );
-                      setRejectionReason(
-                        ""
-                      );
-                    }}
-                    className="rounded-xl border border-[#dbe5ed] px-4 py-2.5 text-[12px] font-semibold text-[#51667e] transition hover:bg-[#f7fafc]"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={
-                      rejectStudent
-                    }
-                    disabled={
-                      actionLoading ===
-                      selectedStudent.id
-                    }
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#dc5f5f] px-4 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#ca4e4e] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {actionLoading ===
-                    selectedStudent.id ? (
-                      <Loader2
-                        size={15}
-                        className="animate-spin"
-                      />
-                    ) : (
-                      <UserX size={15} />
-                    )}
-
-                    Reject Student
-                  </button>
-
-                </div>
+                <button
+                  type="button"
+                  onClick={rejectStudent}
+                  disabled={actionLoading === selectedStudent.id}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#dc5f5f] px-4 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#ca4e4e] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {actionLoading === selectedStudent.id ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <UserX size={15} />
+                  )}
+                  Reject Student
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1563,13 +1052,11 @@ function ApprovalStatCard({
 }: ApprovalStatCardProps) {
   return (
     <div className="group relative min-w-0 overflow-hidden rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#b9d8e9] hover:shadow-[0_12px_28px_rgba(30,70,100,0.09)]">
-
       <div
         className={`pointer-events-none absolute inset-2.5 rounded-[15px] border opacity-0 scale-[0.97] transition-all duration-250 ease-out group-hover:scale-100 group-hover:opacity-100 ${hoverBoxClass}`}
       />
 
       <div className="relative z-10 flex items-start justify-between gap-4">
-
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#687c93]">
             {title}
@@ -1583,12 +1070,8 @@ function ApprovalStatCard({
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClass}`}
         >
-          <Icon
-            size={18}
-            strokeWidth={1.8}
-          />
+          <Icon size={18} strokeWidth={1.8} />
         </div>
-
       </div>
 
       <p className="relative z-10 mt-4 text-[10px] leading-5 text-[#7890a8]">
@@ -1698,7 +1181,6 @@ function EmptyState({
 
   return (
     <div className="flex min-h-[330px] flex-col items-center justify-center px-6 text-center">
-
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#edf7fc] text-[#54a8d5]">
         <GraduationCap
           size={30}
@@ -1720,7 +1202,6 @@ function EmptyState({
             New applications will appear here.
           </p>
         )}
-
     </div>
   );
 }
@@ -1760,19 +1241,9 @@ function StudentApplicationRow({
 
   return (
     <div className="group relative p-5 transition-all duration-200 hover:bg-[#f9fbfd] sm:px-6">
-
-      {/* Premium hover accent — appears only when cursor enters this application */}
-      <span
-        className="pointer-events-none absolute left-2 top-2 h-2 w-2 scale-50 rounded-[3px] bg-[#54bce5] opacity-0 shadow-[0_0_12px_rgba(84,188,229,0.75)] transition-all duration-200 ease-out group-hover:scale-100 group-hover:opacity-100"
-        aria-hidden="true"
-      />
-
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-
         {/* STUDENT INFO */}
-
         <div className="flex min-w-0 items-start gap-4">
-
           <div
             className="
               flex h-12 w-12 shrink-0 items-center justify-center
@@ -1784,27 +1255,19 @@ function StudentApplicationRow({
               group-hover:shadow-[0_8px_20px_rgba(84,188,229,0.24)]
             "
           >
-
             {student.profileImage ? (
               <img
-                src={
-                  student.profileImage
-                }
+                src={student.profileImage}
                 alt={student.name}
                 className="h-full w-full object-cover"
               />
             ) : (
-              <User
-                size={21}
-              />
+              <User size={21} />
             )}
-
           </div>
 
           <div className="min-w-0">
-
             <div className="flex flex-wrap items-center gap-2">
-
               <h3 className="truncate text-[14px] font-bold text-[#142238]">
                 {student.name}
               </h3>
@@ -1813,9 +1276,7 @@ function StudentApplicationRow({
                 <StatusBadge
                   label="Pending"
                   className="bg-[#fff7e8] text-[#c98700]"
-                  icon={
-                    <Clock3 size={11} />
-                  }
+                  icon={<Clock3 size={11} />}
                 />
               )}
 
@@ -1823,11 +1284,7 @@ function StudentApplicationRow({
                 <StatusBadge
                   label="Approved"
                   className="bg-[#edf9f3] text-[#32946b]"
-                  icon={
-                    <CheckCircle2
-                      size={11}
-                    />
-                  }
+                  icon={<CheckCircle2 size={11} />}
                 />
               )}
 
@@ -1835,16 +1292,12 @@ function StudentApplicationRow({
                 <StatusBadge
                   label="Rejected"
                   className="bg-[#fff0f0] text-[#d55b5b]"
-                  icon={
-                    <UserX size={11} />
-                  }
+                  icon={<UserX size={11} />}
                 />
               )}
-
             </div>
 
             <div className="mt-2 flex flex-col gap-1.5 text-[11px] text-[#71849a] sm:flex-row sm:flex-wrap sm:gap-x-5">
-
               <span className="inline-flex items-center gap-2 transition-colors duration-200 group-hover:text-[#4f93b9]">
                 <Mail
                   size={14}
@@ -1862,76 +1315,46 @@ function StudentApplicationRow({
                   {student.campusUserId}
                 </span>
               )}
-
             </div>
 
             <p className="mt-2 text-[10px] text-[#9aaaba]">
-              Registration submitted on{" "}
-              {formatDate(
-                student.createdAt
-              )}
+              Registration submitted on {formatDate(student.createdAt)}
             </p>
 
-            {student.rejectionReason &&
-              rejected && (
-                <p className="mt-2 max-w-[650px] rounded-lg bg-[#fff7f7] px-3 py-2 text-[10px] leading-5 text-[#a76565]">
-                  <span className="font-semibold">
-                    Reason:
-                  </span>{" "}
-                  {
-                    student.rejectionReason
-                  }
-                </p>
-              )}
-
+            {student.rejectionReason && rejected && (
+              <p className="mt-2 max-w-[650px] rounded-lg bg-[#fff7f7] px-3 py-2 text-[10px] leading-5 text-[#a76565]">
+                <span className="font-semibold">Reason:</span>{" "}
+                {student.rejectionReason}
+              </p>
+            )}
           </div>
         </div>
 
         {/* ACTIONS */}
-
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-
           {pending && (
             <>
               <button
                 type="button"
-                onClick={() =>
-                  onApprove(student)
-                }
-                disabled={
-                  actionLoading ===
-                  student.id
-                }
+                onClick={() => onApprove(student)}
+                disabled={actionLoading === student.id}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#3da678] px-4 py-2.5 text-[11px] font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#329267] hover:shadow-[0_6px_16px_rgba(61,166,120,0.18)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {actionLoading ===
-                student.id ? (
-                  <Loader2
-                    size={14}
-                    className="animate-spin"
-                  />
+                {actionLoading === student.id ? (
+                  <Loader2 size={14} className="animate-spin" />
                 ) : (
                   <Check size={14} />
                 )}
-
                 Approve
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  onReject(student)
-                }
-                disabled={
-                  actionLoading ===
-                  student.id
-                }
+                onClick={() => onReject(student)}
+                disabled={actionLoading === student.id}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#efcaca] bg-white px-4 py-2.5 text-[11px] font-semibold text-[#d25e5e] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#fff5f5] hover:shadow-[0_6px_16px_rgba(210,94,94,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <UserX
-                  size={14}
-                />
-
+                <UserX size={14} />
                 Reject
               </button>
             </>
@@ -1939,22 +1362,17 @@ function StudentApplicationRow({
 
           {approved && (
             <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#ccebdc] bg-[#f3fbf7] px-4 py-2.5 text-[11px] font-semibold text-[#35956c]">
-              <CheckCircle2
-                size={14}
-              />
+              <CheckCircle2 size={14} />
               Approved
             </div>
           )}
 
           {rejected && (
             <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#f0d0d0] bg-[#fff7f7] px-4 py-2.5 text-[11px] font-semibold text-[#d05f5f]">
-              <UserX
-                size={14}
-              />
+              <UserX size={14} />
               Rejected
             </div>
           )}
-
         </div>
       </div>
     </div>

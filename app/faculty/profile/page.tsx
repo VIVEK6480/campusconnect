@@ -3,35 +3,27 @@
 import {
   Activity,
   Award,
-  Bell,
   BriefcaseBusiness,
   Building2,
   CalendarCheck2,
-  CalendarDays,
   CheckCircle2,
   ChevronRight,
-  ClipboardCheck,
   Clock3,
   Edit3,
   Eye,
   EyeOff,
   GraduationCap,
   KeyRound,
-  LogOut,
   Mail,
   MapPin,
-  Menu,
   Phone,
   Save,
-  Settings,
   ShieldCheck,
   Upload,
   UserCircle,
   UserRound,
-  Users,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -81,18 +73,6 @@ const DEFAULT_FACULTY: FacultyUser = {
   profileImage: null,
 };
 
-const navigation = [
-  { title: "Dashboard", href: "/dashboard/faculty", icon: GraduationCap },
-  { title: "Students", href: "/dashboard/faculty/students", icon: Users },
-  { title: "Student Approval", href: "/dashboard/faculty/approvals/students", icon: CheckCircle2 },
-  { title: "Attendance", href: "/dashboard/faculty/attendance", icon: ClipboardCheck },
-  { title: "Events", href: "/dashboard/faculty/events", icon: CalendarDays },
-  { title: "Activities", href: "/dashboard/faculty/activities", icon: Activity },
-  { title: "Clubs", href: "/dashboard/faculty/clubs", icon: Users },
-  { title: "Faculty Profile", href: "/faculty/profile", icon: UserCircle },
-  { title: "Notifications", href: "/dashboard/faculty/notifications", icon: Bell },
-];
-
 function normalizeFaculty(raw: Partial<FacultyUser>): FacultyUser {
   return {
     ...DEFAULT_FACULTY,
@@ -116,32 +96,12 @@ function formFromUser(user: FacultyUser): ProfileForm {
   };
 }
 
-function readStoredFaculty(): FacultyUser {
-  if (typeof window === "undefined") return DEFAULT_FACULTY;
-
-  for (const key of ["facultyUser", "faculty", "currentFaculty", "user"]) {
-    try {
-      const stored = localStorage.getItem(key);
-      if (!stored) continue;
-      const candidate = JSON.parse(stored);
-      if (candidate && typeof candidate === "object" && candidate.email) {
-        return normalizeFaculty(candidate);
-      }
-    } catch {
-      // Continue to check next key
-    }
-  }
-
-  return DEFAULT_FACULTY;
-}
-
 export default function FacultyProfilePage() {
   const router = useRouter();
   const pathname = usePathname();
 
   const [user, setUser] = useState<FacultyUser>(DEFAULT_FACULTY);
   const [editing, setEditing] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState<ProfileForm>(() => formFromUser(DEFAULT_FACULTY));
@@ -202,9 +162,6 @@ export default function FacultyProfilePage() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && mobileSidebarOpen) {
-        setMobileSidebarOpen(false);
-      }
       if (event.key === "Escape" && editing && !saving) {
         setEditing(false);
       }
@@ -212,7 +169,7 @@ export default function FacultyProfilePage() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [editing, mobileSidebarOpen, saving]);
+  }, [editing, saving]);
 
   const facultyName = user.name || "Vivek Kumar";
   const facultyRole = user.role || "Faculty Member";
@@ -249,11 +206,6 @@ export default function FacultyProfilePage() {
     ];
     return Math.round((fields.filter(Boolean).length / fields.length) * 100);
   }, [user]);
-
-  function isActive(href: string) {
-    if (href === "/dashboard/faculty") return pathname === href;
-    return pathname === href || pathname.startsWith(`${href}/`);
-  }
 
   function updateForm(field: keyof ProfileForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -459,33 +411,10 @@ export default function FacultyProfilePage() {
     }
   }
 
-  async function signOut() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-      });
-    } catch (logoutError) {
-      console.error("FACULTY LOGOUT ERROR:", logoutError);
-    }
-
-    try {
-      ["facultyUser", "faculty", "currentFaculty", "user", "token", "facultyToken"].forEach(
-        (key) => localStorage.removeItem(key),
-      );
-    } catch {
-      // Handled silently
-    }
-
-    router.replace("/faculty/login");
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[#edf4fa]">
-        <aside className="fixed inset-y-0 left-0 hidden w-[270px] bg-[#0b1423] lg:block" />
-        <main className="min-h-screen lg:pl-[270px]">
+        <main className="min-h-screen w-full">
           <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
             <div className="animate-pulse space-y-5">
               <div className="h-[250px] rounded-[28px] bg-slate-200" />
@@ -503,96 +432,10 @@ export default function FacultyProfilePage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#edf4fa] text-[#142238]">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#edf4fa] text-[#142238]">
       <ProfileLayoutStyles />
-      {mobileSidebarOpen && (
-        <button
-          aria-label="Close sidebar overlay"
-          type="button"
-          onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
-        />
-      )}
 
-      {/* FACULTY SIDEBAR */}
-      <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[270px] flex-col border-r border-[#223149] bg-[#0b1423] text-white shadow-[8px_0_35px_rgba(5,15,30,0.16)] transition-transform duration-300 lg:translate-x-0 ${
-          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex h-[92px] shrink-0 items-center border-b border-[#223149] px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_8px_25px_rgba(84,188,229,0.25)]">
-              <GraduationCap size={25} />
-            </div>
-            <div className="min-w-0">
-              <h1 className="font-serif text-[19px] font-bold tracking-tight">CampusConnect</h1>
-              <p className="mt-0.5 text-[11px] text-[#91a4bb]">Faculty Portal</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            aria-label="Close sidebar"
-            onClick={() => setMobileSidebarOpen(false)}
-            className="ml-auto rounded-lg p-2 text-[#8fa3bb] transition hover:bg-white/10 hover:text-white lg:hidden"
-          >
-            <X size={19} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-7">
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Main Menu
-          </p>
-          <nav className="space-y-1.5">
-            {navigation.map((item) => (
-              <SidebarLink
-                key={item.title}
-                item={item}
-                active={isActive(item.href)}
-                onNavigate={() => setMobileSidebarOpen(false)}
-              />
-            ))}
-          </nav>
-
-          <div className="my-7 h-px bg-[#223149]" />
-
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Account
-          </p>
-          <nav className="space-y-1.5">
-            <Link
-              href="/faculty/security"
-              onClick={() => setMobileSidebarOpen(false)}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-            >
-              <Settings size={18} className="text-[#8195ad] transition group-hover:text-[#63c9ef]" />
-              <span>Settings</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-            >
-              <LogOut size={18} className="text-[#8195ad] transition group-hover:text-[#63c9ef]" />
-              <span>Sign Out</span>
-            </button>
-          </nav>
-        </div>
-
-        <div className="shrink-0 border-t border-[#223149] p-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-[#111e2f] px-3.5 py-3">
-            <Avatar user={user} initials={initials} size="sm" />
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold">{facultyName}</p>
-              <p className="truncate text-[11px] text-[#8296ae]">{facultyRole}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <div className="min-h-screen min-w-0 lg:pl-[270px]">
+      <div className="min-h-screen w-full min-w-0">
         <main className="relative min-h-screen w-full min-w-0 overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div
@@ -850,40 +693,6 @@ export default function FacultyProfilePage() {
         />
       )}
     </div>
-  );
-}
-
-function SidebarLink({
-  item,
-  active,
-  onNavigate,
-}: {
-  item: (typeof navigation)[number];
-  active: boolean;
-  onNavigate: () => void;
-}) {
-  const Icon = item.icon;
-  return (
-    <Link
-      href={item.href}
-      onClick={onNavigate}
-      className={`group relative flex h-11 w-full items-center gap-3 overflow-hidden rounded-xl px-3.5 text-[13px] font-medium transition-all duration-200 ${
-        active
-          ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
-          : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
-      }`}
-    >
-      <span className={`absolute inset-y-0 left-0 w-0 bg-[#54bce5]/10 transition-all duration-300 group-hover:w-full ${active ? "w-full" : ""}`} />
-      <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:bg-[#54bce5]/15">
-        <Icon
-          size={18}
-          strokeWidth={1.8}
-          className={active ? "text-[#63c9ef]" : "text-[#8195ad] transition group-hover:text-[#63c9ef]"}
-        />
-      </span>
-      <span className="relative z-10">{item.title}</span>
-      {active && <ChevronRight size={16} className="relative z-10 ml-auto text-[#63c9ef]" />}
-    </Link>
   );
 }
 

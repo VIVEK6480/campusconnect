@@ -1,29 +1,21 @@
 "use client";
 
 import {
-  Activity,
-  Bell,
   CalendarDays,
   CheckCircle2,
-  ChevronRight,
   Clock,
   GraduationCap,
-  LogOut,
   MapPin,
-  Menu,
-  Plus,
   Pencil,
+  Plus,
   RefreshCw,
   Search,
-  ShieldCheck,
   Trash2,
   UserCircle,
   Users,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
 
 type FacultyUser = {
   id?: string;
@@ -78,63 +70,6 @@ const emptyForm: EventForm = {
   clubId: "",
 };
 
-const navigation = [
-  {
-    title: "Dashboard",
-    href: "/dashboard/faculty",
-    icon: GraduationCap,
-  },
-  {
-    title: "Students",
-    href: "/dashboard/faculty/approvals/students",
-    icon: Users,
-  },
-  {
-    title: "Student Approval",
-    href: "/dashboard/faculty/approvals/students",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Attendance",
-    href: "/dashboard/faculty/attendance",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Events",
-    href: "/dashboard/faculty/events",
-    icon: CalendarDays,
-  },
-  {
-    title: "Activities",
-    href: "/dashboard/faculty/activities",
-    icon: Activity,
-  },
-  {
-    title: "Clubs",
-    href: "/dashboard/faculty/clubs",
-    icon: Users,
-  },
-  {
-    title: "Faculty Profile",
-    href: "/faculty/profile",
-    icon: UserCircle,
-  },
-  {
-    title: "Notifications",
-    href: "/dashboard/faculty/notifications",
-    icon: Bell,
-  },
-];
-
-const accountNavigation = [
-  {
-    title: "Settings",
-    href: "/faculty/security",
-    icon: ShieldCheck,
-  },
-];
-
-
 type EventStatCardProps = {
   title: string;
   value: number;
@@ -151,17 +86,12 @@ function EventStatCard({
   iconClass,
 }: EventStatCardProps) {
   return (
-    <div
-      className="group/stat relative min-w-0 overflow-hidden rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-300 hover:-translate-y-1 hover:border-[#b9d8e9] hover:shadow-[0_16px_32px_rgba(30,70,100,0.11)]"
-    >
+    <div className="group/stat relative min-w-0 overflow-hidden rounded-[19px] border border-[#d8e3ed] bg-white p-4 shadow-[0_7px_22px_rgba(30,60,90,0.055)] transition-all duration-300 hover:-translate-y-1 hover:border-[#b9d8e9] hover:shadow-[0_16px_32px_rgba(30,70,100,0.11)]">
       <span className="pointer-events-none absolute -left-1/2 top-0 h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 transition-all duration-700 group-hover/stat:left-[120%] group-hover/stat:opacity-100" />
 
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-[#687c93]">
-            {title}
-          </p>
-
+          <p className="text-[11px] font-medium text-[#687c93]">{title}</p>
           <p className="mt-2 font-serif text-[27px] font-bold leading-none text-[#0b1728]">
             {value}
           </p>
@@ -170,10 +100,7 @@ function EventStatCard({
         <div
           className={`group/stat-icon relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${iconClass} transition-all duration-300 group-hover/stat:h-12 group-hover/stat:w-12 group-hover/stat:rounded-2xl group-hover/stat:bg-[#54bce5] group-hover/stat:text-white group-hover/stat:shadow-[0_10px_28px_rgba(84,188,229,0.32)]`}
         >
-          <span
-            className="pointer-events-none absolute inset-y-0 left-[-120%] w-[55%] -skew-x-[18deg] bg-gradient-to-r from-transparent via-white/65 to-transparent opacity-0 transition-all duration-700 group-hover/stat-icon:left-[150%] group-hover/stat-icon:opacity-100"
-          />
-
+          <span className="pointer-events-none absolute inset-y-0 left-[-120%] w-[55%] -skew-x-[18deg] bg-gradient-to-r from-transparent via-white/65 to-transparent opacity-0 transition-all duration-700 group-hover/stat-icon:left-[150%] group-hover/stat-icon:opacity-100" />
           <span className="pointer-events-none absolute inset-0 rounded-xl border border-white/30 opacity-0 transition-opacity duration-300 group-hover/stat-icon:opacity-100 group-hover/stat-icon:rounded-2xl" />
 
           <Icon
@@ -193,11 +120,7 @@ function EventStatCard({
 }
 
 export default function FacultyEventsPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-
   const [user, setUser] = useState<FacultyUser>(defaultFaculty);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -268,11 +191,11 @@ export default function FacultyEventsPage() {
               break;
             }
           } catch {
-            // Continue checking the next key.
+            // Continue checking next key
           }
         }
       } catch {
-        // Keep default faculty.
+        // Keep default
       }
     }, 0);
 
@@ -303,7 +226,6 @@ export default function FacultyEventsPage() {
       setEvents(Array.isArray(data.events) ? data.events : []);
     } catch (fetchError) {
       console.error("FETCH EVENTS ERROR:", fetchError);
-
       setError(
         fetchError instanceof Error
           ? fetchError.message
@@ -329,7 +251,6 @@ export default function FacultyEventsPage() {
       if (!response.ok) return;
 
       const data = await response.json();
-
       const receivedClubs = data.clubs || data.data || [];
 
       if (Array.isArray(receivedClubs)) {
@@ -340,10 +261,6 @@ export default function FacultyEventsPage() {
     }
   }
 
-  /* =========================================================
-     INITIAL DATA LOAD
-  ========================================================= */
-
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void fetchEvents();
@@ -352,10 +269,6 @@ export default function FacultyEventsPage() {
 
     return () => window.clearTimeout(timer);
   }, []);
-
-  /* =========================================================
-     CURRENT DATE (PURE RENDER SAFE)
-  ========================================================= */
 
   useEffect(() => {
     const updateCurrentDate = () => setCurrentDate(new Date());
@@ -366,10 +279,6 @@ export default function FacultyEventsPage() {
     return () => window.clearInterval(interval);
   }, []);
 
-  /* =========================================================
-     FORM CHANGE
-  ========================================================= */
-
   function handleChange(field: keyof EventForm, value: string) {
     setForm((previous) => ({
       ...previous,
@@ -379,10 +288,6 @@ export default function FacultyEventsPage() {
     setError("");
     setSuccess("");
   }
-
-  /* =========================================================
-     OPEN CREATE FORM
-  ========================================================= */
 
   function openCreateForm() {
     setIsEditing(false);
@@ -431,10 +336,6 @@ export default function FacultyEventsPage() {
     setForm(emptyForm);
     setError("");
   }
-
-  /* =========================================================
-     CREATE / UPDATE EVENT
-  ========================================================= */
 
   async function handleCreateEvent(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -525,14 +426,7 @@ export default function FacultyEventsPage() {
     }
   }
 
-  /* =========================================================
-     DELETE EVENT
-  ========================================================= */
-
-  async function handleDeleteEvent(
-    eventId: string,
-    title: string
-  ) {
+  async function handleDeleteEvent(eventId: string, title: string) {
     if (deletingId) return;
 
     const confirmed = window.confirm(
@@ -581,42 +475,6 @@ export default function FacultyEventsPage() {
     }
   }
 
-  /* =========================================================
-     SIGN OUT
-  ========================================================= */
-
-  async function handleSignOut() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-      });
-    } catch (logoutError) {
-      console.error("Faculty logout error:", logoutError);
-    }
-
-    try {
-      localStorage.removeItem("facultyUser");
-      localStorage.removeItem("faculty");
-      localStorage.removeItem("currentFaculty");
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("facultyToken");
-    } catch (storageError) {
-      console.error(
-        "Local storage cleanup error:",
-        storageError
-      );
-    }
-
-    router.replace("/faculty/login");
-  }
-
-  /* =========================================================
-     FILTERED EVENTS
-  ========================================================= */
-
   const filteredEvents = events.filter((event) => {
     const term = searchTerm.trim().toLowerCase();
     const eventDate = new Date(event.eventDate);
@@ -638,10 +496,6 @@ export default function FacultyEventsPage() {
 
     return matchesSearch && matchesFilter;
   });
-
-  /* =========================================================
-     DATE / TIME
-  ========================================================= */
 
   function formatDate(date: string) {
     try {
@@ -666,231 +520,13 @@ export default function FacultyEventsPage() {
     }
   }
 
-  /* =========================================================
-     ACTIVE NAVIGATION
-  ========================================================= */
-
-  function isActive(href: string) {
-    if (href === "/dashboard/faculty") {
-      return pathname === href;
-    }
-
-    return (
-      pathname === href ||
-      pathname.startsWith(`${href}/`)
-    );
-  }
-
-  const facultyName = user.name || "Vivek Kumar";
-  const facultyRole = user.role || "Faculty Member";
   const facultyId = user.facultyId || "RNT-9457";
-
-  const initials =
-    facultyName
-      .split(" ")
-      .filter(Boolean)
-      .map((part) => part.charAt(0))
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "VK";
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#eef4fa] text-[#0d1728]">
-
-      {/* =====================================================
-          MOBILE OVERLAY
-      ===================================================== */}
-
-      {mobileSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
-        />
-      )}
-
-      {/* =====================================================
-          SIDEBAR
-      ===================================================== */}
-
-      <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[270px] flex-col border-r border-[#23344d] bg-[#0b1423] text-white shadow-[8px_0_35px_rgba(5,15,30,0.16)] transition-transform duration-300 lg:translate-x-0 ${
-          mobileSidebarOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
-        }`}
-      >
-        <div className="flex h-[92px] shrink-0 items-center justify-between border-b border-[#223149] px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_8px_25px_rgba(84,188,229,0.25)]">
-              <GraduationCap size={25} />
-            </div>
-
-            <div className="min-w-0">
-              <h1 className="font-serif text-[19px] font-bold tracking-tight">
-                CampusConnect
-              </h1>
-
-              <p className="mt-0.5 text-[11px] font-medium text-[#91a4bb]">
-                Faculty Portal
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setMobileSidebarOpen(false)}
-            aria-label="Close sidebar"
-            className="rounded-lg p-2 text-[#8fa3bb] transition hover:bg-white/10 hover:text-white lg:hidden"
-          >
-            <X size={19} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-7">
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Main Menu
-          </p>
-
-          <nav className="space-y-1.5">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={() =>
-                    setMobileSidebarOpen(false)
-                  }
-                  className={`group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium transition-all duration-200 ${
-                    active
-                      ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
-                      : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
-                  }`}
-                >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    className={
-                      active
-                        ? "text-[#63c9ef]"
-                        : "text-[#8195ad] group-hover:text-[#63c9ef]"
-                    }
-                  />
-
-                  <span>{item.title}</span>
-
-                  {active && (
-                    <ChevronRight
-                      size={16}
-                      className="ml-auto text-[#63c9ef]"
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="my-7 h-px bg-[#223149]" />
-
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Account
-          </p>
-
-          <nav className="space-y-1.5">
-            {accountNavigation.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={() =>
-                    setMobileSidebarOpen(false)
-                  }
-                  className={`group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium transition-all duration-200 ${
-                    active
-                      ? "bg-[#17263a] text-[#64c8ee]"
-                      : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
-                  }`}
-                >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    className="text-[#8195ad] group-hover:text-[#63c9ef]"
-                  />
-
-                  <span>{item.title}</span>
-                </Link>
-              );
-            })}
-
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-            >
-              <LogOut
-                size={18}
-                strokeWidth={1.8}
-                className="text-[#8195ad] group-hover:text-[#63c9ef]"
-              />
-
-              <span>Sign Out</span>
-            </button>
-          </nav>
-        </div>
-
-        <div className="shrink-0 border-t border-[#223149] p-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-[#111e2f] px-3.5 py-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold">
-              {initials}
-            </div>
-
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold">
-                {facultyName}
-              </p>
-
-              <p className="truncate text-[11px] text-[#8296ae]">
-                {facultyRole}
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* =====================================================
-          MAIN
-      ===================================================== */}
-
-      <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
-
-        {/* =====================================================
-            MOBILE MENU BUTTON
-        ===================================================== */}
-
-        <button
-          type="button"
-          onClick={() => setMobileSidebarOpen(true)}
-          aria-label="Open sidebar"
-          className="fixed right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce6f0] bg-white/95 text-[#263a53] shadow-lg backdrop-blur-xl lg:hidden"
-        >
-          <Menu size={20} />
-        </button>
-
-        {/* =====================================================
-            CONTENT
-        ===================================================== */}
-
+      <div className="min-h-screen w-full min-w-0">
         <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-4 py-6 sm:px-6">
-
           {/* BACKGROUND EFFECT */}
-
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div
               className="absolute inset-0"
@@ -900,30 +536,19 @@ export default function FacultyEventsPage() {
                 backgroundSize: "42px 42px",
               }}
             />
-
             <div className="absolute left-[12%] top-[4%] h-[420px] w-[420px] rounded-full bg-[#dceef8] opacity-60 blur-3xl" />
-
             <div className="absolute right-[4%] top-[32%] h-[360px] w-[360px] rounded-full bg-[#e4f2f9] opacity-70 blur-3xl" />
           </div>
 
           <div className="relative w-full">
-
-            {/* =================================================
-                HERO
-            ================================================= */}
-
+            {/* HERO */}
             <section className="group/hero relative h-[280px] overflow-hidden rounded-[24px] border border-[#263951] bg-gradient-to-br from-[#0d1728] via-[#101d30] to-[#14273b] px-7 shadow-[0_18px_45px_rgba(20,40,80,0.18)] transition-all duration-500 hover:shadow-[0_25px_60px_rgba(20,40,80,0.25)] sm:px-9 lg:px-11">
-
               <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border border-white/10 transition-transform duration-700 group-hover/hero:scale-110" />
-
               <div className="pointer-events-none absolute right-12 top-10 h-40 w-40 rounded-full border border-white/10 transition-transform duration-700 group-hover/hero:scale-110" />
-
               <div className="pointer-events-none absolute right-[15%] bottom-[-110px] h-64 w-64 rounded-full border border-[#78d4f1]/10" />
 
               <div className="relative z-10 flex h-full items-center justify-between gap-8">
-
                 <div className="max-w-[900px]">
-
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-3.5 py-1.5 text-[10px] font-semibold text-white/95 backdrop-blur-sm">
                     <CalendarDays size={13} />
                     CampusConnect Faculty Events
@@ -932,9 +557,7 @@ export default function FacultyEventsPage() {
                   <h1 className="font-serif text-[32px] font-bold leading-[1.03] tracking-[-0.035em] text-white sm:text-[43px] lg:text-[50px]">
                     Manage campus
                     <br />
-                    <span className="text-[#69c9ed]">
-                      events with ease.
-                    </span>
+                    <span className="text-[#69c9ed]">events with ease.</span>
                   </h1>
 
                   <p className="mt-4 max-w-[780px] text-[12px] leading-5 text-[#d9e3f4] sm:text-[13px]">
@@ -950,30 +573,20 @@ export default function FacultyEventsPage() {
                     <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium text-[#d6e0ed]">
                       <UserCircle size={13} />
                       Faculty ID:
-                      <span className="font-bold text-white">
-                        {facultyId}
-                      </span>
+                      <span className="font-bold text-white">{facultyId}</span>
                     </div>
                   </div>
-
                 </div>
 
-                {/* CREATE EVENT — CENTER RIGHT */}
+                {/* CREATE EVENT */}
                 <button
                   type="button"
                   onClick={openCreateForm}
                   className="group/create relative hidden shrink-0 items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3 text-[12px] font-bold text-[#243a75] shadow-[0_10px_28px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#f7fbff] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] lg:inline-flex"
                 >
                   <span className="absolute inset-0 -translate-x-full bg-[#54bce5]/10 transition-transform duration-500 group-hover/create:translate-x-full" />
-
-                  <Plus
-                    size={16}
-                    className="relative"
-                  />
-
-                  <span className="relative">
-                    Create Event
-                  </span>
+                  <Plus size={16} className="relative" />
+                  <span className="relative">Create Event</span>
                 </button>
 
                 {/* MOBILE CREATE EVENT */}
@@ -985,15 +598,10 @@ export default function FacultyEventsPage() {
                   <Plus size={15} />
                   Create Event
                 </button>
-
               </div>
-
             </section>
 
-            {/* =================================================
-                EVENT STATS
-            ================================================= */}
-
+            {/* STATS */}
             <section className="mt-5 grid w-full grid-cols-1 gap-4 md:grid-cols-3">
               <EventStatCard
                 title="Total Events"
@@ -1039,19 +647,12 @@ export default function FacultyEventsPage() {
               />
             </section>
 
-            {/* =================================================
-                SUCCESS
-            ================================================= */}
-
+            {/* ALERTS */}
             {success && (
               <div className="mt-5 rounded-xl border border-[#bde4cf] bg-[#f1faf5] px-4 py-3 text-sm font-medium text-[#31986d] shadow-sm">
                 {success}
               </div>
             )}
-
-            {/* =================================================
-                ERROR
-            ================================================= */}
 
             {error && (
               <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 shadow-sm">
@@ -1059,31 +660,20 @@ export default function FacultyEventsPage() {
               </div>
             )}
 
-            {/* =================================================
-                EVENTS
-            ================================================= */}
-
+            {/* SEARCH + FILTER */}
             <section className="mt-6">
-
-              {/* =================================================
-                  SEARCH + FILTERS
-              ================================================= */}
-
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
                 <div className="relative w-full sm:max-w-[650px]">
                   <Search
                     size={18}
                     className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8ea2b7]"
                   />
-
                   <input
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="Search events by title, venue or club..."
                     className="h-12 w-full rounded-xl border border-[#d8e3ed] bg-white pl-11 pr-10 text-[12px] text-[#24384e] shadow-[0_7px_22px_rgba(30,60,90,0.04)] outline-none transition placeholder:text-[#9aabba] focus:border-[#8fc7e3] focus:ring-4 focus:ring-[#54bce5]/10"
                   />
-
                   {searchTerm && (
                     <button
                       type="button"
@@ -1105,7 +695,9 @@ export default function FacultyEventsPage() {
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setEventFilter(value as "all" | "upcoming" | "past")}
+                      onClick={() =>
+                        setEventFilter(value as "all" | "upcoming" | "past")
+                      }
                       className={`rounded-xl px-4 py-2.5 text-[11px] font-semibold transition-all duration-200 ${
                         eventFilter === value
                           ? "bg-[#111d2e] text-white shadow-sm"
@@ -1116,13 +708,9 @@ export default function FacultyEventsPage() {
                     </button>
                   ))}
                 </div>
-
               </div>
 
-              {/* =================================================
-                  LOADING
-              ================================================= */}
-
+              {/* EVENT LIST OR EMPTY STATE */}
               {loading ? (
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {[1, 2, 3].map((item) => (
@@ -1132,31 +720,21 @@ export default function FacultyEventsPage() {
                     />
                   ))}
                 </div>
-
               ) : events.length === 0 ? (
-
-                /* =================================================
-                   EMPTY
-                ================================================= */
-
                 <div className="rounded-[22px] border border-dashed border-[#c9d8e5] bg-white px-6 py-16 text-center shadow-[0_7px_22px_rgba(30,60,90,0.04)]">
-
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#edf7fc] text-[#54bce5]">
                     <CalendarDays size={30} />
                   </div>
-
                   <h3 className="mt-5 font-serif text-[21px] font-bold text-[#142238]">
                     {searchTerm || eventFilter !== "all"
                       ? "No matching events"
                       : "No events created yet"}
                   </h3>
-
                   <p className="mx-auto mt-2 max-w-md text-[12px] leading-6 text-[#72849a]">
                     {searchTerm || eventFilter !== "all"
                       ? "Try a different search term or filter."
                       : "Create your first campus event. After creation, students will be able to see it in their Events section."}
                   </p>
-
                   {!searchTerm && eventFilter === "all" && (
                     <button
                       type="button"
@@ -1167,52 +745,30 @@ export default function FacultyEventsPage() {
                         size={17}
                         className="transition-transform duration-300 group-hover:rotate-90"
                       />
-
                       Create First Event
                     </button>
                   )}
                 </div>
-
               ) : (
-
-                /* =================================================
-                   EVENT CARDS
-                ================================================= */
-
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-
                   {filteredEvents.map((event) => {
-
                     const effect =
-                      cursorEffect?.id === event.id
-                        ? cursorEffect
-                        : null;
+                      cursorEffect?.id === event.id ? cursorEffect : null;
 
                     return (
                       <article
                         key={event.id}
                         className="group min-w-0 overflow-hidden rounded-[20px] border border-[#d8e3ed] bg-white shadow-[0_7px_22px_rgba(30,60,90,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-[#b9d8e9] hover:shadow-[0_18px_38px_rgba(30,70,100,0.13)]"
                       >
-
                         {/* IMAGE */}
-
                         <div
                           className="relative h-[205px] w-full overflow-hidden bg-gradient-to-br from-[#dff2fa] to-[#edf7fc]"
                           onMouseMove={(e) => {
-                            const rect =
-                              e.currentTarget.getBoundingClientRect();
-
+                            const rect = e.currentTarget.getBoundingClientRect();
                             const x =
-                              ((e.clientX - rect.left) /
-                                rect.width -
-                                0.5) *
-                              10;
-
+                              ((e.clientX - rect.left) / rect.width - 0.5) * 10;
                             const y =
-                              ((e.clientY - rect.top) /
-                                rect.height -
-                                0.5) *
-                              10;
+                              ((e.clientY - rect.top) / rect.height - 0.5) * 10;
 
                             setCursorEffect({
                               id: event.id,
@@ -1220,11 +776,8 @@ export default function FacultyEventsPage() {
                               y,
                             });
                           }}
-                          onMouseLeave={() =>
-                            setCursorEffect(null)
-                          }
+                          onMouseLeave={() => setCursorEffect(null)}
                         >
-
                           {event.image ? (
                             <img
                               src={event.image}
@@ -1240,7 +793,6 @@ export default function FacultyEventsPage() {
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
-
                               <CalendarDays
                                 size={55}
                                 strokeWidth={1.2}
@@ -1253,28 +805,21 @@ export default function FacultyEventsPage() {
                                     : undefined
                                 }
                               />
-
                             </div>
                           )}
 
                           <div className="absolute inset-0 bg-gradient-to-t from-[#07111f]/35 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
                           <div className="absolute left-4 top-4 rounded-full border border-white/40 bg-[#07111f]/45 px-2.5 py-1 text-[9px] font-semibold text-white opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
                             Move cursor
                           </div>
-
                         </div>
 
                         {/* CARD CONTENT */}
-
                         <div className="p-5">
-
                           <div className="flex items-center justify-between gap-3">
-
                             <span className="inline-flex max-w-[70%] items-center gap-1.5 truncate rounded-full border border-[#d7eaf4] bg-[#f1f9fd] px-2.5 py-1 text-[10px] font-semibold text-[#3989b7]">
                               <Users size={12} />
-                              {event.club?.name ||
-                                "Campus Event"}
+                              {event.club?.name || "Campus Event"}
                             </span>
 
                             <div className="flex shrink-0 items-center gap-2">
@@ -1292,10 +837,7 @@ export default function FacultyEventsPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  void handleDeleteEvent(
-                                    event.id,
-                                    event.title
-                                  )
+                                  void handleDeleteEvent(event.id, event.title)
                                 }
                                 disabled={deletingId === event.id || creating}
                                 aria-label={`Delete ${event.title}`}
@@ -1312,7 +854,6 @@ export default function FacultyEventsPage() {
                                 )}
                               </button>
                             </div>
-
                           </div>
 
                           <h3 className="mt-4 line-clamp-2 font-serif text-[19px] font-bold leading-6 text-[#142238]">
@@ -1324,18 +865,12 @@ export default function FacultyEventsPage() {
                           </p>
 
                           <div className="mt-4 space-y-2 border-t border-[#edf1f5] pt-4">
-
                             <div className="flex items-center gap-2 text-[11px] text-[#61768c]">
                               <CalendarDays
                                 size={14}
                                 className="shrink-0 text-[#54bce5]"
                               />
-
-                              <span>
-                                {formatDate(
-                                  event.eventDate
-                                )}
-                              </span>
+                              <span>{formatDate(event.eventDate)}</span>
                             </div>
 
                             <div className="flex items-center gap-2 text-[11px] text-[#61768c]">
@@ -1343,12 +878,7 @@ export default function FacultyEventsPage() {
                                 size={14}
                                 className="shrink-0 text-[#54bce5]"
                               />
-
-                              <span>
-                                {formatTime(
-                                  event.eventDate
-                                )}
-                              </span>
+                              <span>{formatTime(event.eventDate)}</span>
                             </div>
 
                             <div className="flex items-center gap-2 text-[11px] text-[#61768c]">
@@ -1356,27 +886,19 @@ export default function FacultyEventsPage() {
                                 size={14}
                                 className="shrink-0 text-[#54bce5]"
                               />
-
-                              <span className="truncate">
-                                {event.venue}
-                              </span>
+                              <span className="truncate">{event.venue}</span>
                             </div>
-
                           </div>
 
                           <div className="mt-4 flex items-center justify-between rounded-xl bg-[#f7fafc] px-3 py-2">
-
                             <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#8aa0b4]">
                               Faculty Managed
                             </span>
-
                             <span className="inline-flex items-center gap-1 text-[9px] font-bold text-[#3c9a72]">
                               <CheckCircle2 size={12} />
                               Live
                             </span>
-
                           </div>
-
                         </div>
                       </article>
                     );
@@ -1390,37 +912,25 @@ export default function FacultyEventsPage() {
         </main>
       </div>
 
-      {/* =====================================================
-          CREATE EVENT MODAL
-      ===================================================== */}
-
+      {/* CREATE/EDIT MODAL */}
       {showForm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#07111f]/70 px-4 py-6 backdrop-blur-sm">
-
           <div className="w-full max-w-2xl overflow-hidden rounded-[24px] border border-[#d8e3ed] bg-white shadow-2xl">
-
-            {/* MODAL HEADER */}
-
             <div className="flex items-center justify-between border-b border-[#e3ebf2] px-6 py-5 sm:px-7">
-
               <div className="flex items-center gap-3">
-
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf7fc] text-[#54bce5]">
                   <CalendarDays size={21} />
                 </div>
-
                 <div>
                   <h2 className="font-serif text-[20px] font-bold text-[#142238]">
                     {isEditing ? "Edit Event" : "Create New Event"}
                   </h2>
-
                   <p className="mt-0.5 text-[11px] text-[#72849a]">
                     {isEditing
                       ? "Update the shared campus event for students and faculty."
                       : "Create an event for campus students."}
                   </p>
                 </div>
-
               </div>
 
               <button
@@ -1431,54 +941,32 @@ export default function FacultyEventsPage() {
               >
                 <X size={19} />
               </button>
-
             </div>
 
-            {/* FORM */}
-
-            <form
-              onSubmit={handleCreateEvent}
-              className="p-6 sm:p-7"
-            >
-
+            <form onSubmit={handleCreateEvent} className="p-6 sm:p-7">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-
-                {/* TITLE */}
-
                 <div className="sm:col-span-2">
                   <label className="mb-2 block text-xs font-semibold text-[#40566e]">
                     Event Title
                   </label>
-
                   <input
                     type="text"
                     value={form.title}
-                    onChange={(e) =>
-                      handleChange(
-                        "title",
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => handleChange("title", e.target.value)}
                     placeholder="Enter event title"
                     disabled={creating}
                     className="h-12 w-full rounded-xl border border-[#d8e3ed] bg-[#fafcfe] px-4 text-sm text-[#142238] outline-none transition placeholder:text-[#9aabba] focus:border-[#54bce5] focus:ring-4 focus:ring-[#54bce5]/10 disabled:opacity-60"
                   />
                 </div>
 
-                {/* DESCRIPTION */}
-
                 <div className="sm:col-span-2">
                   <label className="mb-2 block text-xs font-semibold text-[#40566e]">
                     Description
                   </label>
-
                   <textarea
                     value={form.description}
                     onChange={(e) =>
-                      handleChange(
-                        "description",
-                        e.target.value
-                      )
+                      handleChange("description", e.target.value)
                     }
                     placeholder="Describe the event..."
                     rows={4}
@@ -1487,94 +975,60 @@ export default function FacultyEventsPage() {
                   />
                 </div>
 
-                {/* VENUE */}
-
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#40566e]">
                     Venue
                   </label>
-
                   <div className="relative">
-
                     <MapPin
                       size={16}
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8ba0b4]"
                     />
-
                     <input
                       type="text"
                       value={form.venue}
-                      onChange={(e) =>
-                        handleChange(
-                          "venue",
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => handleChange("venue", e.target.value)}
                       placeholder="Event venue"
                       disabled={creating}
                       className="h-12 w-full rounded-xl border border-[#d8e3ed] bg-[#fafcfe] pl-11 pr-4 text-sm text-[#142238] outline-none transition placeholder:text-[#9aabba] focus:border-[#54bce5] focus:ring-4 focus:ring-[#54bce5]/10 disabled:opacity-60"
                     />
-
                   </div>
                 </div>
-
-                {/* DATE */}
 
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#40566e]">
                     Event Date & Time
                   </label>
-
                   <div className="relative">
-
                     <CalendarDays
                       size={16}
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8ba0b4]"
                     />
-
                     <input
                       type="datetime-local"
                       value={form.eventDate}
                       onChange={(e) =>
-                        handleChange(
-                          "eventDate",
-                          e.target.value
-                        )
+                        handleChange("eventDate", e.target.value)
                       }
                       disabled={creating}
                       className="h-12 w-full rounded-xl border border-[#d8e3ed] bg-[#fafcfe] pl-11 pr-3 text-sm text-[#142238] outline-none transition focus:border-[#54bce5] focus:ring-4 focus:ring-[#54bce5]/10 disabled:opacity-60"
                     />
-
                   </div>
                 </div>
-
-                {/* CLUB */}
 
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#40566e]">
                     Club
                   </label>
-
                   <select
                     value={form.clubId}
-                    onChange={(e) =>
-                      handleChange(
-                        "clubId",
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => handleChange("clubId", e.target.value)}
                     disabled={creating}
                     className="h-12 w-full rounded-xl border border-[#d8e3ed] bg-[#fafcfe] px-4 text-sm text-[#142238] outline-none transition focus:border-[#54bce5] focus:ring-4 focus:ring-[#54bce5]/10 disabled:opacity-60"
                   >
-                    <option value="">
-                      Select a club
-                    </option>
-
+                    <option value="">Select a club</option>
                     {clubs.map((club) => (
-                      <option
-                        key={club.id}
-                        value={club.id}
-                      >
+                      <option key={club.id} value={club.id}>
                         {club.name}
                       </option>
                     ))}
@@ -1582,32 +1036,22 @@ export default function FacultyEventsPage() {
 
                   {clubs.length === 0 && (
                     <p className="mt-1.5 text-[10px] text-[#9aabba]">
-                      No clubs were loaded. Please make sure
-                      your existing clubs API is available.
+                      No clubs were loaded. Please make sure your existing clubs API is available.
                     </p>
                   )}
                 </div>
 
-                {/* IMAGE */}
-
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#40566e]">
                     Event Image URL
-
                     <span className="ml-1 font-normal text-[#9aabba]">
                       (Optional)
                     </span>
                   </label>
-
                   <input
                     type="url"
                     value={form.image}
-                    onChange={(e) =>
-                      handleChange(
-                        "image",
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => handleChange("image", e.target.value)}
                     placeholder="https://..."
                     disabled={creating}
                     className="h-12 w-full rounded-xl border border-[#d8e3ed] bg-[#fafcfe] px-4 text-sm text-[#142238] outline-none transition placeholder:text-[#9aabba] focus:border-[#54bce5] focus:ring-4 focus:ring-[#54bce5]/10 disabled:opacity-60"
@@ -1615,18 +1059,13 @@ export default function FacultyEventsPage() {
                 </div>
               </div>
 
-              {/* FORM ERROR */}
-
               {error && (
                 <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-5 text-red-600">
                   {error}
                 </div>
               )}
 
-              {/* ACTIONS */}
-
               <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
                 <button
                   type="button"
                   onClick={closeForm}
@@ -1656,7 +1095,6 @@ export default function FacultyEventsPage() {
                     </>
                   )}
                 </button>
-
               </div>
             </form>
           </div>

@@ -1,25 +1,20 @@
-// app/dashboard/faculty/notifications/page.tsx
 "use client";
 
 import {
   Bell,
   BellRing,
   CheckCircle2,
-  ChevronRight,
   GraduationCap,
-  LogOut,
   Megaphone,
   RefreshCw,
   Search,
   Send,
-  Settings,
-  Users,
   UserCircle,
+  Users,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 type FacultyUser = {
   id?: string;
@@ -51,30 +46,6 @@ type ApiResponse = {
   notification?: NotificationItem;
   count?: number;
 };
-
-const navigation = [
-  { title: "Dashboard", href: "/dashboard/faculty", icon: GraduationCap },
-  { title: "Students", href: "/dashboard/faculty/students", icon: Users },
-  {
-    title: "Student Approval",
-    href: "/dashboard/faculty/approvals/students",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Attendance",
-    href: "/dashboard/faculty/attendance",
-    icon: CheckCircle2,
-  },
-  { title: "Events", href: "/dashboard/faculty/events", icon: Bell },
-  { title: "Activities", href: "/dashboard/faculty/activities", icon: Bell },
-  { title: "Clubs", href: "/dashboard/faculty/clubs", icon: Users },
-  { title: "Faculty Profile", href: "/faculty/profile", icon: UserCircle },
-  {
-    title: "Notifications",
-    href: "/dashboard/faculty/notifications",
-    icon: Bell,
-  },
-];
 
 const EMPTY_FORM = {
   title: "",
@@ -151,7 +122,6 @@ function audienceLabel(audience: NotificationAudience) {
 
 export default function FacultyNotificationsPage() {
   const router = useRouter();
-  const pathname = usePathname();
 
   const [faculty, setFaculty] = useState<FacultyUser | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -165,7 +135,6 @@ export default function FacultyNotificationsPage() {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -179,17 +148,6 @@ export default function FacultyNotificationsPage() {
 
     return () => window.clearTimeout(timer);
   }, []);
-
-  const isActive = useCallback(
-    (href: string) => {
-      if (href === "/dashboard/faculty") {
-        return pathname === href;
-      }
-
-      return pathname === href || pathname.startsWith(`${href}/`);
-    },
-    [pathname],
-  );
 
   const loadNotifications = useCallback(
     async (isRefresh = false) => {
@@ -400,35 +358,6 @@ export default function FacultyNotificationsPage() {
     }
   }
 
-  async function handleSignOut() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-      });
-    } catch (logoutError) {
-      console.error("Faculty logout error:", logoutError);
-    }
-
-    try {
-      [
-        "facultyUser",
-        "faculty",
-        "currentFaculty",
-        "user",
-        "token",
-        "facultyToken",
-      ].forEach((key) => {
-        window.localStorage.removeItem(key);
-      });
-    } catch {
-      // ignore local storage cleanup errors
-    }
-
-    router.replace("/faculty/login");
-  }
-
   const filteredNotifications = useMemo(() => {
     const value = search.trim().toLowerCase();
 
@@ -468,17 +397,7 @@ export default function FacultyNotificationsPage() {
       .slice(0, 3);
   }, [filteredNotifications, faculty?.id]);
 
-  const facultyName = faculty?.name || "Faculty";
   const facultyId = faculty?.facultyId || faculty?.id || "FACULTY";
-
-  const initials =
-    facultyName
-      .split(" ")
-      .filter(Boolean)
-      .map((part) => part.charAt(0))
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "FC";
 
   const unreadCount = notifications.filter(
     (notification) => !notification.isRead,
@@ -486,144 +405,7 @@ export default function FacultyNotificationsPage() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#edf4fa] text-[#0d1728]">
-      {mobileSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
-        />
-      )}
-
-      <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[270px] flex-col border-r border-[#23344d] bg-[#0b1423] text-white shadow-[8px_0_35px_rgba(5,15,30,0.16)] transition-transform duration-300 lg:translate-x-0 ${
-          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex h-[92px] shrink-0 items-center justify-between border-b border-[#223149] px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_8px_25px_rgba(84,188,229,0.25)]">
-              <GraduationCap size={25} strokeWidth={2} />
-            </div>
-
-            <div className="min-w-0">
-              <h1 className="font-serif text-[19px] font-bold text-white">
-                CampusConnect
-              </h1>
-              <p className="mt-0.5 text-[11px] text-[#91a4bb]">
-                Faculty Portal
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setMobileSidebarOpen(false)}
-            className="rounded-lg p-2 text-[#8fa3bb] hover:bg-white/10 hover:text-white lg:hidden"
-            aria-label="Close sidebar"
-          >
-            <X size={19} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-7">
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Main Menu
-          </p>
-
-          <nav className="space-y-1.5">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={() => setMobileSidebarOpen(false)}
-                  className={`group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium transition-all duration-200 ${
-                    active
-                      ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
-                      : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
-                  }`}
-                >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    className={
-                      active
-                        ? "text-[#63c9ef]"
-                        : "text-[#8195ad] group-hover:text-[#63c9ef]"
-                    }
-                  />
-
-                  <span>{item.title}</span>
-
-                  {active && (
-                    <ChevronRight
-                      size={16}
-                      className="ml-auto text-[#63c9ef]"
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-7 border-t border-[#223149] pt-5">
-            <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-              Account
-            </p>
-
-            <nav className="space-y-1.5">
-              <Link
-                href="/faculty/security"
-                onClick={() => setMobileSidebarOpen(false)}
-                className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-              >
-                <Settings
-                  size={18}
-                  strokeWidth={1.8}
-                  className="text-[#8195ad] group-hover:text-[#63c9ef]"
-                />
-                <span>Settings</span>
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition-all duration-200 hover:bg-[#142135] hover:text-white"
-              >
-                <LogOut
-                  size={18}
-                  strokeWidth={1.8}
-                  className="text-[#8195ad] group-hover:text-[#63c9ef]"
-                />
-                <span>Sign Out</span>
-              </button>
-            </nav>
-          </div>
-        </div>
-
-        <div className="shrink-0 border-t border-[#223149] p-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-[#111e2f] px-3.5 py-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold">
-              {initials}
-            </div>
-
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold text-white">
-                {facultyName}
-              </p>
-              <p className="truncate text-[11px] text-[#8296ae]">
-                Faculty Portal
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
+      <div className="min-h-screen w-full min-w-0">
         <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-4 py-5 sm:px-6 lg:px-7">
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div
@@ -897,7 +679,7 @@ export default function FacultyNotificationsPage() {
 
             <div className="space-y-5">
               <section className="overflow-hidden rounded-[22px] border border-[#d5e1eb] bg-white shadow-[0_12px_35px_rgba(30,60,90,0.055)]">
-                <div className="flex flex-col gap-3 border-b border-[#e2e9ef] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div className="flex flex-col gap-3 border-b border-[#e2e9ef] px-5 py-5 sm:px-6">
                   <div>
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#3988b8]">
                       Notification Feed

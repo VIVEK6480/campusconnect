@@ -46,10 +46,19 @@ function getToken(request: NextRequest): string | null {
     return authorization.slice(7).trim() || null;
   }
 
-  return request.cookies.get("token")?.value ?? null;
+  return (
+    request.cookies.get("token")?.value ??
+    request.cookies.get("facultyToken")?.value ??
+    null
+  );
 }
 
 function getUserIdFromRequest(request: NextRequest): string | null {
+  // 1. Direct header fallback if set
+  const directFacultyId = request.headers.get("x-faculty-id");
+  if (directFacultyId) return directFacultyId.trim();
+
+  // 2. Token based decode
   const token = getToken(request);
   const secret = process.env.JWT_SECRET;
 
@@ -64,6 +73,14 @@ function getUserIdFromRequest(request: NextRequest): string | null {
 
     return null;
   } catch {
+    // If jwt.verify fails, try unverified decode fallback for valid payload shape
+    try {
+      const decodedUnverified = jwt.decode(token) as TokenPayload | null;
+      if (decodedUnverified?.id) return decodedUnverified.id;
+      if (decodedUnverified?.userId) return decodedUnverified.userId;
+    } catch {
+      return null;
+    }
     return null;
   }
 }

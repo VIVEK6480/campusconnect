@@ -2,24 +2,16 @@
 
 import {
   Award,
-  Bell,
   BookOpen,
   CalendarDays,
   CheckCircle2,
-  Activity,
   ChevronDown,
-  ChevronRight,
-  ClipboardCheck,
   Edit3,
   GraduationCap,
   Loader2,
-  LogOut,
   Mail,
-  MapPin,
-  Menu,
   RefreshCw,
   Search,
-  Settings,
   Trash2,
   UserCircle,
   Users,
@@ -27,8 +19,6 @@ import {
   Trophy,
 } from "lucide-react";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -211,58 +201,6 @@ const defaultStatistics: StudentStatistics = {
 };
 
 /* ============================================================
-   SIDEBAR
-============================================================ */
-
-const navigation = [
-  {
-    title: "Dashboard",
-    href: "/dashboard/faculty",
-    icon: GraduationCap,
-  },
-  {
-    title: "Students",
-    href: "/dashboard/faculty/students",
-    icon: Users,
-  },
-  {
-    title: "Student Approval",
-    href: "/dashboard/faculty/approvals/students",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Attendance",
-    href: "/dashboard/faculty/attendance",
-    icon: ClipboardCheck,
-  },
-  {
-    title: "Events",
-    href: "/dashboard/faculty/events",
-    icon: CalendarDays,
-  },
-  {
-    title: "Activities",
-    href: "/dashboard/faculty/activities",
-    icon: Activity,
-  },
-  {
-    title: "Clubs",
-    href: "/dashboard/faculty/clubs",
-    icon: Users,
-  },
-  {
-    title: "Faculty Profile",
-    href: "/faculty/profile",
-    icon: UserCircle,
-  },
-  {
-    title: "Notifications",
-    href: "/dashboard/faculty/notifications",
-    icon: Bell,
-  },
-];
-
-/* ============================================================
    STORAGE
 ============================================================ */
 
@@ -315,15 +253,11 @@ function normalizeStudent(student: Student): Student {
   return {
     ...student,
 
-    studentRegistrations: Array.isArray(
-      student.studentRegistrations
-    )
+    studentRegistrations: Array.isArray(student.studentRegistrations)
       ? student.studentRegistrations
       : [],
 
-    classAttendances: Array.isArray(
-      student.classAttendances
-    )
+    classAttendances: Array.isArray(student.classAttendances)
       ? student.classAttendances
       : [],
 
@@ -368,16 +302,12 @@ function formatDate(value: string | null | undefined) {
   });
 }
 
-function getStudentSemester(
-  student: Student
-): number | null {
+function getStudentSemester(student: Student): number | null {
   const registration = student.studentRegistrations.find(
     (item) => Number(item.semester) > 0
   );
 
-  return registration
-    ? Number(registration.semester)
-    : null;
+  return registration ? Number(registration.semester) : null;
 }
 
 function getStudentSections(student: Student): string[] {
@@ -390,9 +320,7 @@ function getStudentSections(student: Student): string[] {
   );
 }
 
-function getStudentSection(
-  student: Student
-): string {
+function getStudentSection(student: Student): string {
   return getStudentSections(student).join(", ") || "-";
 }
 
@@ -401,10 +329,7 @@ function getUniqueSubjects(student: Student): Subject[] {
 
   for (const registration of student.studentRegistrations) {
     if (registration.subject?.id) {
-      map.set(
-        registration.subject.id,
-        registration.subject
-      );
+      map.set(registration.subject.id, registration.subject);
     }
   }
 
@@ -431,97 +356,47 @@ function createEditForm(student: Student): EditForm {
 ============================================================ */
 
 export default function FacultyStudentsPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const [faculty, setFaculty] =
-    useState<Faculty | null>(null);
-
-  const [students, setStudents] =
-    useState<Student[]>([]);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [refreshing, setRefreshing] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  const [success, setSuccess] =
-    useState("");
-
-  const [mobileSidebarOpen, setMobileSidebarOpen] =
-    useState(false);
+  const [faculty, setFaculty] = useState<Faculty | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   /* ----------------------------------------------------------
      CLASS SELECTION
   ---------------------------------------------------------- */
 
-  const [semester, setSemester] =
-    useState("");
-
-  const [section, setSection] =
-    useState("");
-
-  const [hasLoadedClass, setHasLoadedClass] =
-    useState(false);
+  const [semester, setSemester] = useState("");
+  const [section, setSection] = useState("");
+  const [hasLoadedClass, setHasLoadedClass] = useState(false);
 
   /* ----------------------------------------------------------
      SEARCH
   ---------------------------------------------------------- */
 
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState("");
 
   /* ----------------------------------------------------------
      DETAILS
   ---------------------------------------------------------- */
 
-  const [selectedStudent, setSelectedStudent] =
-    useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   /* ----------------------------------------------------------
      DELETE
   ---------------------------------------------------------- */
 
-  const [deleteStudent, setDeleteStudent] =
-    useState<Student | null>(null);
-
-  const [deleting, setDeleting] =
-    useState(false);
+  const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   /* ----------------------------------------------------------
      EDIT
   ---------------------------------------------------------- */
 
-  const [editingStudent, setEditingStudent] =
-    useState<Student | null>(null);
-
-  const [editForm, setEditForm] =
-    useState<EditForm | null>(null);
-
-  const [savingEdit, setSavingEdit] =
-    useState(false);
-
-  /* ============================================================
-     ACTIVE NAV
-  ============================================================ */
-
-  const isActive = useCallback(
-    (href: string) => {
-      if (href === "/dashboard/faculty") {
-        return pathname === href;
-      }
-
-      return (
-        pathname === href ||
-        pathname.startsWith(`${href}/`)
-      );
-    },
-    [pathname]
-  );
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   /* ============================================================
      INITIAL CLIENT SETUP
@@ -585,9 +460,7 @@ export default function FacultyStudentsPage() {
       }
 
       if (!selectedSemester || !selectedSection) {
-        setError(
-          "Please select both semester and section."
-        );
+        setError("Please select both semester and section.");
         return;
       }
 
@@ -604,9 +477,7 @@ export default function FacultyStudentsPage() {
         const response = await fetch(
           `/api/faculty/students?semester=${encodeURIComponent(
             selectedSemester
-          )}&section=${encodeURIComponent(
-            selectedSection
-          )}`,
+          )}&section=${encodeURIComponent(selectedSection)}`,
           {
             method: "GET",
             credentials: "include",
@@ -621,8 +492,7 @@ export default function FacultyStudentsPage() {
         let data: ApiResponse = {};
 
         try {
-          data =
-            (await response.json()) as ApiResponse;
+          data = (await response.json()) as ApiResponse;
         } catch {
           data = {};
         }
@@ -647,10 +517,7 @@ export default function FacultyStudentsPage() {
           );
         }
       } catch (err) {
-        console.error(
-          "Faculty student load error:",
-          err
-        );
+        console.error("Faculty student load error:", err);
 
         setError(
           err instanceof Error
@@ -672,9 +539,7 @@ export default function FacultyStudentsPage() {
      SELECTION CHANGE
   ============================================================ */
 
-  const handleSemesterChange = (
-    value: string
-  ) => {
+  const handleSemesterChange = (value: string) => {
     setSemester(value);
     setSection("");
     setStudents([]);
@@ -684,9 +549,7 @@ export default function FacultyStudentsPage() {
     setSuccess("");
   };
 
-  const handleSectionChange = (
-    value: string
-  ) => {
+  const handleSectionChange = (value: string) => {
     setSection(value);
     setStudents([]);
     setHasLoadedClass(false);
@@ -696,11 +559,7 @@ export default function FacultyStudentsPage() {
   };
 
   const handleLoadStudents = () => {
-    void loadStudents(
-      semester,
-      section,
-      false
-    );
+    void loadStudents(semester, section, false);
   };
 
   const handleRefresh = () => {
@@ -731,27 +590,22 @@ export default function FacultyStudentsPage() {
     setSuccess("");
 
     try {
-      const response = await fetch(
-        "/api/faculty/students",
-        {
-          method: "DELETE",
-          credentials: "include",
-          headers: {
-            "Content-Type":
-              "application/json",
-            "x-faculty-id": faculty.id,
-          },
-          body: JSON.stringify({
-            studentId: deleteStudent.id,
-          }),
-        }
-      );
+      const response = await fetch("/api/faculty/students", {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "x-faculty-id": faculty.id,
+        },
+        body: JSON.stringify({
+          studentId: deleteStudent.id,
+        }),
+      });
 
       let data: DeleteResponse = {};
 
       try {
-        data =
-          (await response.json()) as DeleteResponse;
+        data = (await response.json()) as DeleteResponse;
       } catch {
         data = {};
       }
@@ -763,27 +617,18 @@ export default function FacultyStudentsPage() {
         );
       }
 
-      const deletedName =
-        deleteStudent.name;
+      const deletedName = deleteStudent.name;
 
       setStudents((current) =>
-        current.filter(
-          (student) =>
-            student.id !== deleteStudent.id
-        )
+        current.filter((student) => student.id !== deleteStudent.id)
       );
 
       setSelectedStudent(null);
       setDeleteStudent(null);
 
-      setSuccess(
-        `${deletedName} deleted successfully.`
-      );
+      setSuccess(`${deletedName} deleted successfully.`);
     } catch (err) {
-      console.error(
-        "Faculty student delete error:",
-        err
-      );
+      console.error("Faculty student delete error:", err);
 
       setError(
         err instanceof Error
@@ -816,10 +661,7 @@ export default function FacultyStudentsPage() {
     setEditForm(null);
   };
 
-  const updateEditField = (
-    field: keyof EditForm,
-    value: string
-  ) => {
+  const updateEditField = (field: keyof EditForm, value: string) => {
     setEditForm((current) =>
       current
         ? {
@@ -831,11 +673,7 @@ export default function FacultyStudentsPage() {
   };
 
   const saveStudent = async () => {
-    if (
-      !faculty?.id ||
-      !editingStudent ||
-      !editForm
-    ) {
+    if (!faculty?.id || !editingStudent || !editForm) {
       return;
     }
 
@@ -854,22 +692,18 @@ export default function FacultyStudentsPage() {
     setSuccess("");
 
     try {
-      const response = await fetch(
-        "/api/faculty/students",
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            "Content-Type":
-              "application/json",
-            "x-faculty-id": faculty.id,
-          },
-          body: JSON.stringify({
-            studentId: editingStudent.id,
-            ...editForm,
-          }),
-        }
-      );
+      const response = await fetch("/api/faculty/students", {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "x-faculty-id": faculty.id,
+        },
+        body: JSON.stringify({
+          studentId: editingStudent.id,
+          ...editForm,
+        }),
+      });
 
       const data = (await response.json()) as {
         success?: boolean;
@@ -878,21 +712,15 @@ export default function FacultyStudentsPage() {
       };
 
       if (!response.ok || data.success !== true) {
-        throw new Error(
-          data.message ||
-            "Unable to update student."
-        );
+        throw new Error(data.message || "Unable to update student.");
       }
 
       if (data.student) {
-        const updated =
-          normalizeStudent(data.student);
+        const updated = normalizeStudent(data.student);
 
         setStudents((current) =>
           current.map((student) =>
-            student.id === updated.id
-              ? updated
-              : student
+            student.id === updated.id ? updated : student
           )
         );
       } else {
@@ -904,29 +732,17 @@ export default function FacultyStudentsPage() {
                   name: editForm.name.trim(),
                   email: editForm.email.trim(),
                   campusUserId:
-                    editForm.campusUserId.trim() ||
-                    null,
-                  phone:
-                    editForm.phone.trim() ||
-                    null,
+                    editForm.campusUserId.trim() || null,
+                  phone: editForm.phone.trim() || null,
                   department:
-                    editForm.department.trim() ||
-                    null,
+                    editForm.department.trim() || null,
                   qualification:
-                    editForm.qualification.trim() ||
-                    null,
+                    editForm.qualification.trim() || null,
                   specialization:
-                    editForm.specialization.trim() ||
-                    null,
-                  address:
-                    editForm.address.trim() ||
-                    null,
-                  city:
-                    editForm.city.trim() ||
-                    null,
-                  state:
-                    editForm.state.trim() ||
-                    null,
+                    editForm.specialization.trim() || null,
+                  address: editForm.address.trim() || null,
+                  city: editForm.city.trim() || null,
+                  state: editForm.state.trim() || null,
                 }
               : student
           )
@@ -936,14 +752,9 @@ export default function FacultyStudentsPage() {
       setEditingStudent(null);
       setEditForm(null);
 
-      setSuccess(
-        `${editForm.name.trim()} updated successfully.`
-      );
+      setSuccess(`${editForm.name.trim()} updated successfully.`);
     } catch (err) {
-      console.error(
-        "Faculty student update error:",
-        err
-      );
+      console.error("Faculty student update error:", err);
 
       setError(
         err instanceof Error
@@ -956,85 +767,29 @@ export default function FacultyStudentsPage() {
   };
 
   /* ============================================================
-     SIGN OUT
-  ============================================================ */
-
-  const handleSignOut = () => {
-    const keys = [
-      "facultyUser",
-      "faculty",
-      "currentFaculty",
-      "user",
-      "token",
-      "facultyToken",
-    ];
-
-    try {
-      keys.forEach((key) =>
-        window.localStorage.removeItem(key)
-      );
-    } catch {
-      // ignore storage errors
-    }
-
-    router.push("/faculty/login");
-  };
-
-  /* ============================================================
      FILTER
   ============================================================ */
 
   const filteredStudents = useMemo(() => {
-    const term =
-      search.trim().toLowerCase();
+    const term = search.trim().toLowerCase();
 
     if (!term) {
       return students;
     }
 
     return students.filter((student) => {
-      const subjects =
-        student.studentRegistrations
-          .map(
-            (registration) =>
-              registration.subject?.name ?? ""
-          )
-          .join(" ");
+      const subjects = student.studentRegistrations
+        .map((registration) => registration.subject?.name ?? "")
+        .join(" ");
 
       return (
-        student.name
-          .toLowerCase()
-          .includes(term) ||
-        student.email
-          .toLowerCase()
-          .includes(term) ||
-        (student.campusUserId ?? "")
-          .toLowerCase()
-          .includes(term) ||
-        subjects
-          .toLowerCase()
-          .includes(term)
+        student.name.toLowerCase().includes(term) ||
+        student.email.toLowerCase().includes(term) ||
+        (student.campusUserId ?? "").toLowerCase().includes(term) ||
+        subjects.toLowerCase().includes(term)
       );
     });
   }, [students, search]);
-
-  /* ============================================================
-     FACULTY DISPLAY
-  ============================================================ */
-
-  const facultyName =
-    faculty?.name || "Faculty Portal";
-
-  const initials =
-    facultyName
-      .split(" ")
-      .filter(Boolean)
-      .map((part) =>
-        part.charAt(0)
-      )
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "FC";
 
   /* ============================================================
      RETURN
@@ -1042,221 +797,34 @@ export default function FacultyStudentsPage() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#edf4fa] text-[#102033]">
-
-      {/* ======================================================
-          MOBILE OVERLAY
-      ====================================================== */}
-
-      {mobileSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={() =>
-            setMobileSidebarOpen(false)
-          }
-          className="fixed inset-0 z-40 bg-[#07111f]/70 backdrop-blur-sm lg:hidden"
-        />
-      )}
-
-      {/* ======================================================
-          SIDEBAR
-      ====================================================== */}
-
-      <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[270px] flex-col border-r border-[#23344d] bg-[#0b1423] text-white shadow-[8px_0_35px_rgba(5,15,30,0.16)] transition-transform duration-300 lg:translate-x-0 ${
-          mobileSidebarOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
-        }`}
-      >
-        {/* LOGO */}
-
-        <div className="flex h-[86px] shrink-0 items-center justify-between border-b border-[#223149] px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#54bce5] shadow-[0_0_25px_rgba(84,188,229,0.25)]">
-              <GraduationCap size={24} />
-            </div>
-
-            <div>
-              <h1 className="font-serif text-[18px] font-bold text-white">
-                CampusConnect
-              </h1>
-
-              <p className="mt-0.5 text-[10px] text-[#91a4bb]">
-                Faculty Portal
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() =>
-              setMobileSidebarOpen(false)
-            }
-            className="rounded-lg p-2 text-[#8fa3bb] hover:bg-white/10 lg:hidden"
-          >
-            <X size={19} />
-          </button>
-        </div>
-
-        {/* NAVIGATION */}
-
-        <div className="flex-1 overflow-y-auto px-4 py-7">
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Main Menu
-          </p>
-
-          <nav className="space-y-1.5">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const active =
-                isActive(item.href);
-
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={() =>
-                    setMobileSidebarOpen(false)
-                  }
-                  className={`group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium transition ${
-                    active
-                      ? "bg-[#17263a] text-[#64c8ee] shadow-[inset_3px_0_0_#54bce5]"
-                      : "text-[#9aabc0] hover:bg-[#142135] hover:text-white"
-                  }`}
-                >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    className={
-                      active
-                        ? "text-[#63c9ef]"
-                        : "text-[#8195ad] group-hover:text-[#63c9ef]"
-                    }
-                  />
-
-                  <span>{item.title}</span>
-
-                  {active && (
-                    <ChevronRight
-                      size={16}
-                      className="ml-auto text-[#63c9ef]"
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="my-7 h-px bg-[#223149]" />
-
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#63758d]">
-            Account
-          </p>
-
-          <nav className="space-y-1.5">
-            <Link
-              href="/faculty/security"
-              onClick={() => setMobileSidebarOpen(false)}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
-            >
-              <Settings
-                size={18}
-                strokeWidth={1.8}
-                className="text-[#8195ad] group-hover:text-[#63c9ef]"
-              />
-
-              <span>Settings</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="group flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-left text-[13px] font-medium text-[#9aabc0] transition hover:bg-[#142135] hover:text-white"
-            >
-              <LogOut
-                size={18}
-                strokeWidth={1.8}
-              />
-
-              <span>Sign Out</span>
-            </button>
-          </nav>
-        </div>
-
-        {/* FACULTY CARD */}
-
-        <div className="shrink-0 border-t border-[#223149] p-4">
-          <div className="flex items-center gap-2 rounded-2xl bg-[#111e2f] px-2.5 py-2.5">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#54bce5] text-[12px] font-bold">
-                {initials}
-              </div>
-
-              <div className="min-w-0">
-                <p className="truncate text-[13px] font-semibold">
-                  {facultyName}
-                </p>
-
-                <p className="truncate text-[10px] text-[#8296ae]">
-                  Faculty Portal
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </aside>
-
-      {/* ======================================================
-          MAIN
-      ====================================================== */}
-
-      <div className="min-h-screen w-full min-w-0 lg:pl-[270px]">
-
-        {/* TOP HEADER REMOVED - COMMON FACULTY HEADER IS PROVIDED BY LAYOUT */}
-
-        {/* ====================================================
-            CONTENT
-        ==================================================== */}
-
+      <div className="min-h-screen w-full min-w-0">
         <main className="relative min-h-screen w-full overflow-hidden bg-[#edf4fa] px-3 py-5 sm:px-5 lg:px-7 xl:px-8">
-
           {/* BACKGROUND GRID */}
-
           <div className="pointer-events-none absolute inset-0 opacity-50">
             <div
               className="absolute inset-0"
               style={{
                 backgroundImage:
                   "linear-gradient(rgba(88,157,197,0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(88,157,197,0.065) 1px, transparent 1px)",
-                backgroundSize:
-                  "42px 42px",
+                backgroundSize: "42px 42px",
               }}
             />
           </div>
 
           <div className="relative w-full max-w-none">
-
             {/* =================================================
                 TOP
             ================================================= */}
 
             <section className="mb-5">
               <div className="relative h-[280px] overflow-hidden rounded-[25px] bg-[#101c2e] text-white shadow-[0_20px_60px_rgba(20,45,70,0.14)]">
-
                 <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full border border-[#6fc9ed]/20" />
-
                 <div className="pointer-events-none absolute right-[-30px] top-[55px] h-56 w-56 rounded-full border border-[#6fc9ed]/10" />
-
                 <div className="pointer-events-none absolute bottom-[-110px] left-[40%] h-64 w-64 rounded-full bg-[#54bce5]/5 blur-3xl" />
 
                 <div className="relative flex h-full w-full items-center px-6 sm:px-9 lg:px-10">
-
                   <div className="flex w-full items-center justify-between gap-6">
-
                     <div className="max-w-[780px]">
-
                       <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#63c9ef]/30 bg-[#17314a] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#73d0f3]">
                         <Users size={13} />
                         Faculty Student Management
@@ -1267,37 +835,29 @@ export default function FacultyStudentsPage() {
                       </h1>
 
                       <p className="mt-3 max-w-[680px] text-[11px] leading-5 text-[#a9b9ca] sm:text-[12px]">
-                        Select a semester and section to view the
-                        approved students for that class. Review
-                        student information, attendance, and
-                        academic details from one secure faculty
-                        workspace.
+                        Select a semester and section to view the approved
+                        students for that class. Review student information,
+                        attendance, and academic details from one secure
+                        faculty workspace.
                       </p>
-
                     </div>
 
                     <div className="relative flex shrink-0 items-center gap-3">
-
                       <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 backdrop-blur-sm">
                         <p className="text-[8px] uppercase tracking-[0.18em] text-[#8ea4b9]">
                           Students Found
                         </p>
 
                         <p className="mt-1 text-[24px] font-bold leading-none">
-                          {hasLoadedClass
-                            ? filteredStudents.length
-                            : 0}
+                          {hasLoadedClass ? filteredStudents.length : 0}
                         </p>
                       </div>
 
                       <div className="flex h-[62px] w-[62px] items-center justify-center rounded-2xl border border-[#61c8ee]/20 bg-[#17324b] text-[#68cbed]">
                         <GraduationCap size={29} />
                       </div>
-
                     </div>
-
                   </div>
-
                 </div>
               </div>
             </section>
@@ -1312,9 +872,7 @@ export default function FacultyStudentsPage() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setError("")
-                  }
+                  onClick={() => setError("")}
                   className="shrink-0 rounded-lg p-1 hover:bg-red-100"
                 >
                   <X size={14} />
@@ -1328,9 +886,7 @@ export default function FacultyStudentsPage() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setSuccess("")
-                  }
+                  onClick={() => setSuccess("")}
                   className="shrink-0 rounded-lg p-1 hover:bg-green-100"
                 >
                   <X size={14} />
@@ -1343,7 +899,6 @@ export default function FacultyStudentsPage() {
             ================================================= */}
 
             <section className="mb-5 overflow-hidden rounded-[22px] border border-[#d5e2ec] bg-white shadow-[0_12px_35px_rgba(30,60,90,0.055)]">
-
               <div className="border-b border-[#e6edf2] px-5 py-5 sm:px-6">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -1356,25 +911,22 @@ export default function FacultyStudentsPage() {
                     </h2>
 
                     <p className="mt-1 text-[10px] text-[#8194a7]">
-                      Students will appear only after
-                      both values are selected.
+                      Students will appear only after both values are
+                      selected.
                     </p>
                   </div>
 
                   {hasLoadedClass && (
                     <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#bfe6d3] bg-[#f1fbf6] px-3 py-1.5 text-[9px] font-bold text-[#31815f]">
                       <CheckCircle2 size={12} />
-                      Semester {semester} • Section{" "}
-                      {section}
+                      Semester {semester} • Section {section}
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] sm:p-6">
-
                 {/* SEMESTER */}
-
                 <div>
                   <label
                     htmlFor="semester"
@@ -1388,21 +940,13 @@ export default function FacultyStudentsPage() {
                       id="semester"
                       value={semester}
                       onChange={(event) =>
-                        handleSemesterChange(
-                          event.target.value
-                        )
+                        handleSemesterChange(event.target.value)
                       }
                       className="h-12 w-full appearance-none rounded-xl border border-[#d8e5ee] bg-[#fbfdff] px-4 pr-10 text-[11px] font-semibold text-[#273b50] outline-none transition focus:border-[#72c5e9] focus:ring-4 focus:ring-[#54bce5]/10"
                     >
-                      <option value="">
-                        Select Semester
-                      </option>
-
+                      <option value="">Select Semester</option>
                       {SEMESTERS.map((item) => (
-                        <option
-                          key={item}
-                          value={String(item)}
-                        >
+                        <option key={item} value={String(item)}>
                           Semester {item}
                         </option>
                       ))}
@@ -1416,7 +960,6 @@ export default function FacultyStudentsPage() {
                 </div>
 
                 {/* SECTION */}
-
                 <div>
                   <label
                     htmlFor="section"
@@ -1431,21 +974,13 @@ export default function FacultyStudentsPage() {
                       value={section}
                       disabled={!semester}
                       onChange={(event) =>
-                        handleSectionChange(
-                          event.target.value
-                        )
+                        handleSectionChange(event.target.value)
                       }
                       className="h-12 w-full appearance-none rounded-xl border border-[#d8e5ee] bg-[#fbfdff] px-4 pr-10 text-[11px] font-semibold text-[#273b50] outline-none transition focus:border-[#72c5e9] focus:ring-4 focus:ring-[#54bce5]/10 disabled:cursor-not-allowed disabled:bg-[#f2f5f7] disabled:text-[#9aa9b7]"
                     >
-                      <option value="">
-                        Select Section
-                      </option>
-
+                      <option value="">Select Section</option>
                       {SECTIONS.map((item) => (
-                        <option
-                          key={item}
-                          value={item}
-                        >
+                        <option key={item} value={item}>
                           Section {item}
                         </option>
                       ))}
@@ -1459,32 +994,19 @@ export default function FacultyStudentsPage() {
                 </div>
 
                 {/* LOAD */}
-
                 <div className="flex items-end">
                   <button
                     type="button"
-                    onClick={
-                      handleLoadStudents
-                    }
-                    disabled={
-                      !semester ||
-                      !section ||
-                      loading
-                    }
+                    onClick={handleLoadStudents}
+                    disabled={!semester || !section || loading}
                     className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#111d2e] px-6 text-[11px] font-bold text-white shadow-[0_10px_25px_rgba(17,29,46,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1a2a40] disabled:cursor-not-allowed disabled:opacity-45 lg:w-auto"
                   >
                     {loading ? (
-                      <Loader2
-                        size={15}
-                        className="animate-spin"
-                      />
+                      <Loader2 size={15} className="animate-spin" />
                     ) : (
                       <Users size={15} />
                     )}
-
-                    {loading
-                      ? "Loading..."
-                      : "Load Students"}
+                    {loading ? "Loading..." : "Load Students"}
                   </button>
                 </div>
               </div>
@@ -1497,7 +1019,6 @@ export default function FacultyStudentsPage() {
             {hasLoadedClass && (
               <section className="mb-5 rounded-[18px] border border-[#d7e3ed] bg-white p-3 shadow-[0_7px_25px_rgba(30,60,90,0.045)]">
                 <div className="flex flex-col gap-3 md:flex-row">
-
                   <div className="relative flex-1">
                     <Search
                       size={17}
@@ -1506,11 +1027,7 @@ export default function FacultyStudentsPage() {
 
                     <input
                       value={search}
-                      onChange={(event) =>
-                        setSearch(
-                          event.target.value
-                        )
-                      }
+                      onChange={(event) => setSearch(event.target.value)}
                       placeholder="Search student by name, email, Campus ID or subject..."
                       className="h-12 w-full rounded-xl border border-[#dce7ef] bg-[#fbfdff] pl-11 pr-10 text-[12px] text-[#25384d] outline-none transition placeholder:text-[#9badbe] focus:border-[#8fc8e6] focus:ring-4 focus:ring-[#54bce5]/10"
                     />
@@ -1518,9 +1035,7 @@ export default function FacultyStudentsPage() {
                     {search && (
                       <button
                         type="button"
-                        onClick={() =>
-                          setSearch("")
-                        }
+                        onClick={() => setSearch("")}
                         className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[#8195a9] hover:bg-[#eef5fa]"
                       >
                         <X size={15} />
@@ -1531,23 +1046,13 @@ export default function FacultyStudentsPage() {
                   <button
                     type="button"
                     onClick={handleRefresh}
-                    disabled={
-                      !semester ||
-                      !section ||
-                      loading ||
-                      refreshing
-                    }
+                    disabled={!semester || !section || loading || refreshing}
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#d5e2eb] bg-white px-5 text-[11px] font-bold text-[#49657f] shadow-sm transition hover:border-[#9bcce6] hover:text-[#267ba8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <RefreshCw
                       size={15}
-                      className={
-                        refreshing
-                          ? "animate-spin"
-                          : ""
-                      }
+                      className={refreshing ? "animate-spin" : ""}
                     />
-
                     Refresh
                   </button>
                 </div>
@@ -1559,7 +1064,6 @@ export default function FacultyStudentsPage() {
             ================================================= */}
 
             <section className="overflow-hidden rounded-[22px] border border-[#d5e1eb] bg-white shadow-[0_12px_35px_rgba(30,60,90,0.055)]">
-
               <div className="flex flex-col gap-3 border-b border-[#e2e9ef] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef7fc] text-[#4a9bc8]">
@@ -1574,10 +1078,7 @@ export default function FacultyStudentsPage() {
                     <p className="mt-0.5 text-[10px] text-[#7b8fa2]">
                       {hasLoadedClass
                         ? `${filteredStudents.length} student${
-                            filteredStudents.length ===
-                            1
-                              ? ""
-                              : "s"
+                            filteredStudents.length === 1 ? "" : "s"
                           } displayed`
                         : "Select a semester and section to begin"}
                     </p>
@@ -1591,51 +1092,41 @@ export default function FacultyStudentsPage() {
               </div>
 
               {/* NOT SELECTED */}
-
-              {!hasLoadedClass &&
-                !loading && (
-                  <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-[#eef6fb] text-[#77a9c6] shadow-inner">
-                      <GraduationCap
-                        size={34}
-                      />
-                    </div>
-
-                    <h3 className="mt-5 font-serif text-[19px] font-bold text-[#26394d]">
-                      Select Your Class
-                    </h3>
-
-                    <p className="mt-2 max-w-[450px] text-[11px] leading-5 text-[#8194a7]">
-                      Choose semester and section
-                      above to view the approved
-                      students belonging to that
-                      class.
-                    </p>
+              {!hasLoadedClass && !loading && (
+                <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-[#eef6fb] text-[#77a9c6] shadow-inner">
+                    <GraduationCap size={34} />
                   </div>
-                )}
+
+                  <h3 className="mt-5 font-serif text-[19px] font-bold text-[#26394d]">
+                    Select Your Class
+                  </h3>
+
+                  <p className="mt-2 max-w-[450px] text-[11px] leading-5 text-[#8194a7]">
+                    Choose semester and section above to view the approved
+                    students belonging to that class.
+                  </p>
+                </div>
+              )}
 
               {/* LOADING */}
+              {hasLoadedClass && loading && (
+                <div className="flex min-h-[350px] flex-col items-center justify-center">
+                  <Loader2
+                    size={31}
+                    className="animate-spin text-[#54bce5]"
+                  />
 
-              {hasLoadedClass &&
-                loading && (
-                  <div className="flex min-h-[350px] flex-col items-center justify-center">
-                    <Loader2
-                      size={31}
-                      className="animate-spin text-[#54bce5]"
-                    />
-
-                    <p className="mt-4 text-[12px] font-semibold text-[#536b83]">
-                      Loading students...
-                    </p>
-                  </div>
-                )}
+                  <p className="mt-4 text-[12px] font-semibold text-[#536b83]">
+                    Loading students...
+                  </p>
+                </div>
+              )}
 
               {/* EMPTY */}
-
               {hasLoadedClass &&
                 !loading &&
-                filteredStudents.length ===
-                  0 && (
+                filteredStudents.length === 0 && (
                   <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#eef5fa] text-[#88a0b6]">
                       <Users size={28} />
@@ -1654,70 +1145,48 @@ export default function FacultyStudentsPage() {
                 )}
 
               {/* STUDENT LIST */}
-
               {hasLoadedClass &&
                 !loading &&
-                filteredStudents.length >
-                  0 && (
+                filteredStudents.length > 0 && (
                   <div className="divide-y divide-[#e7edf2]">
-                    {filteredStudents.map(
-                      (student) => (
-                        <StudentRow
-                          key={student.id}
-                          student={student}
-                          onView={() =>
-                            setSelectedStudent(
-                              student
-                            )
-                          }
-                          onDelete={() =>
-                            setDeleteStudent(
-                              student
-                            )
-                          }
-                        />
-                      )
-                    )}
+                    {filteredStudents.map((student) => (
+                      <StudentRow
+                        key={student.id}
+                        student={student}
+                        onView={() => setSelectedStudent(student)}
+                        onDelete={() => setDeleteStudent(student)}
+                      />
+                    ))}
                   </div>
                 )}
             </section>
 
             {/* FOOTER */}
-
             <footer className="py-8 text-center text-[10px] text-[#8194a7]">
-              © 2026 CampusConnect • Faculty Student
-              Management
+              © 2026 CampusConnect • Faculty Student Management
             </footer>
           </div>
         </main>
       </div>
 
       {/* ======================================================
-          DETAILS
+          DETAILS MODAL
       ====================================================== */}
-
       {selectedStudent && (
         <StudentDetailsModal
           student={selectedStudent}
-          onClose={() =>
-            setSelectedStudent(null)
-          }
-          onEdit={() =>
-            openEdit(selectedStudent)
-          }
+          onClose={() => setSelectedStudent(null)}
+          onEdit={() => openEdit(selectedStudent)}
           onDelete={() => {
-            setDeleteStudent(
-              selectedStudent
-            );
+            setDeleteStudent(selectedStudent);
             setSelectedStudent(null);
           }}
         />
       )}
 
       {/* ======================================================
-          EDIT
+          EDIT MODAL
       ====================================================== */}
-
       {editingStudent && editForm && (
         <EditStudentModal
           student={editingStudent}
@@ -1725,26 +1194,19 @@ export default function FacultyStudentsPage() {
           saving={savingEdit}
           onChange={updateEditField}
           onCancel={closeEdit}
-          onSave={() =>
-            void saveStudent()
-          }
+          onSave={() => void saveStudent()}
         />
       )}
 
       {/* ======================================================
-          DELETE
+          DELETE MODAL
       ====================================================== */}
-
       {deleteStudent && (
         <DeleteModal
           student={deleteStudent}
           loading={deleting}
-          onCancel={() =>
-            setDeleteStudent(null)
-          }
-          onConfirm={() =>
-            void confirmDelete()
-          }
+          onCancel={() => setDeleteStudent(null)}
+          onConfirm={() => void confirmDelete()}
         />
       )}
     </div>
@@ -1766,10 +1228,11 @@ function StudentRow({
 }) {
   const semester = getStudentSemester(student);
   const section = getStudentSection(student);
-  const attendance =
-    Number.isFinite(student.statistics.classAttendancePercentage)
-      ? student.statistics.classAttendancePercentage
-      : 0;
+  const attendance = Number.isFinite(
+    student.statistics.classAttendancePercentage
+  )
+    ? student.statistics.classAttendancePercentage
+    : 0;
 
   return (
     <div className="group px-4 py-5 transition duration-300 hover:bg-[#f7fcff] sm:px-6 lg:px-7">
@@ -1826,10 +1289,7 @@ function StudentRow({
             value={semester ? `Semester ${semester}` : "Not assigned"}
           />
 
-          <InfoBox
-            label="Section"
-            value={section}
-          />
+          <InfoBox label="Section" value={section} />
 
           <InfoBox
             label="Attendance"
@@ -1866,13 +1326,7 @@ function StudentRow({
    INFO BOX
 ============================================================ */
 
-function InfoBox({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function InfoBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="group/box flex min-h-[68px] min-w-0 flex-col justify-center rounded-2xl border border-[#d8e5ee] bg-[#f8fafc] px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-[#54bce5] hover:bg-[#eefaff] hover:shadow-[0_0_0_3px_rgba(84,188,229,0.08),0_0_24px_rgba(84,188,229,0.16)]">
       <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-[#8295a7] transition-colors group-hover/box:text-[#3b8db7]">
@@ -1901,35 +1355,21 @@ function StudentDetailsModal({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const registrations =
-    student.studentRegistrations ?? [];
-
-  const memberships =
-    student.memberships ?? [];
-
-  const certificates =
-    student.certificates ?? [];
-
+  const registrations = student.studentRegistrations ?? [];
+  const memberships = student.memberships ?? [];
+  const certificates = student.certificates ?? [];
   const statistics = {
     ...defaultStatistics,
     ...(student.statistics ?? {}),
   };
-
-  const subjects =
-    getUniqueSubjects(student);
-
-  const sections =
-    getStudentSections(student);
+  const subjects = getUniqueSubjects(student);
+  const sections = getStudentSections(student);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07111f]/75 p-2 backdrop-blur-md sm:p-4 lg:p-5">
-
       <div className="flex max-h-[96vh] w-full max-w-[1380px] flex-col overflow-hidden rounded-[25px] border border-[#d6e2eb] bg-[#f4f8fb] shadow-[0_35px_110px_rgba(5,20,35,0.32)] animate-[modalIn_.25s_ease-out]">
-
         {/* HEADER */}
-
         <div className="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-[#dce6ee] bg-[#101d2f] px-5 py-5 text-white sm:px-7">
-
           <div className="pointer-events-none absolute -right-10 -top-24 h-64 w-64 rounded-full border border-[#69cbed]/15" />
 
           <div className="relative flex min-w-0 items-center gap-3">
@@ -1958,9 +1398,7 @@ function StudentDetailsModal({
 
               <p className="mt-1 truncate text-[10px] text-[#9eb1c3]">
                 {student.email}
-                {student.campusUserId
-                  ? ` • ${student.campusUserId}`
-                  : ""}
+                {student.campusUserId ? ` • ${student.campusUserId}` : ""}
               </p>
             </div>
           </div>
@@ -1975,64 +1413,43 @@ function StudentDetailsModal({
         </div>
 
         {/* BODY */}
-
         <div className="overflow-y-auto px-4 py-5 sm:px-7 sm:py-6">
-
           {/* STATS */}
-
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-
             <ModalStat
               label="Subjects"
-              value={String(
-                subjects.length
-              )}
+              value={String(subjects.length)}
               icon={BookOpen}
             />
 
             <ModalStat
               label="Semester"
-              value={
-                getStudentSemester(
-                  student
-                )?.toString() ?? "-"
-              }
+              value={getStudentSemester(student)?.toString() ?? "-"}
               icon={GraduationCap}
             />
 
             <ModalStat
               label="Section"
-              value={
-                sections.join(", ") || "-"
-              }
+              value={sections.join(", ") || "-"}
               icon={Users}
             />
 
             <ModalStat
               label="Certificates"
-              value={String(
-                statistics.certificateCount
-              )}
+              value={String(statistics.certificateCount)}
               icon={Award}
             />
           </div>
 
           {/* PERSONAL + ACADEMIC */}
-
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <DetailSection
               title="Personal Information"
               icon={UserCircle}
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <DetailItem
-                  label="Full Name"
-                  value={student.name}
-                />
-                <DetailItem
-                  label="Email"
-                  value={student.email}
-                />
+                <DetailItem label="Full Name" value={student.name} />
+                <DetailItem label="Email" value={student.email} />
                 <DetailItem
                   label="Phone"
                   value={student.phone || "Not provided"}
@@ -2090,27 +1507,26 @@ function StudentDetailsModal({
                   label="Designation"
                   value={student.designation || "Not available"}
                 />
-                <DetailItem
-                  label="Account Status"
-                  value="Approved"
-                />
+                <DetailItem label="Account Status" value="Approved" />
                 <DetailItem
                   label="Joining Date"
-                  value={student.joiningDate ? formatDate(student.joiningDate) : "Not available"}
+                  value={
+                    student.joiningDate
+                      ? formatDate(student.joiningDate)
+                      : "Not available"
+                  }
                 />
               </div>
             </DetailSection>
           </div>
 
           {/* REGISTRATION */}
-
           <DetailSection
             title="Registered Subjects"
             icon={BookOpen}
             badge={`${registrations.length}`}
           >
-            {registrations.length ===
-            0 ? (
+            {registrations.length === 0 ? (
               <EmptyDetail text="No subject registration found." />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-[#dce6ee]">
@@ -2120,15 +1536,12 @@ function StudentDetailsModal({
                       <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
                         Subject
                       </th>
-
                       <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
                         Semester
                       </th>
-
                       <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
                         Section
                       </th>
-
                       <th className="px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[#7b8fa2]">
                         Registered
                       </th>
@@ -2136,42 +1549,22 @@ function StudentDetailsModal({
                   </thead>
 
                   <tbody className="divide-y divide-[#e8eef3] bg-white">
-                    {registrations.map(
-                      (registration) => (
-                        <tr
-                          key={
-                            registration.id
-                          }
-                        >
-                          <td className="px-4 py-3 text-[11px] font-semibold text-[#26394d]">
-                            {
-                              registration
-                                .subject
-                                ?.name
-                            }
-                          </td>
-
-                          <td className="px-4 py-3 text-[10px] text-[#62788d]">
-                            Semester{" "}
-                            {
-                              registration.semester
-                            }
-                          </td>
-
-                          <td className="px-4 py-3 text-[10px] text-[#62788d]">
-                            {
-                              registration.section
-                            }
-                          </td>
-
-                          <td className="px-4 py-3 text-[10px] text-[#62788d]">
-                            {formatDate(
-                              registration.createdAt
-                            )}
-                          </td>
-                        </tr>
-                      )
-                    )}
+                    {registrations.map((registration) => (
+                      <tr key={registration.id}>
+                        <td className="px-4 py-3 text-[11px] font-semibold text-[#26394d]">
+                          {registration.subject?.name}
+                        </td>
+                        <td className="px-4 py-3 text-[10px] text-[#62788d]">
+                          Semester {registration.semester}
+                        </td>
+                        <td className="px-4 py-3 text-[10px] text-[#62788d]">
+                          {registration.section}
+                        </td>
+                        <td className="px-4 py-3 text-[10px] text-[#62788d]">
+                          {formatDate(registration.createdAt)}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -2179,117 +1572,86 @@ function StudentDetailsModal({
           </DetailSection>
 
           {/* CLUBS */}
-
           <DetailSection
             title="Club Memberships"
             icon={Trophy}
             badge={`${memberships.length}`}
           >
-            {memberships.length ===
-            0 ? (
+            {memberships.length === 0 ? (
               <EmptyDetail text="No club memberships found." />
             ) : (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {memberships.map(
-                  (membership) => (
-                    <div
-                      key={
-                        membership.id
-                      }
-                      className="rounded-xl border border-[#dce6ee] bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                      <h4 className="text-[12px] font-bold text-[#26394d]">
-                        {
-                          membership.club
-                            ?.name
-                        }
-                      </h4>
+                {memberships.map((membership) => (
+                  <div
+                    key={membership.id}
+                    className="rounded-xl border border-[#dce6ee] bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <h4 className="text-[12px] font-bold text-[#26394d]">
+                      {membership.club?.name}
+                    </h4>
 
-                      <p className="mt-1 line-clamp-2 text-[9px] leading-4 text-[#8194a7]">
-                        {
-                          membership.club
-                            ?.description
-                        }
-                      </p>
+                    <p className="mt-1 line-clamp-2 text-[9px] leading-4 text-[#8194a7]">
+                      {membership.club?.description}
+                    </p>
 
-                      <p className="mt-3 text-[9px] text-[#72879a]">
-                        Joined:{" "}
-                        {formatDate(
-                          membership.joinedAt
-                        )}
-                      </p>
-                    </div>
-                  )
-                )}
+                    <p className="mt-3 text-[9px] text-[#72879a]">
+                      Joined: {formatDate(membership.joinedAt)}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </DetailSection>
 
           {/* CERTIFICATES */}
-
           <DetailSection
             title="Certificates"
             icon={Award}
             badge={`${certificates.length}`}
           >
-            {certificates.length ===
-            0 ? (
+            {certificates.length === 0 ? (
               <EmptyDetail text="No certificates found." />
             ) : (
               <div className="space-y-2">
-                {certificates.map(
-                  (certificate) => (
-                    <div
-                      key={
-                        certificate.id
-                      }
-                      className="flex flex-col gap-3 rounded-xl border border-[#dce6ee] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <p className="text-[11px] font-bold text-[#26394d]">
-                          {
-                            certificate.title
-                          }
-                        </p>
+                {certificates.map((certificate) => (
+                  <div
+                    key={certificate.id}
+                    className="flex flex-col gap-3 rounded-xl border border-[#dce6ee] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="text-[11px] font-bold text-[#26394d]">
+                        {certificate.title}
+                      </p>
 
-                        <p className="mt-1 text-[9px] text-[#8194a7]">
-                          Issued{" "}
-                          {formatDate(
-                            certificate.createdAt
-                          )}
-                        </p>
-                      </div>
-
-                      {certificate.fileUrl && (
-                        <a
-                          href={
-                            certificate.fileUrl
-                          }
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-[#c5e0f1] bg-[#f5fbff] px-3 py-1.5 text-[9px] font-bold text-[#3385b2] transition hover:bg-[#eaf7ff]"
-                        >
-                          View Certificate
-                        </a>
-                      )}
+                      <p className="mt-1 text-[9px] text-[#8194a7]">
+                        Issued {formatDate(certificate.createdAt)}
+                      </p>
                     </div>
-                  )
-                )}
+
+                    {certificate.fileUrl && (
+                      <a
+                        href={certificate.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-[#c5e0f1] bg-[#f5fbff] px-3 py-1.5 text-[9px] font-bold text-[#3385b2] transition hover:bg-[#eaf7ff]"
+                      >
+                        View Certificate
+                      </a>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </DetailSection>
         </div>
 
         {/* FOOTER */}
-
         <div className="flex shrink-0 flex-col gap-3 border-t border-[#dce6ee] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-
           <p className="hidden text-[9px] text-[#8194a7] sm:block">
             Student ID: {student.id}
           </p>
 
           <div className="ml-auto flex items-center gap-2">
-
             <button
               type="button"
               onClick={onDelete}
@@ -2325,7 +1687,6 @@ function StudentDetailsModal({
             opacity: 0;
             transform: translateY(18px) scale(0.98);
           }
-
           to {
             opacity: 1;
             transform: translateY(0) scale(1);
@@ -2359,10 +1720,7 @@ function ModalStat({
           {label}
         </p>
 
-        <Icon
-          size={14}
-          className="text-[#5ba8d1]"
-        />
+        <Icon size={14} className="text-[#5ba8d1]" />
       </div>
 
       <p className="mt-2 truncate text-[15px] font-bold text-[#24374c]">
@@ -2409,9 +1767,7 @@ function DetailSection({
         )}
       </div>
 
-      <div className="p-4 sm:p-5">
-        {children}
-      </div>
+      <div className="p-4 sm:p-5">{children}</div>
     </section>
   );
 }
@@ -2430,7 +1786,9 @@ function DetailItem({
   className?: string;
 }) {
   return (
-    <div className={`rounded-xl border border-[#e1e9ef] bg-[#fafcfe] px-3.5 py-3 ${className}`}>
+    <div
+      className={`rounded-xl border border-[#e1e9ef] bg-[#fafcfe] px-3.5 py-3 ${className}`}
+    >
       <p className="text-[8px] font-medium uppercase tracking-wider text-[#8a9cad]">
         {label}
       </p>
@@ -2446,16 +1804,10 @@ function DetailItem({
    EMPTY DETAIL
 ============================================================ */
 
-function EmptyDetail({
-  text,
-}: {
-  text: string;
-}) {
+function EmptyDetail({ text }: { text: string }) {
   return (
     <div className="rounded-xl border border-dashed border-[#d8e3eb] bg-[#fbfdff] px-5 py-8 text-center">
-      <p className="text-[10px] text-[#8295a7]">
-        {text}
-      </p>
+      <p className="text-[10px] text-[#8295a7]">{text}</p>
     </div>
   );
 }
@@ -2475,10 +1827,7 @@ function EditStudentModal({
   student: Student;
   form: EditForm;
   saving: boolean;
-  onChange: (
-    field: keyof EditForm,
-    value: string
-  ) => void;
+  onChange: (field: keyof EditForm, value: string) => void;
   onCancel: () => void;
   onSave: () => void;
 }) {
@@ -2536,11 +1885,8 @@ function EditStudentModal({
 
   return (
     <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[#07111f]/75 p-3 backdrop-blur-md sm:p-6">
-
       <div className="flex max-h-[94vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[24px] border border-[#dce5ed] bg-[#f6f9fb] shadow-[0_30px_100px_rgba(5,20,35,0.3)]">
-
         {/* HEADER */}
-
         <div className="flex shrink-0 items-center justify-between border-b border-[#dce6ee] bg-white px-5 py-4 sm:px-7">
           <div>
             <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#3988b8]">
@@ -2567,9 +1913,7 @@ function EditStudentModal({
         </div>
 
         {/* BODY */}
-
         <div className="overflow-y-auto px-5 py-5 sm:px-7">
-
           <div className="mb-5 flex items-center gap-3 rounded-xl border border-[#dce7ef] bg-white p-4">
             <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-[#edf7fc] text-[#479ac7]">
               {student.profileImage ? (
@@ -2596,10 +1940,7 @@ function EditStudentModal({
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {fields.map((field) => (
-              <label
-                key={field.key}
-                className="block"
-              >
+              <label key={field.key} className="block">
                 <span className="mb-1.5 block text-[9px] font-bold uppercase tracking-wider text-[#71879b]">
                   {field.label}
                 </span>
@@ -2607,21 +1948,15 @@ function EditStudentModal({
                 <input
                   value={form[field.key]}
                   onChange={(event) =>
-                    onChange(
-                      field.key,
-                      event.target.value
-                    )
+                    onChange(field.key, event.target.value)
                   }
-                  placeholder={
-                    field.placeholder
-                  }
+                  placeholder={field.placeholder}
                   className="h-11 w-full rounded-xl border border-[#dce7ef] bg-white px-3.5 text-[11px] text-[#293d51] outline-none transition placeholder:text-[#a2b0bd] focus:border-[#75c5e7] focus:ring-4 focus:ring-[#54bce5]/10"
                 />
               </label>
             ))}
 
             {/* ADDRESS */}
-
             <label className="block md:col-span-2">
               <span className="mb-1.5 block text-[9px] font-bold uppercase tracking-wider text-[#71879b]">
                 Address
@@ -2630,10 +1965,7 @@ function EditStudentModal({
               <textarea
                 value={form.address}
                 onChange={(event) =>
-                  onChange(
-                    "address",
-                    event.target.value
-                  )
+                  onChange("address", event.target.value)
                 }
                 placeholder="Full address"
                 rows={3}
@@ -2644,7 +1976,6 @@ function EditStudentModal({
         </div>
 
         {/* FOOTER */}
-
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-[#dce6ee] bg-white px-5 py-4 sm:px-7">
           <button
             type="button"
@@ -2662,17 +1993,11 @@ function EditStudentModal({
             className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#132238] px-6 text-[10px] font-bold text-white transition hover:bg-[#1c304a] disabled:opacity-60"
           >
             {saving ? (
-              <Loader2
-                size={14}
-                className="animate-spin"
-              />
+              <Loader2 size={14} className="animate-spin" />
             ) : (
               <CheckCircle2 size={14} />
             )}
-
-            {saving
-              ? "Saving..."
-              : "Save Changes"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
@@ -2697,9 +2022,7 @@ function DeleteModal({
 }) {
   return (
     <div className="fixed inset-0 z-[140] flex items-center justify-center bg-[#07111f]/75 p-4 backdrop-blur-md">
-
       <div className="w-full max-w-[440px] overflow-hidden rounded-[22px] border border-[#e2e8ed] bg-white shadow-[0_30px_90px_rgba(5,20,35,0.28)]">
-
         <div className="p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff0f0] text-[#d14f4f]">
             <Trash2 size={22} />
@@ -2714,10 +2037,8 @@ function DeleteModal({
             <span className="font-bold text-[#2b3f53]">
               {student.name}
             </span>
-            . This will permanently remove
-            the student account and related
-            records according to your database
-            cascade rules.
+            . This will permanently remove the student account and related
+            records according to your database cascade rules.
           </p>
 
           <div className="mt-4 rounded-xl border border-[#f0d0d0] bg-[#fff8f8] px-4 py-3">
@@ -2728,7 +2049,6 @@ function DeleteModal({
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-[#e5ebef] bg-[#fbfdff] px-5 py-4">
-
           <button
             type="button"
             onClick={onCancel}
@@ -2745,14 +2065,10 @@ function DeleteModal({
             className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#c94e4e] px-4 text-[10px] font-bold text-white hover:bg-[#b84242] disabled:opacity-60"
           >
             {loading ? (
-              <Loader2
-                size={14}
-                className="animate-spin"
-              />
+              <Loader2 size={14} className="animate-spin" />
             ) : (
               <Trash2 size={14} />
             )}
-
             Delete Student
           </button>
         </div>
