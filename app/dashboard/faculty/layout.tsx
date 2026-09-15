@@ -53,6 +53,56 @@ const defaultFaculty: FacultyUser = {
 };
 
 /* =========================================================
+   INSTANT LOCAL STORAGE EXTRACTOR (ZERO-LATENCY)
+========================================================= */
+
+function getInstantFacultyUser(): FacultyUser {
+  if (typeof window === "undefined") return defaultFaculty;
+
+  try {
+    const cachedImage = localStorage.getItem("facultyProfileImage");
+    const possibleKeys = [
+      "facultyUser",
+      "faculty",
+      "currentFaculty",
+      "user",
+    ];
+
+    for (const key of possibleKeys) {
+      const stored = localStorage.getItem(key);
+      if (!stored) continue;
+
+      try {
+        const candidate = JSON.parse(stored);
+        if (candidate && typeof candidate === "object" && candidate.email) {
+          return {
+            id: candidate.id ?? defaultFaculty.id,
+            name: candidate.name ?? defaultFaculty.name,
+            email: candidate.email ?? defaultFaculty.email,
+            facultyId:
+              candidate.facultyId ??
+              candidate.campusUserId ??
+              defaultFaculty.facultyId,
+            campusUserId: candidate.campusUserId ?? null,
+            role: candidate.role ?? defaultFaculty.role,
+            approvalStatus:
+              candidate.approvalStatus ?? defaultFaculty.approvalStatus,
+            profileImage:
+              candidate.profileImage || cachedImage || null,
+          };
+        }
+      } catch {
+        continue;
+      }
+    }
+  } catch {
+    // Fallback to default
+  }
+
+  return defaultFaculty;
+}
+
+/* =========================================================
    MENU TYPES
 ========================================================= */
 
@@ -166,6 +216,10 @@ function SidebarContent({
   navigate,
 }: SidebarContentProps) {
   const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [profileImage]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[#0d1424]">
@@ -379,7 +433,7 @@ function SidebarContent({
           </button>
         </nav>
 
-        {/* BOTTOM PROFILE CARD WITH PHOTO */}
+        {/* BOTTOM PROFILE CARD WITH INSTANT PHOTO */}
         <div className="mt-auto pt-[20px]">
           <div className="h-px w-full bg-[#263247]" />
           <button
@@ -394,6 +448,7 @@ function SidebarContent({
                   alt={facultyName}
                   className="h-full w-full object-cover"
                   onError={() => setImgError(true)}
+                  loading="eager"
                 />
               ) : (
                 initials
@@ -426,7 +481,8 @@ export default function FacultyLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  const [user, setUser] = useState<FacultyUser>(defaultFaculty);
+  // Instant zero-delay memory cache initialization
+  const [user, setUser] = useState<FacultyUser>(getInstantFacultyUser);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(() =>
     pathname.startsWith("/dashboard/faculty/attendance")
@@ -439,45 +495,30 @@ export default function FacultyLayout({
     router.push(href);
   };
 
-  const loadUserData = async () => {
-    try {
-      const possibleKeys = [
-        "facultyUser",
-        "faculty",
-        "currentFaculty",
-        "user",
-      ];
-
-      for (const key of possibleKeys) {
-        const stored = localStorage.getItem(key);
-        if (!stored) continue;
-
-        try {
-          const candidate = JSON.parse(stored);
-          if (candidate && typeof candidate === "object" && candidate.email) {
-            setUser((prev) => ({
-              ...prev,
-              id: candidate.id ?? defaultFaculty.id,
-              name: candidate.name ?? defaultFaculty.name,
-              email: candidate.email ?? defaultFaculty.email,
-              facultyId:
-                candidate.facultyId ??
-                candidate.campusUserId ??
-                defaultFaculty.facultyId,
-              campusUserId: candidate.campusUserId ?? null,
-              role: candidate.role ?? defaultFaculty.role,
-              approvalStatus:
-                candidate.approvalStatus ?? defaultFaculty.approvalStatus,
-              profileImage: candidate.profileImage || null,
-            }));
-            break;
-          }
-        } catch {
-          continue;
-        }
+  const syncProfile = (updated: Partial<FacultyUser>) => {
+    if (updated.profileImage) {
+      try {
+        localStorage.setItem("facultyProfileImage", updated.profileImage);
+      } catch {
+        // Safe catch
       }
+    }
+    setHeaderImgError(false);
+    setUser((prev) => ({
+      ...prev,
+      ...updated,
+    }));
+  };
 
-      // Live Profile Sync from backend to fetch uploaded photo
+  const loadUserData = async () => {
+    // Phase 1: Instant sync from localStorage
+    const local = getInstantFacultyUser();
+    if (local.email && local.email !== defaultFaculty.email) {
+      setUser(local);
+    }
+
+    // Phase 2: Live background fetch from backend
+    try {
       const response = await fetch("/api/faculty/profile", {
         method: "GET",
         credentials: "include",
@@ -487,20 +528,32 @@ export default function FacultyLayout({
 
       if (response.ok && data.success && data.faculty) {
         const f = data.faculty;
-        setUser((prev) => ({
-          ...prev,
-          id: f.id ?? prev.id,
-          name: f.name ?? prev.name,
-          email: f.email ?? prev.email,
-          facultyId: f.facultyId || f.campusUserId || prev.facultyId,
-          campusUserId: f.campusUserId ?? prev.campusUserId,
-          role: f.role ?? prev.role,
-          approvalStatus: f.approvalStatus ?? prev.approvalStatus,
+        const freshUser: Partial<FacultyUser> = {
+          id: f.id,
+          name: f.name,
+          email: f.email,
+          facultyId: f.facultyId || f.campusUserId,
+          campusUserId: f.campusUserId,
+          role: f.role,
+          approvalStatus: f.approvalStatus,
           profileImage: f.profileImage || null,
-        }));
+        };
+
+        syncProfile(freshUser);
+
+        // Update local storage so next refresh has this photo instantly
+        try {
+          const currentStored = localStorage.getItem("user") || localStorage.getItem("facultyUser");
+          if (currentStored) {
+            const parsed = JSON.parse(currentStored);
+            localStorage.setItem("user", JSON.stringify({ ...parsed, ...freshUser }));
+          }
+        } catch {
+          // ignore
+        }
       }
     } catch (error) {
-      console.error("Faculty user loading error:", error);
+      console.error("Faculty profile background sync error:", error);
     }
   };
 
@@ -514,11 +567,22 @@ export default function FacultyLayout({
   };
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadUserData();
-    }, 0);
+    // Initial direct sync
+    void loadUserData();
 
-    return () => window.clearTimeout(timer);
+    // Listen to local changes (e.g. when user uploads photo in profile tab)
+    const handleStorageChange = () => {
+      const refreshed = getInstantFacultyUser();
+      setUser(refreshed);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("faculty-profile-updated", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("faculty-profile-updated", handleStorageChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -558,6 +622,7 @@ export default function FacultyLayout({
         "user",
         "token",
         "facultyToken",
+        "facultyProfileImage",
       ].forEach((key) => localStorage.removeItem(key));
     } catch (storageError) {
       console.error("Storage cleanup error:", storageError);
@@ -667,7 +732,7 @@ export default function FacultyLayout({
 
               <div className="mx-1 h-8 w-px shrink-0 bg-[#dce6f0]" />
 
-              {/* PROFILE BUTTON (DISPLAYS UPLOADED PHOTO) */}
+              {/* PROFILE BUTTON (DISPLAYS PHOTO INSTANTLY) */}
               <button
                 type="button"
                 onClick={() => navigate("/faculty/profile")}
@@ -680,6 +745,7 @@ export default function FacultyLayout({
                       alt={facultyName}
                       className="h-full w-full object-cover"
                       onError={() => setHeaderImgError(true)}
+                      loading="eager"
                     />
                   ) : (
                     initials
