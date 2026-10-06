@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 import { prisma } from "@/lib/prisma";
@@ -25,18 +26,58 @@ function json(
 
 /* ============================================================
    GET TOKEN
-   Cookie first, Bearer token fallback
+
+   Student cookie first:
+   studentToken
+
+   Legacy cookie fallback:
+   token
+
+   Bearer token fallback
 ============================================================ */
 
 function getToken(
   request: NextRequest
 ): string | null {
-  const cookieToken =
+
+  // =========================================================
+  // STUDENT AUTH COOKIE
+  // =========================================================
+  //
+  // Student login creates:
+  //
+  //     studentToken
+  //
+  // This must be checked first.
+  //
+  // =========================================================
+
+  const studentCookie =
+    request.cookies.get("studentToken")?.value;
+
+  if (studentCookie) {
+    return studentCookie;
+  }
+
+  // =========================================================
+  // LEGACY TOKEN FALLBACK
+  // =========================================================
+  //
+  // Keep the old "token" cookie support so that existing
+  // sessions or older frontend behavior are not broken.
+  //
+  // =========================================================
+
+  const legacyCookie =
     request.cookies.get("token")?.value;
 
-  if (cookieToken) {
-    return cookieToken;
+  if (legacyCookie) {
+    return legacyCookie;
   }
+
+  // =========================================================
+  // BEARER TOKEN FALLBACK
+  // =========================================================
 
   const authorization =
     request.headers.get(

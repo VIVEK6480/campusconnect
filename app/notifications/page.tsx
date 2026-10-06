@@ -26,6 +26,8 @@ type Notification = {
   title: string;
   message: string;
   createdAt: string;
+  isRead?: boolean | null;
+  read?: boolean | null;
 };
 
 type ApiResponse = {
@@ -57,6 +59,9 @@ export default function NotificationsPage() {
   const [refreshing, setRefreshing] =
     useState(false);
 
+  const [actionError, setActionError] =
+    useState("");
+
   /* =========================================================
      LOAD NOTIFICATIONS
   ========================================================= */
@@ -85,10 +90,20 @@ export default function NotificationsPage() {
           );
         }
 
-        setNotifications(
-          Array.isArray(data.notifications)
-            ? data.notifications
-            : []
+        const list = Array.isArray(data.notifications)
+          ? data.notifications
+          : [];
+
+        setNotifications(list);
+
+        setReadNotifications(
+          list
+            .filter(
+              (notification) =>
+                notification.isRead === true ||
+                notification.read === true
+            )
+            .map((notification) => notification.id)
         );
       } catch (err) {
         console.error(
@@ -134,12 +149,55 @@ export default function NotificationsPage() {
   };
 
   /* =========================================================
+     SAVE READ STATUS TO BACKEND
+  ========================================================= */
+
+  const saveReadStatus = async (
+    notificationId: string
+  ): Promise<boolean> => {
+    try {
+      const response = await fetch(
+        `/api/notifications/${notificationId}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            isRead: true,
+          }),
+        }
+      );
+
+      const data: ApiResponse =
+        await response.json();
+
+      return (
+        response.ok &&
+        data.success === true
+      );
+    } catch (err) {
+      console.error(
+        "MARK AS READ ERROR:",
+        err
+      );
+
+      return false;
+    }
+  };
+
+  /* =========================================================
      MARK AS READ
   ========================================================= */
 
-  const markAsRead = (
+  const markAsRead = async (
     notificationId: string
   ) => {
+    setActionError("");
+
+    // Update the screen immediately
     setReadNotifications((current) => {
       if (
         current.includes(notificationId)
@@ -152,19 +210,82 @@ export default function NotificationsPage() {
         notificationId,
       ];
     });
+
+    // Save it in the backend
+    const saved =
+      await saveReadStatus(
+        notificationId
+      );
+
+    if (!saved) {
+      setReadNotifications((current) =>
+        current.filter(
+          (id) => id !== notificationId
+        )
+      );
+
+      setActionError(
+        "Could not save this notification as read. Please try again."
+      );
+    }
   };
 
   /* =========================================================
      MARK ALL AS READ
   ========================================================= */
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    const unreadIds = notifications
+      .filter(
+        (notification) =>
+          !readNotifications.includes(
+            notification.id
+          )
+      )
+      .map(
+        (notification) =>
+          notification.id
+      );
+
+    if (unreadIds.length === 0) {
+      return;
+    }
+
+    setActionError("");
+
+    // Update the screen immediately
     setReadNotifications(
       notifications.map(
         (notification) =>
           notification.id
       )
     );
+
+    // Save everything in the backend
+    const results = await Promise.all(
+      unreadIds.map(async (id) => ({
+        id,
+        saved: await saveReadStatus(id),
+      }))
+    );
+
+    const failedIds = results
+      .filter((result) => !result.saved)
+      .map((result) => result.id);
+
+    if (failedIds.length > 0) {
+      setReadNotifications((current) =>
+        current.filter(
+          (id) => !failedIds.includes(id)
+        )
+      );
+
+      setActionError(
+        `Could not save ${failedIds.length} notification${
+          failedIds.length === 1 ? "" : "s"
+        } as read. Please try again.`
+      );
+    }
   };
 
   /* =========================================================
@@ -517,6 +638,20 @@ export default function NotificationsPage() {
                   Try Again
                 </button>
 
+              </div>
+            )}
+
+            {actionError && (
+              <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+                <p>{actionError}</p>
+
+                <button
+                  type="button"
+                  onClick={() => setActionError("")}
+                  className="shrink-0 rounded-xl bg-red-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-600"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
 
